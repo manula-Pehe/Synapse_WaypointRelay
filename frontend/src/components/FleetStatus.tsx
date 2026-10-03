@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import TakeOffRoadDialog from './TakeOffRoadDialog';
 
 export interface VehicleItem {
   id: string;
@@ -126,8 +127,16 @@ export const FleetStatus: React.FC<FleetStatusProps> = ({
   onToggleOnRoad,
 }) => {
   const [vehicles, setVehicles] = useState<VehicleItem[]>(initialFleet);
+  const [selectedVehicleForOffRoad, setSelectedVehicleForOffRoad] = useState<VehicleItem | null>(null);
 
   const handleToggle = (id: string) => {
+    const target = vehicles.find((v) => v.id === id);
+    if (target && target.onRoad) {
+      // Prompt confirmation dialog when taking an active vehicle off the road
+      setSelectedVehicleForOffRoad(target);
+      return;
+    }
+
     setVehicles((prev) =>
       prev.map((v) => {
         if (v.id === id) {
@@ -363,6 +372,26 @@ export const FleetStatus: React.FC<FleetStatusProps> = ({
       <footer className="text-xs text-slate-500">
         Showing 11 of 38 · fuel percentages are illustrative for the demo week
       </footer>
+
+      {/* 5. Take Off Road Confirmation Dialog */}
+      <TakeOffRoadDialog
+        isOpen={!!selectedVehicleForOffRoad}
+        onClose={() => setSelectedVehicleForOffRoad(null)}
+        vehicleId={selectedVehicleForOffRoad?.id}
+        vehicleDetails={`${selectedVehicleForOffRoad?.type} · ${selectedVehicleForOffRoad?.capacityKg.toLocaleString()} kg · ${selectedVehicleForOffRoad?.capacityM3.toFixed(1)} m³`}
+        onConfirm={() => {
+          if (selectedVehicleForOffRoad) {
+            setVehicles((prev) =>
+              prev.map((v) =>
+                v.id === selectedVehicleForOffRoad.id
+                  ? { ...v, onRoad: false, status: 'Workshop' }
+                  : v
+              )
+            );
+            onToggleOnRoad?.(selectedVehicleForOffRoad.id, true);
+          }
+        }}
+      />
     </div>
   );
 };
