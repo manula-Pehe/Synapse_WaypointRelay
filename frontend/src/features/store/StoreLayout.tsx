@@ -24,14 +24,15 @@ export function StoreLayout() {
   const home = useQuery({ queryKey: ['store', 'home'], queryFn: storeApi.home, refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
   const outlet = useQuery({ queryKey: ['store', 'outlet', user?.outletId], queryFn: () => storeApi.outlet(user!.outletId!), enabled: !!user?.outletId, staleTime: 60_000 })
   const isOrders = pathname === '/store/orders'
+  const isReview = pathname === '/store/orders/review'
   const isHome = pathname === '/store'
   const orderList = useQuery({ queryKey: ['store', 'orders'], queryFn: () => storeApi.orders(), enabled: isOrders, refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
   const upcomingCount = orderList.data?.items.filter(order => !['DELIVERED', 'PARTIAL', 'FAILED', 'CANCELLED'].includes(order.status)).length ?? 0
   const now = useStoreLiveNow(home.data?.now, home.dataUpdatedAt)
   const dateLabel = now ? storeDateLabel(now) : ''
   const timeLabel = now ? storeTimeLabel(now) : ''
-  const title = isOrders ? 'Orders' : isHome ? `${now ? storeGreeting(now) : 'Hello'}, ${user?.name?.split(' ')[0] ?? 'Store manager'}` : 'Store manager'
-  const subtitle = isOrders ? `Upcoming and past orders for ${user?.outletId ?? 'your outlet'}` : isHome ? `${dateLabel} · ${timeLabel}` : `${user?.outletId ?? ''} · ${dateLabel}`
+  const title = isReview ? `Review and confirm · ${home.data?.runDate ? storeDateLabel(new Date(`${home.data.runDate}T12:00:00+05:30`)) : ''}` : isOrders ? 'Orders' : isHome ? `${now ? storeGreeting(now) : 'Hello'}, ${user?.name?.split(' ')[0] ?? 'Store manager'}` : 'Store manager'
+  const subtitle = isReview ? 'Review your quantities before the cut-off' : isOrders ? `Upcoming and past orders for ${user?.outletId ?? 'your outlet'}` : isHome ? `${dateLabel} · ${timeLabel}` : `${user?.outletId ?? ''} · ${dateLabel}`
   const cutoff = home.data && now ? storeCutoffLabel(now, home.data.cutOffAt, home.data.ordersClosed) : 'Loading cut-off…'
 
   return <div className="store-shell">
@@ -41,7 +42,7 @@ export function StoreLayout() {
       <div className="store-outlet-card"><strong>{outlet.data?.name ?? user?.outletId}</strong>{outlet.data && <><span>Waypoint {outlet.data.brand} · {outlet.data.dockType.replaceAll('_', ' ')} · {outlet.data.parkingConstraint.replaceAll('_', ' ')}</span><span>Delivery window {storeWindowLabel(outlet.data.windowOpen, outlet.data.windowClose)}</span></>}<button onClick={logout}>Sign out</button></div>
     </aside>
     <header className="store-topbar">
-      <div className="store-topbar-inner"><div className="store-page-title"><h1>{title}</h1><p className="store-desktop-subtitle">{subtitle}</p><p className="store-mobile-subtitle">{user?.outletId} · {isOrders ? `${upcomingCount} upcoming` : dateLabel}</p></div><div className="store-topbar-actions"><span className="store-cutoff"><StoreIcon name="clock" size={18} />{cutoff}</span><NotificationBell iconSrc="/store-icons/bell.svg" /><span className="store-account"><span className="store-avatar" />{user?.name}</span></div></div>
+      <div className="store-topbar-inner"><div className="store-page-title"><h1>{title}</h1><p className="store-desktop-subtitle">{subtitle}</p><p className="store-mobile-subtitle">{isReview ? 'Review quantities' : `${user?.outletId} · ${isOrders ? `${upcomingCount} upcoming` : dateLabel}`}</p></div><div className="store-topbar-actions"><span className="store-cutoff"><StoreIcon name="clock" size={18} />{cutoff}</span><NotificationBell iconSrc="/store-icons/bell.svg" /><span className="store-account"><span className="store-avatar" />{user?.name}</span></div></div>
     </header>
     <main className="store-main"><Outlet /></main>
     <nav aria-label="Store" className="store-bottom-nav">{links.map(link => <NavLink key={link.to} to={link.to} end={link.end} className={({ isActive }) => `store-bottom-link${isActive ? ' active' : ''}`}>{({ isActive }) => <><StoreIcon name={link.label === 'Settings' ? 'mobile-more' : link.icon === 'home' && !isActive ? 'mobile-home-inactive' : link.icon === 'orders' && isActive ? 'mobile-orders-active' : `mobile-${link.icon}`} size={22} />{link.label === 'Settings' ? 'More' : link.label}</>}</NavLink>)}</nav>

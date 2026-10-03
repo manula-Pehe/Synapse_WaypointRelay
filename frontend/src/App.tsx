@@ -13,6 +13,7 @@ import FleetStatus from './components/FleetStatus'
 import LiveBoardPage from './components/LiveBoardPage'
 import { StoreLayout } from './features/store/StoreLayout'
 import { StoreHome, StoreOrders, StoreOrderDetail, NewStoreOrder } from './features/store/StoreOrders'
+import { StoreReview } from './features/store/StoreReview'
 import { StoreDeliveries } from './features/store/StoreDeliveries'
 import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreIssues'
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
@@ -98,6 +99,7 @@ export default function App() {
                       <Route index element={<StoreHome />} />
                       <Route path="orders" element={<StoreOrders />} />
                       <Route path="orders/new" element={<NewStoreOrder />} />
+                      <Route path="orders/review" element={<StoreReview />} />
                       <Route path="orders/:id" element={<StoreOrderDetail />} />
                       <Route path="deliveries" element={<StoreDeliveries />} />
                       <Route path="issues" element={<StoreIssues />} />
