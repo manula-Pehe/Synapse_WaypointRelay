@@ -6,6 +6,7 @@ import java.util.List;
 import com.synapse.waypoint.core.order.dto.CreateOrderRequest;
 import com.synapse.waypoint.core.order.dto.OrderDto;
 import com.synapse.waypoint.core.order.dto.OrderEventDto;
+import com.synapse.waypoint.core.order.dto.OrderFilters;
 import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
 
 /**
@@ -15,6 +16,12 @@ import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
 public interface OrderService {
 
     OrderDto get(String orderId);
+
+    /**
+     * The orders of one run date, optionally of one depot, by reference. A store manager always gets
+     * only their own outlet's orders.
+     */
+    List<OrderDto> findByRun(LocalDate runDate, String depot, OrderFilters filters);
 
     OrderDto confirm(String orderId);
 

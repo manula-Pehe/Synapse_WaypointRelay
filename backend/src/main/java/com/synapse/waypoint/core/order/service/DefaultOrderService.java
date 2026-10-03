@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import com.synapse.waypoint.common.time.DemoClock;
 import com.synapse.waypoint.core.order.dto.CreateOrderRequest;
 import com.synapse.waypoint.core.order.dto.OrderDto;
 import com.synapse.waypoint.core.order.dto.OrderEventDto;
+import com.synapse.waypoint.core.order.dto.OrderFilters;
 import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
 import com.synapse.waypoint.core.order.entity.NewOrder;
 import com.synapse.waypoint.core.order.entity.Order;
@@ -26,12 +28,14 @@ import com.synapse.waypoint.core.order.entity.OrderStatus;
 import com.synapse.waypoint.core.order.event.OrderStatusChanged;
 import com.synapse.waypoint.core.order.repository.OrderEventRepository;
 import com.synapse.waypoint.core.order.repository.OrderRepository;
+import com.synapse.waypoint.core.order.repository.OrderSpecifications;
 
 @Service
 @Transactional
 class DefaultOrderService implements OrderService {
 
     private static final String EDITED = "EDITED";
+    private static final Sort SORT_BY_REF = Sort.by("ref");
 
     private final OrderRepository orders;
     private final OrderEventRepository events;
@@ -61,6 +65,13 @@ class DefaultOrderService implements OrderService {
     @Transactional(readOnly = true)
     public OrderDto get(String orderId) {
         return mapper.toDto(load(orderId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderDto> findByRun(LocalDate runDate, String depot, OrderFilters filters) {
+        OrderFilters scoped = filters.forOutlet(access.outletFilterFor(filters.outletId()));
+        return mapper.toDtos(orders.findAll(OrderSpecifications.forRun(runDate, depot, scoped), SORT_BY_REF));
     }
 
     @Override
