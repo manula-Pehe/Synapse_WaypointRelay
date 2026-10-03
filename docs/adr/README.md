@@ -9,3 +9,4 @@
 | [0005](0005-single-order-service-state-machine.md) | Single order service with an explicit state machine | Accepted |
 | [0006](0006-demo-clock-time-source.md) | Demo clock as the single time source | Accepted |
 | [0007](0007-dataset-loaded-at-runtime.md) | Dataset loaded at runtime, never committed | Accepted |
+| [0008](0008-vercel-frontend-and-docker-server.md) | Frontend on Vercel, backend on a Docker server | Accepted |
