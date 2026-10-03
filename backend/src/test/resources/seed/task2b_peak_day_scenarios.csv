@@ -1,0 +1,6 @@
+scenario,order_ref,outlet_id,brand,district,depot,dock_type,parking_constraint,mall_window,window_open_time,window_close_time,temp_requirement,order_units,order_weight_kg,order_volume_m3,deferred_yesterday,days_since_last_served
+S1,T-001,OUT001,Fresh,Testville,Peliyagoda,rear_dock,normal,,05:00,07:30,chilled,40,310.5,1.25,0,1
+S1,T-002,OUT001,Fresh,Testville,Peliyagoda,rear_dock,normal,,05:00,07:30,ambient,120,900,5.5,1,2
+S1,T-003,OUT002,Fresh,Testville,Peliyagoda,street,van_only,,05:00,07:30,ambient,60,450,2.75,0,1
+S1,T-004,OUT003,Style,Mallton,Peliyagoda,mall_bay,mall_dock,10:00-12:30,09:00,20:00,ambient,25,80,0.9,0,7
+S2,T-900,OUT002,Fresh,Testville,Peliyagoda,street,van_only,,05:00,07:30,ambient,10,50,0.5,0,1
