@@ -11,13 +11,13 @@ function useNotifications() {
   const { user } = useAuth()
   return useQuery({ queryKey: ['notifications', user?.role, user?.id], queryFn: () => getNotifications(user!), enabled: !!user, refetchInterval: 30_000 })
 }
-export function NotificationBell() {
+export function NotificationBell({ iconSrc }: { iconSrc?: string } = {}) {
   const { user, language } = useAuth()
   const { data } = useNotifications()
   if (!user) return null
   const unread = data?.filter((item) => !item.read).length ?? 0
   return <Link to={`${rolePaths[user.role]}/notifications`} aria-label={`${notificationMessages[language].title}, ${unread} ${notificationMessages[language].unread}`} className="relative flex min-h-12 min-w-12 items-center justify-center rounded-lg hover:bg-brand-soft">
-    <NoticeIcon name="bell" className="size-6" />
+    {iconSrc ? <img src={iconSrc} alt="" width="24" height="24" /> : <NoticeIcon name="bell" className="size-6" />}
     {unread > 0 && <span aria-hidden="true" className="absolute right-0 top-0 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">{unread > 99 ? '99+' : unread}</span>}
   </Link>
 }
