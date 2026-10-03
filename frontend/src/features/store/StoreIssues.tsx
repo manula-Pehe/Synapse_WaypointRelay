@@ -20,7 +20,7 @@ function IssuePhoto({ issueId, photoId }: { issueId: string; photoId: string }) 
   return <><button onClick={() => void open()} className="flex min-h-12 items-center text-brand underline">View photo</button>{error && <span role="alert" className="text-danger">{error}</span>}</>
 }
 export function StoreIssues() {
-  const query = useQuery({ queryKey: ['store', 'issues'], queryFn: storeApi.issues })
+  const query = useQuery({ queryKey: ['store', 'issues'], queryFn: storeApi.issues, refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
   if (!query.data) return <Loading error={query.error} retry={() => void query.refetch()} />
   return <><Heading title="Issues" subtitle="Reports and replies from dispatch" action={<Link to="/store/issues/new" className="flex min-h-12 items-center rounded-lg bg-brand px-5 font-semibold text-on-brand">+ Report problem</Link>} />
     <div className="space-y-3">{query.data.items.length ? query.data.items.map(issue => <Link key={issue.id} to={`/store/issues/${issue.id}`} className="block rounded-xl border border-line bg-surface p-5 hover:border-brand"><div className="flex flex-wrap justify-between gap-2"><div><p className="font-bold">{issue.ref} · {issue.type.replaceAll('_', ' ').toLowerCase()}</p><p className="mt-1 text-sm text-muted">{issue.orderId ? `Order ${issue.orderId.slice(0, 8)} · ` : ''}{new Date(issue.createdAt).toLocaleString()}</p></div><IssueStatus status={issue.status} /></div></Link>) : <Card>No issues reported.</Card>}</div>
@@ -47,7 +47,7 @@ export function StoreIssueDetail() {
   const { id = '' } = useParams()
   const location = useLocation()
   const client = useQueryClient()
-  const query = useQuery({ queryKey: ['store', 'issue', id], queryFn: () => storeApi.issue(id) })
+  const query = useQuery({ queryKey: ['store', 'issue', id], queryFn: () => storeApi.issue(id), refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
   const [text, setText] = useState('')
   const mutation = useMutation({ mutationFn: () => storeApi.issueMessage(id, text), onSuccess: async () => { setText(''); await client.invalidateQueries({ queryKey: ['store', 'issue', id] }); await client.invalidateQueries({ queryKey: ['store', 'issues'] }) } })
   if (!query.data) return <Loading error={query.error} retry={() => void query.refetch()} />

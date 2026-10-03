@@ -12,6 +12,7 @@ npm run dev
 `POST /api/auth/login`. There is no automatic fallback to mocks on API failures.
 `VITE_API_TARGET` selects the backend forwarded through the local `/api` proxy.
 Production defaults to real login unless mock mode is explicitly enabled at build time.
+Store manager screens always load their operational data from backend endpoints.
 
 | Role | Identifier | Password / PIN |
 | --- | --- | --- |

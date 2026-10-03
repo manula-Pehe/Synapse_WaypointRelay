@@ -16,7 +16,7 @@
 .store-page-title{min-width:0;flex:1}
 .store-page-title h1{font-size:22px;line-height:30px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .store-page-title p{font-size:14px;line-height:20px;color:#4a5563}
-.store-mobile-subtitle,.store-mobile-status{display:none}
+.store-mobile-subtitle{display:none}
 .store-topbar-actions{display:flex;align-items:center;gap:16px}
 .store-cutoff{display:flex;align-items:center;gap:8px;background:#fcf0d9;color:#945a00;border-radius:999px;padding:8px 14px;font-size:14px;line-height:20px;font-weight:600;white-space:nowrap}
 .store-account{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;white-space:nowrap}
@@ -77,9 +77,7 @@
 @media(max-width:1050px){
  .store-shell{padding-left:0;padding-bottom:81px}
  .store-sidebar{display:none}
- .store-topbar{height:108px;position:relative}
- .store-mobile-status{height:42px;padding:14px 24px 6px;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:600}
- .store-mobile-battery{height:11px;width:22px;border:1.5px solid #16202b;border-radius:3px}
+ .store-topbar{height:66px;position:relative}
  .store-topbar-inner{height:66px;padding:0 16px}
  .store-page-title h1{font-size:20px;line-height:28px}
  .store-desktop-subtitle{display:none}

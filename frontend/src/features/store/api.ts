@@ -1,12 +1,14 @@
 import { api, apiBlob } from '../../lib/api'
-import { demoStoreApi } from '../../mocks/store'
 
 export type OrderStatus = 'PREPARED' | 'CONFIRMED' | 'PLANNED' | 'LOADED' | 'ON_THE_WAY' | 'DELIVERED' | 'PARTIAL' | 'FAILED' | 'MOVED' | 'CANCELLED'
 export interface Order {
   id: string; ref: string; outletId: string; outletName: string; brand: string; temp: 'CHILLED' | 'AMBIENT'
   units: number; runDate: string; status: OrderStatus; source: string; storeChecked: boolean
+  autoConfirm: boolean
   updatedAt: string; confirmedAt: string | null; weightKg: number; volumeM3: number
 }
+export interface OutletDetails { id: string; name: string; brand: string; district: string; depot: string; dockType: string; parkingConstraint: string; windowOpen: string; windowClose: string; mallWindowOpen: string | null; mallWindowClose: string | null }
+export interface StoreNotificationSettings { deliveries: boolean; orders: boolean; issues: boolean }
 export interface OrderEvent { at: string; actor: string | null; type: string; fromStatus: OrderStatus | null; toStatus: OrderStatus; details: Record<string, unknown> }
 export interface OrderDetail { order: Order; history: OrderEvent[] }
 export interface StoreHome { outlet: string; brand: string; runDate: string; now: string; ordersClosed: boolean; cutOffAt: string; tomorrow: Order[]; today: Order[]; openIssues: number }
@@ -15,6 +17,11 @@ export interface IssueMessage { id: string; authorId: string; authorName: string
 export interface Issue { id: string; ref: string; outletId: string; orderId: string | null; type: string; units: number | null; wants: string; status: 'OPEN' | 'ANSWERED' | 'RESOLVED'; createdAt: string; resolvedAt: string | null; messages: IssueMessage[]; photoIds: string[] }
 interface List<T> { items: T[]; total: number }
 const realStoreApi = {
+  outlet: (id: string) => api<OutletDetails>(`outlets/${encodeURIComponent(id)}`),
+  notificationSettings: () => api<StoreNotificationSettings>('store/notifications/settings'),
+  saveNotificationSettings: (settings: StoreNotificationSettings) => api<StoreNotificationSettings>('store/notifications/settings', { method: 'PUT', body: JSON.stringify(settings) }),
+  notificationReads: () => api<string[]>('store/notifications/reads'),
+  markNotificationReads: (ids: string[]) => api<void>('store/notifications/reads', { method: 'POST', body: JSON.stringify({ ids }) }),
   home: () => api<StoreHome>('store/home'),
   orders: (from?: string, to?: string) => api<List<Order>>(`store/orders?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) })}`),
   order: (id: string) => api<OrderDetail>(`store/orders/${id}`),
@@ -38,4 +45,4 @@ const realStoreApi = {
   dispatchReply: (id: string, text: string) => api<Issue>(`dispatch/issues/${id}/reply`, { method: 'POST', body: JSON.stringify({ text }) }),
   dispatchResolve: (id: string) => api<Issue>(`dispatch/issues/${id}/resolve`, { method: 'POST' }),
 }
-export const storeApi = import.meta.env.VITE_MOCK_STORE === 'true' ? demoStoreApi : realStoreApi
+export const storeApi = realStoreApi
