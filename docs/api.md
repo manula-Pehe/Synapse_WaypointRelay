@@ -94,6 +94,8 @@ Anything else → `409 INVALID_STATUS`.
 ```
 ### `POST /api/settings/clock` (dispatcher) `{ "at": "2026-09-30T16:05:00+05:30" }` → same as GET
 
+Moving the clock forward runs every timed job that has become due (see `docs/deployment.md`, "Timed jobs") before the response returns, so e.g. a move past 4 PM has closed the orders by then. Moving it backwards re-runs nothing.
+
 ---
 
 ## 3. Reference data
