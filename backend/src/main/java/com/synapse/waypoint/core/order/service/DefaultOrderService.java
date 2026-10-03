@@ -14,9 +14,11 @@ import com.synapse.waypoint.common.error.ErrorCode;
 import com.synapse.waypoint.common.error.NotFoundException;
 import com.synapse.waypoint.common.security.CurrentUser;
 import com.synapse.waypoint.common.time.DemoClock;
+import com.synapse.waypoint.core.order.dto.CreateOrderRequest;
 import com.synapse.waypoint.core.order.dto.OrderDto;
 import com.synapse.waypoint.core.order.dto.OrderEventDto;
 import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
+import com.synapse.waypoint.core.order.entity.NewOrder;
 import com.synapse.waypoint.core.order.entity.Order;
 import com.synapse.waypoint.core.order.entity.OrderEvent;
 import com.synapse.waypoint.core.order.entity.OrderStatus;
@@ -32,16 +34,19 @@ class DefaultOrderService implements OrderService {
     private final OrderRepository orders;
     private final OrderEventRepository events;
     private final OrderMapper mapper;
+    private final OrderFactory factory;
     private final OrderAccessPolicy access;
     private final OrderChangeGuard changeGuard;
     private final DemoClock clock;
     private final CurrentUser currentUser;
 
     DefaultOrderService(OrderRepository orders, OrderEventRepository events, OrderMapper mapper,
-            OrderAccessPolicy access, OrderChangeGuard changeGuard, DemoClock clock, CurrentUser currentUser) {
+            OrderFactory factory, OrderAccessPolicy access, OrderChangeGuard changeGuard, DemoClock clock,
+            CurrentUser currentUser) {
         this.orders = orders;
         this.events = events;
         this.mapper = mapper;
+        this.factory = factory;
         this.access = access;
         this.changeGuard = changeGuard;
         this.clock = clock;
@@ -77,7 +82,7 @@ class DefaultOrderService implements OrderService {
     public OrderDto cancel(String orderId, String reason) {
         Order order = load(orderId);
         changeGuard.requireOpenForChanges(order);
-        return transition(order, OrderStatus.CANCELLED, withReason(reason));
+        return transition(order, OrderStatus.CANCELLED, optionalText("reason", reason));
     }
 
     @Override
@@ -96,7 +101,7 @@ class DefaultOrderService implements OrderService {
             throw new DomainException(ErrorCode.VALIDATION, "The new date must be after the current run date.",
                     Map.of("newDate", "must be after " + order.getRunDate()));
         }
-        Map<String, Object> details = withReason(reason);
+        Map<String, Object> details = optionalText("reason", reason);
         details.put("fromDate", order.getRunDate().toString());
         details.put("toDate", newDate.toString());
         OrderStatus from = order.getStatus();
@@ -125,6 +130,31 @@ class DefaultOrderService implements OrderService {
     }
 
     @Override
+    public OrderDto createStoreOrder(CreateOrderRequest request) {
+        requirePositive(request.units());
+        access.requireOwnOutletForStore(request.outletId());
+        return create(factory.storeOrder(request), optionalText("note", request.note()));
+    }
+
+    @Override
+    public OrderDto createPhoneInOrder(CreateOrderRequest request) {
+        requirePositive(request.units());
+        return create(factory.phoneInOrder(request), optionalText("note", request.note()));
+    }
+
+    @Override
+    public OrderDto createRemainder(String parentOrderId, int units, String reason) {
+        Order parent = load(parentOrderId);
+        if (units <= 0 || units > parent.getUnits()) {
+            throw new DomainException(ErrorCode.VALIDATION, "A remainder must be between 1 and the ordered units.",
+                    Map.of("units", "must be between 1 and " + parent.getUnits()));
+        }
+        Map<String, Object> details = optionalText("reason", reason);
+        details.put("parentOrderId", parent.getId());
+        return create(factory.remainder(parent, units), details);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<OrderEventDto> history(String orderId) {
         load(orderId);
@@ -149,15 +179,25 @@ class DefaultOrderService implements OrderService {
         return mapper.toDto(saved);
     }
 
+    private OrderDto create(NewOrder spec, Map<String, Object> extraDetails) {
+        Order order = orders.saveAndFlush(Order.create(spec, clock.now()));
+        Map<String, Object> details = new LinkedHashMap<>(extraDetails);
+        details.put("source", order.getSource().name());
+        events.save(new OrderEvent(order.getId(), order.getCreatedAt(), currentUser.idIfSignedIn().orElse(null),
+                order.getStatus().name(), null, order.getStatus(), details));
+        return mapper.toDto(order);
+    }
+
     private Order load(String orderId) {
         Order order = orders.findById(orderId).orElseThrow(() -> new NotFoundException("Order", orderId));
         return access.requireVisible(order);
     }
 
-    private static Map<String, Object> withReason(String reason) {
+    /** History details holding {@code text} under {@code key}, or nothing when no text was given. */
+    private static Map<String, Object> optionalText(String key, String text) {
         Map<String, Object> details = new LinkedHashMap<>();
-        if (reason != null && !reason.isBlank()) {
-            details.put("reason", reason.strip());
+        if (text != null && !text.isBlank()) {
+            details.put(key, text.strip());
         }
         return details;
     }

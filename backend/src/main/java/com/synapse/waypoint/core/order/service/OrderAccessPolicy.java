@@ -27,10 +27,21 @@ class OrderAccessPolicy {
         return order;
     }
 
+    /** A store manager may place orders only for their own outlet. */
+    void requireOwnOutletForStore(String outletId) {
+        if (!isScopedTo(outletId)) {
+            throw new NotFoundException("Outlet", outletId);
+        }
+    }
+
     private boolean isVisible(Order order) {
+        return isScopedTo(order.getOutletId());
+    }
+
+    private boolean isScopedTo(String outletId) {
         if (currentUser.idIfSignedIn().isEmpty() || !currentUser.is(Role.STORE_MANAGER)) {
             return true;
         }
-        return currentUser.outletId().filter(order.getOutletId()::equals).isPresent();
+        return currentUser.outletId().filter(outletId::equals).isPresent();
     }
 }

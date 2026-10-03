@@ -3,6 +3,7 @@ package com.synapse.waypoint.core.order.service;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.synapse.waypoint.core.order.dto.CreateOrderRequest;
 import com.synapse.waypoint.core.order.dto.OrderDto;
 import com.synapse.waypoint.core.order.dto.OrderEventDto;
 import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
@@ -32,6 +33,15 @@ public interface OrderService {
 
     /** Ends the delivery as DELIVERED, PARTIAL or FAILED; {@code units} is how many were delivered. */
     OrderDto recordOutcome(String orderId, DeliveryOutcome outcome, int units);
+
+    /** A store's extra order: starts PREPARED, for the store's own outlet only. */
+    OrderDto createStoreOrder(CreateOrderRequest request);
+
+    /** An order the dispatcher took by phone: starts CONFIRMED but not yet checked by the store. */
+    OrderDto createPhoneInOrder(CreateOrderRequest request);
+
+    /** The unserved part of an order, as a new CONFIRMED order whose reference is the parent's plus "-R". */
+    OrderDto createRemainder(String parentOrderId, int units, String reason);
 
     List<OrderEventDto> history(String orderId);
 }
