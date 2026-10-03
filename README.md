@@ -49,7 +49,7 @@ Shared: role-based sign-in, notifications, English / Sinhala / Tamil, light and 
                    PostgreSQL 16
 ```
 
-Modules communicate only through service interfaces. API: [`docs/api.md`](docs/api.md) · Decisions: [`docs/adr/`](docs/adr/)
+Modules communicate only through service interfaces. API: [`docs/api.md`](docs/api.md) · Data model: [`docs/data-model.md`](docs/data-model.md) · Decisions: [`docs/adr/`](docs/adr/)
 
 ## Getting started
 
@@ -104,7 +104,7 @@ frontend/            React application
   src/ui/                shared components
   src/lib/               API client, auth, offline
 deploy/              server setup, deploy script, Caddy config
-docs/                API contract, deployment, decision records
+docs/                API contract, data model, deployment, decision records
 .github/workflows/   CI
 ```
 
