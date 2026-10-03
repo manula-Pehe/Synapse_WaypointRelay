@@ -73,8 +73,8 @@ On first start the backend loads reference data and the demo delivery day from `
 
 ### Local development
 ```bash
-# backend (needs a local PostgreSQL 16)
-cd backend && ./mvnw spring-boot:run
+# backend (needs a local PostgreSQL 16, e.g. `docker compose up -d db`)
+cd backend && JWT_SECRET="$(openssl rand -base64 48)" ./mvnw spring-boot:run
 
 # frontend
 cd frontend && npm ci && npm run dev
