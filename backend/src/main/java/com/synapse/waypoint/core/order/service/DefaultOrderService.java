@@ -24,10 +24,12 @@ import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
 import com.synapse.waypoint.core.order.entity.NewOrder;
 import com.synapse.waypoint.core.order.entity.Order;
 import com.synapse.waypoint.core.order.entity.OrderEvent;
+import com.synapse.waypoint.core.order.entity.OrderRun;
 import com.synapse.waypoint.core.order.entity.OrderStatus;
 import com.synapse.waypoint.core.order.event.OrderStatusChanged;
 import com.synapse.waypoint.core.order.repository.OrderEventRepository;
 import com.synapse.waypoint.core.order.repository.OrderRepository;
+import com.synapse.waypoint.core.order.repository.OrderRunRepository;
 import com.synapse.waypoint.core.order.repository.OrderSpecifications;
 
 @Service
@@ -43,19 +45,21 @@ class DefaultOrderService implements OrderService {
     private final OrderFactory factory;
     private final OrderAccessPolicy access;
     private final OrderChangeGuard changeGuard;
+    private final OrderRunRepository runs;
     private final ApplicationEventPublisher publisher;
     private final DemoClock clock;
     private final CurrentUser currentUser;
 
     DefaultOrderService(OrderRepository orders, OrderEventRepository events, OrderMapper mapper,
             OrderFactory factory, OrderAccessPolicy access, OrderChangeGuard changeGuard,
-            ApplicationEventPublisher publisher, DemoClock clock, CurrentUser currentUser) {
+            OrderRunRepository runs, ApplicationEventPublisher publisher, DemoClock clock, CurrentUser currentUser) {
         this.orders = orders;
         this.events = events;
         this.mapper = mapper;
         this.factory = factory;
         this.access = access;
         this.changeGuard = changeGuard;
+        this.runs = runs;
         this.publisher = publisher;
         this.clock = clock;
         this.currentUser = currentUser;
@@ -81,6 +85,14 @@ class DefaultOrderService implements OrderService {
         OrderStatus from = order.getStatus();
         order.confirm(currentUser.idIfSignedIn().orElse(null), clock.now());
         return saveWithEvent(order, from, Map.of());
+    }
+
+    @Override
+    public OrderDto autoConfirm(String orderId) {
+        Order order = load(orderId);
+        OrderStatus from = order.getStatus();
+        order.confirmAutomatically(clock.now());
+        return saveWithEvent(order, from, Map.of("auto", true));
     }
 
     @Override
@@ -148,12 +160,14 @@ class DefaultOrderService implements OrderService {
     public OrderDto createStoreOrder(CreateOrderRequest request) {
         requirePositive(request.units());
         access.requireOwnOutletForStore(request.outletId());
+        changeGuard.requireOpenForNewOrder(request.outletId(), request.runDate());
         return create(factory.storeOrder(request), optionalText("note", request.note()));
     }
 
     @Override
     public OrderDto createPhoneInOrder(CreateOrderRequest request) {
         requirePositive(request.units());
+        changeGuard.requireOpenForNewOrder(request.outletId(), request.runDate());
         return create(factory.phoneInOrder(request), optionalText("note", request.note()));
     }
 
@@ -174,6 +188,12 @@ class DefaultOrderService implements OrderService {
     public List<OrderEventDto> history(String orderId) {
         load(orderId);
         return events.findByOrderIdOrderByAtAscIdAsc(orderId).stream().map(mapper::toDto).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isClosed(LocalDate runDate, String depot) {
+        return runs.findByRunDateAndDepot(runDate, depot.strip()).filter(OrderRun::isClosed).isPresent();
     }
 
     private OrderDto transition(Order order, OrderStatus target, Map<String, Object> details) {

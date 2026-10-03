@@ -137,11 +137,13 @@ Anything else → `409 INVALID_STATUS`.
 - `GET /api/orders/{id}` → `{ order, history: [ { at, actor, type, fromStatus, toStatus, details } ] }` — D10, S3p
 - `runDate` defaults to the current run date; `depot` matches case-insensitively; results are ordered by `ref`. A store manager always gets their own outlet, whatever `outletId` they pass.
 - `history[].actor` is the user id (`null` when the system or a timed job made the change); `type` is the new status name, or `EDITED` for a quantity change.
-- `GET /api/orders/close-status?runDate=&depot=` (any role) → `{ closed: true, closedAt, closedBy }`
+- `GET /api/orders/close-status?runDate=&depot=` (any role) → `{ closed, closedAt, closedBy, cutOffAt }` — `runDate` defaults to the current run date, `depot` is required. `cutOffAt` is 4:00 PM Sri Lanka time on the day before `runDate`; `closedAt` and `closedBy` are `null` while open, and `closedBy` is also `null` when the 4 PM job closed the orders
+
+- After the orders of a run are closed, a **store manager's** confirm, edit and cancel of its orders (and a new store order) return 409 `ORDERS_CLOSED`. The dispatcher and timed jobs are not restricted.
 
 ### Dispatcher
-- `POST /api/dispatch/orders/close` `{ "runDate", "depot" }` → `{ closedAt, confirmed: 79, autoConfirmed: 3, notConfirmed: 3 }` — D1 button; 409 `ORDERS_CLOSED` if already closed
-- `POST /api/dispatch/orders/phone-in` `{ "outletId", "runDate", "temp", "units", "note" }` → `201` + order (`source=PHONE_IN`, `status=CONFIRMED`, `storeChecked=false`; weight and volume are estimated from the outlet's past orders) — D1b
+- `POST /api/dispatch/orders/close` `{ "runDate", "depot" }` → `{ closedAt, confirmed: 79, autoConfirmed: 3, notConfirmed: 3 }` — D1 button; 409 `ORDERS_CLOSED` if already closed; 400 `VALIDATION` for an unknown depot. Counts are for that run and depot: `confirmed` = orders already confirmed before closing, `autoConfirmed` = Fresh ambient orders confirmed by the cut-off (`autoConfirm=true`, history `details.auto`), `notConfirmed` = orders left `PREPARED` (chilled, Style, Tech) — planning uses only `CONFIRMED` orders. `depot` matches case-insensitively
+- `POST /api/dispatch/orders/phone-in` `{ "outletId", "runDate", "temp", "units", "note" }` → `201` + order (`source=PHONE_IN`, `status=CONFIRMED`, `storeChecked=false`; weight and volume are estimated from the outlet's past orders) — D1b. 409 `ORDERS_CLOSED` when the orders of that `runDate` and the outlet's depot are already closed; a later run date is still open
 - `GET /api/dispatch/orders/unconfirmed?runDate=&depot=` → `{ items: [ { outletId, outletName, phone, orders: [order…] } ], total }` — D1u. Lists `PREPARED` orders, ordered by outlet id; `phone` is `null` until outlets store one
 
 ---
@@ -208,7 +210,7 @@ Anything else → `409 INVALID_STATUS`.
 - `GET /api/store/orders?from=&to=` → list of orders (own outlet) — S6
 - `PUT /api/store/orders/{id}` `{ "units": 80 }` → order (PREPARED only; 409 `ORDERS_CLOSED` / `INVALID_STATUS`) — S2
 - `POST /api/store/orders/{id}/confirm` → order · `POST /api/store/orders/{id}/cancel` → order — S2, S2x
-- `POST /api/store/orders` `{ "runDate", "temp", "units", "note" }` → order (`source=STORE`) — S2n
+- `POST /api/store/orders` `{ "runDate", "temp", "units", "note" }` → order (`source=STORE`) — S2n; 409 `ORDERS_CLOSED` when that run is closed
 - `POST /api/store/orders/{id}/check` `{ "ok": true }` or `{ "ok": false, "message": "…" }` — S2e, S2e-msg
 - `GET /api/store/deliveries?runDate=` → list of
 ```json
@@ -285,7 +287,7 @@ Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, 
 |---|---|---|
 | `CurrentUser` | auth | `id()`, `role()`, `outletId()`, `depot()`, `vehicleId()` |
 | `DemoClock` | core | `now(): OffsetDateTime`, `today(): LocalDate`, `runDate(): LocalDate` |
-| `OrderService` | core | `get(id)`, `findByRun(runDate, depot, filters)`, `confirm(id)`, `editUnits(id, units)`, `cancel(id, reason)`, `createStoreOrder(…)`, `createPhoneInOrder(…)`, `markPlanned(id, planId)`, `markMoved(id, newDate, reason)`, `markLoaded(id)`, `markOnTheWay(id)`, `recordOutcome(id, outcome, units)`, `createRemainder(parentId, units, reason)`, `history(id)`, `isClosed(runDate, depot)` |
+| `OrderService` | core | `get(id)`, `findByRun(runDate, depot, filters)`, `confirm(id)`, `editUnits(id, units)`, `cancel(id, reason)`, `createStoreOrder(…)`, `createPhoneInOrder(…)`, `markPlanned(id, planId)`, `markMoved(id, newDate, reason)`, `markLoaded(id)`, `markOnTheWay(id)`, `recordOutcome(id, outcome, units)`, `createRemainder(parentId, units, reason)`, `history(id)`, `isClosed(runDate, depot)`, `autoConfirm(id)` (cut-off only; no user) |
 | `ReferenceService` | core | `outlet(id)`, `outlets(depot)`, `vehicle(id)`, `availableVehicles(runDate, depot)`, `travel(district, depot)`, `serviceMinutes(brand, dockType)`, `fuelUsed(vehicleId, isoYear, isoWeek)` |
 | `NotificationService` | notification | `notifyUser(userId, …)`, `notifyRole(role, scope, severity, type, title, body, link)` |
 | `FileService` | core | `store(bytes, contentType, kind, clientId): fileId`, `get(fileId)` — photos and signatures (driver proof, issue photos) |

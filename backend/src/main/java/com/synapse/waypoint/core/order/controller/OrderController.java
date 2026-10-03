@@ -11,11 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.synapse.waypoint.common.dto.ListResponse;
 import com.synapse.waypoint.common.time.DemoClock;
+import com.synapse.waypoint.core.order.dto.CloseStatusDto;
 import com.synapse.waypoint.core.order.dto.OrderDetailDto;
 import com.synapse.waypoint.core.order.dto.OrderDto;
 import com.synapse.waypoint.core.order.dto.OrderFilters;
 import com.synapse.waypoint.core.order.entity.OrderStatus;
 import com.synapse.waypoint.core.order.entity.TemperatureRequirement;
+import com.synapse.waypoint.core.order.service.CloseOrdersService;
 import com.synapse.waypoint.core.order.service.OrderService;
 
 /** Order list and detail — docs/api.md §4. */
@@ -24,10 +26,12 @@ import com.synapse.waypoint.core.order.service.OrderService;
 class OrderController {
 
     private final OrderService orderService;
+    private final CloseOrdersService closeOrders;
     private final DemoClock clock;
 
-    OrderController(OrderService orderService, DemoClock clock) {
+    OrderController(OrderService orderService, CloseOrdersService closeOrders, DemoClock clock) {
         this.orderService = orderService;
+        this.closeOrders = closeOrders;
         this.clock = clock;
     }
 
@@ -42,6 +46,14 @@ class OrderController {
             @RequestParam(required = false) TemperatureRequirement temp) {
         LocalDate date = runDate != null ? runDate : clock.runDate();
         return ListResponse.of(orderService.findByRun(date, depot, new OrderFilters(status, outletId, brand, temp)));
+    }
+
+    /** Whether the orders of a run are closed, and when they close; open to every signed-in role. */
+    @GetMapping("/close-status")
+    CloseStatusDto closeStatus(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate runDate,
+            @RequestParam String depot) {
+        return closeOrders.status(runDate != null ? runDate : clock.runDate(), depot);
     }
 
     @GetMapping("/{id}")

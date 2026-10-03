@@ -1,13 +1,13 @@
 package com.synapse.waypoint.core.order.dto;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 import com.synapse.waypoint.core.order.entity.OrderStatus;
 
-/** One history row; {@code actor} is the user id, or null when the system made the change. */
+/** One history row, timed in Sri Lanka time in whole seconds; {@code actor} is the user id, or null when the system made the change. */
 public record OrderEventDto(
-        Instant at,
+        OffsetDateTime at,
         String actor,
         String type,
         OrderStatus fromStatus,

@@ -25,9 +25,13 @@ public final class OrderFixtures {
     }
 
     public static void insertOutlet(JdbcTemplate jdbc, String id, String brand, String district) {
+        insertOutlet(jdbc, id, brand, district, DEPOT);
+    }
+
+    public static void insertOutlet(JdbcTemplate jdbc, String id, String brand, String district, String depot) {
         jdbc.update("""
                 INSERT INTO outlets (id, brand, district, depot, dock_type, parking_constraint, window_open, window_close)
-                VALUES (?, ?, ?, ?, 'rear_dock', 'normal', '05:00', '07:00')""", id, brand, district, DEPOT);
+                VALUES (?, ?, ?, ?, 'rear_dock', 'normal', '05:00', '07:00')""", id, brand, district, depot);
     }
 
     public static void insertUser(JdbcTemplate jdbc, String id, String role, String outletId) {
@@ -41,10 +45,21 @@ public final class OrderFixtures {
                 OrderSource.STORE, RUN_DATE), CREATED_AT));
     }
 
+    public static Order save(OrderRepository orders, String outletId, String brand, TemperatureRequirement temp,
+            OrderStatus status) {
+        return orders.saveAndFlush(Order.create(newOrder(outletId, brand, status, temp, 10, OrderSource.SEED,
+                RUN_DATE), CREATED_AT));
+    }
+
     public static NewOrder newOrder(String outletId, OrderStatus status, TemperatureRequirement temp, int units,
             OrderSource source, LocalDate runDate) {
+        return newOrder(outletId, "Fresh", status, temp, units, source, runDate);
+    }
+
+    public static NewOrder newOrder(String outletId, String brand, OrderStatus status, TemperatureRequirement temp,
+            int units, OrderSource source, LocalDate runDate) {
         String id = UUID.randomUUID().toString();
-        return new NewOrder(id, "T-" + id.substring(0, 8), outletId, "Fresh", temp, units,
+        return new NewOrder(id, "T-" + id.substring(0, 8), outletId, brand, temp, units,
                 new BigDecimal("100.00"), new BigDecimal("1.000"), runDate, status, source, false, 1, false, null,
                 true);
     }

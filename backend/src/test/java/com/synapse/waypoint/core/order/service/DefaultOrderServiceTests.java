@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
@@ -79,7 +80,7 @@ class DefaultOrderServiceTests {
         assertThat(history.get(0).fromStatus()).isEqualTo(from);
         assertThat(history.get(0).toStatus()).isEqualTo(to);
         assertThat(history.get(0).type()).isEqualTo(to.name());
-        assertThat(history.get(0).at()).isBetween(before, clock.now());
+        assertThat(history.get(0).at().toInstant()).isBetween(before.truncatedTo(ChronoUnit.SECONDS), clock.now());
     }
 
     @ParameterizedTest(name = "{0} cannot be {1}")
@@ -103,6 +104,30 @@ class DefaultOrderServiceTests {
         service.confirm(order.getId());
 
         assertThat(service.history(order.getId()).get(0).actor()).isNull();
+    }
+
+    @Test
+    void shouldAutoConfirmAPreparedOrderWithoutAUserAndMarkIt() {
+        Order order = OrderFixtures.save(orders, OUTLET, PREPARED);
+
+        OrderDto result = service.autoConfirm(order.getId());
+
+        assertThat(result.status()).isEqualTo(CONFIRMED);
+        assertThat(result.autoConfirm()).isTrue();
+        assertThat(result.confirmedAt()).isNotNull();
+        OrderEventDto event = service.history(order.getId()).get(0);
+        assertThat(event.type()).isEqualTo("CONFIRMED");
+        assertThat(event.actor()).isNull();
+        assertThat(event.details()).containsEntry("auto", true);
+    }
+
+    @Test
+    void shouldRefuseToAutoConfirmAnOrderThatIsNotPrepared() {
+        Order order = OrderFixtures.save(orders, OUTLET, CONFIRMED);
+
+        assertThatThrownBy(() -> service.autoConfirm(order.getId()))
+                .isInstanceOfSatisfying(DomainException.class,
+                        e -> assertThat(e.code()).isEqualTo(ErrorCode.INVALID_STATUS));
     }
 
     @Test

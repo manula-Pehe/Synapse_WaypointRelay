@@ -136,6 +136,12 @@ public class Order {
         confirmedBy = userId;
     }
 
+    /** Confirms on the store's behalf at the cut-off: no user, and the order is marked as auto-confirmed. */
+    public void confirmAutomatically(Instant now) {
+        confirm(null, now);
+        autoConfirm = true;
+    }
+
     /** Changes the quantity of a PREPARED order; weight and volume follow in proportion. */
     public void editUnits(int newUnits, Instant now) {
         if (status != OrderStatus.PREPARED) {
