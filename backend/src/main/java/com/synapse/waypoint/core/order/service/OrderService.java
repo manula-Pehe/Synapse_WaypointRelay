@@ -1,0 +1,37 @@
+package com.synapse.waypoint.core.order.service;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import com.synapse.waypoint.core.order.dto.OrderDto;
+import com.synapse.waypoint.core.order.dto.OrderEventDto;
+import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
+
+/**
+ * The only way any module changes an order's status (docs/api.md §11). Every change checks the
+ * lifecycle, writes one history row and fails with {@code INVALID_STATUS} when not allowed.
+ */
+public interface OrderService {
+
+    OrderDto get(String orderId);
+
+    OrderDto confirm(String orderId);
+
+    /** Only a PREPARED order can be edited. */
+    OrderDto editUnits(String orderId, int units);
+
+    OrderDto cancel(String orderId, String reason);
+
+    OrderDto markPlanned(String orderId, String planId);
+
+    OrderDto markMoved(String orderId, LocalDate newDate, String reason);
+
+    OrderDto markLoaded(String orderId);
+
+    OrderDto markOnTheWay(String orderId);
+
+    /** Ends the delivery as DELIVERED, PARTIAL or FAILED; {@code units} is how many were delivered. */
+    OrderDto recordOutcome(String orderId, DeliveryOutcome outcome, int units);
+
+    List<OrderEventDto> history(String orderId);
+}
