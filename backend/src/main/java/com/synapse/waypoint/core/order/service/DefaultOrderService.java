@@ -160,12 +160,14 @@ class DefaultOrderService implements OrderService {
     public OrderDto createStoreOrder(CreateOrderRequest request) {
         requirePositive(request.units());
         access.requireOwnOutletForStore(request.outletId());
+        changeGuard.requireOpenForNewOrder(request.outletId(), request.runDate());
         return create(factory.storeOrder(request), optionalText("note", request.note()));
     }
 
     @Override
     public OrderDto createPhoneInOrder(CreateOrderRequest request) {
         requirePositive(request.units());
+        changeGuard.requireOpenForNewOrder(request.outletId(), request.runDate());
         return create(factory.phoneInOrder(request), optionalText("note", request.note()));
     }
 
