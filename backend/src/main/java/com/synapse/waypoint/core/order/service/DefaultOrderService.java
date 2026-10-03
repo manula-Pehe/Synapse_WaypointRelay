@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ import com.synapse.waypoint.core.order.entity.NewOrder;
 import com.synapse.waypoint.core.order.entity.Order;
 import com.synapse.waypoint.core.order.entity.OrderEvent;
 import com.synapse.waypoint.core.order.entity.OrderStatus;
+import com.synapse.waypoint.core.order.event.OrderStatusChanged;
 import com.synapse.waypoint.core.order.repository.OrderEventRepository;
 import com.synapse.waypoint.core.order.repository.OrderRepository;
 
@@ -37,18 +39,20 @@ class DefaultOrderService implements OrderService {
     private final OrderFactory factory;
     private final OrderAccessPolicy access;
     private final OrderChangeGuard changeGuard;
+    private final ApplicationEventPublisher publisher;
     private final DemoClock clock;
     private final CurrentUser currentUser;
 
     DefaultOrderService(OrderRepository orders, OrderEventRepository events, OrderMapper mapper,
-            OrderFactory factory, OrderAccessPolicy access, OrderChangeGuard changeGuard, DemoClock clock,
-            CurrentUser currentUser) {
+            OrderFactory factory, OrderAccessPolicy access, OrderChangeGuard changeGuard,
+            ApplicationEventPublisher publisher, DemoClock clock, CurrentUser currentUser) {
         this.orders = orders;
         this.events = events;
         this.mapper = mapper;
         this.factory = factory;
         this.access = access;
         this.changeGuard = changeGuard;
+        this.publisher = publisher;
         this.clock = clock;
         this.currentUser = currentUser;
     }
@@ -173,18 +177,23 @@ class DefaultOrderService implements OrderService {
 
     private OrderDto saveWithEvent(Order order, String type, OrderStatus from, Map<String, Object> details) {
         Order saved = orders.saveAndFlush(order);
-        Instant at = saved.getUpdatedAt();
-        events.save(new OrderEvent(saved.getId(), at, currentUser.idIfSignedIn().orElse(null), type, from,
-                saved.getStatus(), details));
+        recordHistory(saved, type, from, saved.getUpdatedAt(), details);
         return mapper.toDto(saved);
+    }
+
+    /** Writes the history row and announces the change; every order change goes through here. */
+    private void recordHistory(Order order, String type, OrderStatus from, Instant at, Map<String, Object> details) {
+        String actor = currentUser.idIfSignedIn().orElse(null);
+        events.save(new OrderEvent(order.getId(), at, actor, type, from, order.getStatus(), details));
+        publisher.publishEvent(new OrderStatusChanged(order.getId(), order.getOutletId(), type, from,
+                order.getStatus(), actor, at));
     }
 
     private OrderDto create(NewOrder spec, Map<String, Object> extraDetails) {
         Order order = orders.saveAndFlush(Order.create(spec, clock.now()));
         Map<String, Object> details = new LinkedHashMap<>(extraDetails);
         details.put("source", order.getSource().name());
-        events.save(new OrderEvent(order.getId(), order.getCreatedAt(), currentUser.idIfSignedIn().orElse(null),
-                order.getStatus().name(), null, order.getStatus(), details));
+        recordHistory(order, order.getStatus().name(), null, order.getCreatedAt(), details);
         return mapper.toDto(order);
     }
 
