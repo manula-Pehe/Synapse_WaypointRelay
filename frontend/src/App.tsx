@@ -2,7 +2,7 @@ import { useState } from 'react';
 import DispatcherLayout from './components/DispatcherLayout';
 import OrderQueue from './components/OrderQueue';
 import FleetStatus from './components/FleetStatus';
-import LiveBoard from './components/LiveBoard';
+import LiveBoardPage from './components/LiveBoardPage';
 
 export function App() {
   const [activeNav, setActiveNav] = useState('live-board');
@@ -36,7 +36,7 @@ export function App() {
       case 'fleet':
         return <FleetStatus />;
       case 'live-board':
-        return <LiveBoard />;
+        return <LiveBoardPage />;
       case 'orders':
       default:
         return <OrderQueue />;
