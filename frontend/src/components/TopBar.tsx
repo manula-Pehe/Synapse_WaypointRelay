@@ -7,6 +7,7 @@ export interface TopBarProps {
   onDepotChange?: (depot: string) => void;
   runDate?: string;
   planStatus?: string;
+  notificationCount?: number;
   onNotificationClick?: () => void;
 }
 
@@ -17,6 +18,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onDepotChange,
   runDate = 'Run: Thu 1 Oct',
   planStatus = 'Plan v1 · not started',
+  notificationCount = 8,
   onNotificationClick,
 }) => {
   const [internalDepot, setInternalDepot] = useState('Peliyagoda');
@@ -119,7 +121,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           type="button"
           aria-label="Notifications"
           onClick={onNotificationClick}
-          className="flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition hover:bg-slate-50 hover:text-slate-900"
+          className="relative flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition hover:bg-slate-50 hover:text-slate-900"
         >
           <svg
             className="h-4 w-4"
@@ -131,6 +133,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
+          {notificationCount !== undefined && notificationCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-white bg-red-600 text-[10px] font-bold text-white shadow-xs">
+              {notificationCount}
+            </span>
+          )}
         </button>
       </div>
     </header>

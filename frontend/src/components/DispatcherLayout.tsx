@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SideNav from './SideNav';
 import type { SideNavProps } from './SideNav';
 import TopBar from './TopBar';
+import NotificationsDrawer from './NotificationsDrawer';
 
 export interface DispatcherLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ export interface DispatcherLayoutProps {
   onDepotChange?: (depot: string) => void;
   runDate?: string;
   planStatus?: string;
+  notificationCount?: number;
   user?: SideNavProps['user'];
   onNotificationClick?: () => void;
   hideTopBar?: boolean;
@@ -28,10 +30,18 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
   onDepotChange,
   runDate,
   planStatus,
+  notificationCount = 8,
   user,
   onNotificationClick,
   hideTopBar = false,
 }) => {
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+
+  const handleNotificationClick = () => {
+    setIsNotifOpen(true);
+    onNotificationClick?.();
+  };
+
   return (
     <div className="flex h-screen w-full bg-white overflow-hidden font-sans text-slate-800 antialiased">
       {/* Left Sidebar Navigation */}
@@ -52,7 +62,8 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
             onDepotChange={onDepotChange}
             runDate={runDate}
             planStatus={planStatus}
-            onNotificationClick={onNotificationClick}
+            notificationCount={notificationCount}
+            onNotificationClick={handleNotificationClick}
           />
         )}
 
@@ -61,6 +72,12 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
           {children}
         </div>
       </main>
+
+      {/* Notifications Drawer Overlay */}
+      <NotificationsDrawer
+        isOpen={isNotifOpen}
+        onClose={() => setIsNotifOpen(false)}
+      />
     </div>
   );
 };
