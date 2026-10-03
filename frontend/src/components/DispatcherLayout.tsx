@@ -15,6 +15,7 @@ export interface DispatcherLayoutProps {
   planStatus?: string;
   user?: SideNavProps['user'];
   onNotificationClick?: () => void;
+  hideTopBar?: boolean;
 }
 
 export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
@@ -29,6 +30,7 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
   planStatus,
   user,
   onNotificationClick,
+  hideTopBar = false,
 }) => {
   return (
     <div className="flex min-h-screen w-full bg-[#f8fafc] text-slate-800 antialiased font-sans">
@@ -42,15 +44,17 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
       {/* Main Column */}
       <div className="flex flex-1 flex-col overflow-x-hidden">
         {/* Top Navigation Bar */}
-        <TopBar
-          title={title}
-          subtitle={subtitle}
-          activeDepot={activeDepot}
-          onDepotChange={onDepotChange}
-          runDate={runDate}
-          planStatus={planStatus}
-          onNotificationClick={onNotificationClick}
-        />
+        {!hideTopBar && (
+          <TopBar
+            title={title}
+            subtitle={subtitle}
+            activeDepot={activeDepot}
+            onDepotChange={onDepotChange}
+            runDate={runDate}
+            planStatus={planStatus}
+            onNotificationClick={onNotificationClick}
+          />
+        )}
 
         {/* Content Area Rendering Children */}
         <main className="flex-1 p-8">

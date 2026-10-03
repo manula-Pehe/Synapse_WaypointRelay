@@ -20,9 +20,10 @@ import { StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
 import OutletsReference from './components/OutletsReference'
 import RunReport from './components/RunReport'
+import CapacityOutlook from './components/CapacityOutlook'
 
 function DispatcherWorkspace() {
-  const [activeNav, setActiveNav] = useState('reports')
+  const [activeNav, setActiveNav] = useState('capacity')
 
   const pageMeta: Record<string, { title: string; subtitle: string; planStatus?: string }> = {
     orders: {
@@ -39,6 +40,11 @@ function DispatcherWorkspace() {
       title: 'Live board · Thu 1 Oct · 6:45 AM',
       subtitle: 'Exceptions first · updates arrive as drivers sync',
       planStatus: 'Plan v1 · published',
+    },
+    capacity: {
+      title: 'Capacity outlook · next 10 weeks',
+      subtitle: 'Demand forecast vs fleet · Peliyagoda · plan fridge trucks before peaks',
+      planStatus: 'Estimated · rule-based',
     },
     outlets: {
       title: 'Outlets',
@@ -60,6 +66,7 @@ function DispatcherWorkspace() {
 
   const content = activeNav === 'fleet' ? <FleetStatus />
     : activeNav === 'live-board' ? <LiveBoardPage />
+    : activeNav === 'capacity' ? <CapacityOutlook />
     : activeNav === 'outlets' ? <OutletsReference />
     : activeNav === 'reports' ? <RunReport />
     : <OrderQueue />
@@ -71,6 +78,7 @@ function DispatcherWorkspace() {
       title={currentMeta.title}
       subtitle={currentMeta.subtitle}
       planStatus={currentMeta.planStatus}
+      hideTopBar={activeNav === 'capacity'}
     >
       {content}
     </DispatcherLayout>
