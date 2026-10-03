@@ -1,14 +1,14 @@
 package com.synapse.waypoint.core.order.dto;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 import com.synapse.waypoint.core.order.entity.OrderSource;
 import com.synapse.waypoint.core.order.entity.OrderStatus;
 import com.synapse.waypoint.core.order.entity.TemperatureRequirement;
 
-/** The order object of docs/api.md §4. */
+/** The order object of docs/api.md §4; times are Sri Lanka time in whole seconds. */
 public record OrderDto(
         String id,
         String ref,
@@ -27,6 +27,6 @@ public record OrderDto(
         boolean deferredYesterday,
         String parentOrderId,
         boolean storeChecked,
-        Instant confirmedAt,
-        Instant updatedAt) {
+        OffsetDateTime confirmedAt,
+        OffsetDateTime updatedAt) {
 }

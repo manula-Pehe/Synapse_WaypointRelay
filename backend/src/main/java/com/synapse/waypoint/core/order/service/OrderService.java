@@ -25,6 +25,9 @@ public interface OrderService {
 
     OrderDto confirm(String orderId);
 
+    /** Confirms at the cut-off without a user and marks the order as auto-confirmed. */
+    OrderDto autoConfirm(String orderId);
+
     /** Only a PREPARED order can be edited. */
     OrderDto editUnits(String orderId, int units);
 
@@ -51,4 +54,7 @@ public interface OrderService {
     OrderDto createRemainder(String parentOrderId, int units, String reason);
 
     List<OrderEventDto> history(String orderId);
+
+    /** Whether the orders of this run and depot have been closed (the cut-off has passed). */
+    boolean isClosed(LocalDate runDate, String depot);
 }
