@@ -98,13 +98,16 @@ Anything else → `409 INVALID_STATUS`.
 
 ## 3. Reference data
 
+Any signed-in role can read outlets and vehicles. `depot` matches case-insensitively; leaving it out returns every depot.
+
 ### `GET /api/outlets?depot=&brand=` → list of
 ```json
-{ "id": "OUT001", "brand": "Fresh", "district": "Colombo", "depot": "Peliyagoda",
+{ "id": "OUT001", "name": "OUT001 · Colombo", "brand": "Fresh", "district": "Colombo", "depot": "Peliyagoda",
   "dockType": "street", "parkingConstraint": "van_only",
   "windowOpen": "05:00", "windowClose": "07:30", "mallWindowOpen": null, "mallWindowClose": null }
 ```
-### `GET /api/outlets/{id}` → one outlet
+Ordered by id. `name` is "id · district" (same as on orders) until outlets have a name column. `brand` filters ignoring case.
+### `GET /api/outlets/{id}` → one outlet (404 `NOT_FOUND` if unknown)
 
 ### `GET /api/vehicles?depot=&runDate=` → list of
 ```json
@@ -112,11 +115,19 @@ Anything else → `409 INVALID_STATUS`.
   "fuelType": "diesel", "kmPerL": 9.5, "weeklyFuelQuotaL": 300, "depot": "Peliyagoda",
   "availability": "AVAILABLE", "availabilityReason": null }
 ```
+Ordered by id. `runDate` defaults to the current run date.
+
+**Availability rule (one place, used by every endpoint and by `ReferenceService`):** a vehicle with **no** `vehicle_availability` row for the run date is `AVAILABLE`. A row can mark it `IN_WORKSHOP` or `OFF_ROAD` for that date only.
 
 ### Fleet (dispatcher) — D2, D2v
 - `GET /api/dispatch/fleet?runDate=&depot=` → `{ items: [vehicle…], confirmedAt, confirmedBy, counts: { available, inWorkshop, offRoad, reeferAvailable } }`
-- `PUT /api/dispatch/fleet/{vehicleId}` `{ "runDate": "2026-10-01", "status": "OFF_ROAD", "reason": "Brake issue" }` → vehicle
-- `POST /api/dispatch/fleet/confirm` `{ "runDate", "depot" }` → `{ confirmedAt, confirmedBy }`
+  - `items` are the depot's vehicles with availability; `counts` are per status, and `reeferAvailable` counts only **available** reefers; `confirmedAt` / `confirmedBy` are `null` until the fleet is confirmed.
+  - `runDate` defaults to the current run date. `depot` defaults to the dispatcher's own depot; a dispatcher with no depot must send it (400 `VALIDATION`). A depot name no outlet uses → 400 `VALIDATION`; another real depot than the dispatcher's own → 404.
+- `PUT /api/dispatch/fleet/{vehicleId}` `{ "runDate": "2026-10-01", "status": "OFF_ROAD", "reason": "Brake issue" }` → vehicle (with its new availability) — D2v
+  - `reason` is required (non-blank, max 200) unless `status` is `AVAILABLE`, otherwise 400 `VALIDATION`; for `AVAILABLE` the stored reason is cleared.
+  - Unknown vehicle → 404. A dispatcher who has a depot cannot change another depot's vehicle (404); a dispatcher with no depot covers all depots.
+  - `updatedBy` / `updatedAt` come from the signed-in user and the demo clock.
+- `POST /api/dispatch/fleet/confirm` `{ "runDate", "depot" }` → `{ confirmedAt, confirmedBy }` — writes the run's fleet confirmation. Confirming again is fine and updates the time. A depot name no outlet uses → 400 `VALIDATION` (as for close orders); another real depot than the dispatcher's own → 404.
 
 ---
 
@@ -288,7 +299,7 @@ Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, 
 | `CurrentUser` | auth | `id()`, `role()`, `outletId()`, `depot()`, `vehicleId()` |
 | `DemoClock` | core | `now(): OffsetDateTime`, `today(): LocalDate`, `runDate(): LocalDate` |
 | `OrderService` | core | `get(id)`, `findByRun(runDate, depot, filters)`, `confirm(id)`, `editUnits(id, units)`, `cancel(id, reason)`, `createStoreOrder(…)`, `createPhoneInOrder(…)`, `markPlanned(id, planId)`, `markMoved(id, newDate, reason)`, `markLoaded(id)`, `markOnTheWay(id)`, `recordOutcome(id, outcome, units)`, `createRemainder(parentId, units, reason)`, `history(id)`, `isClosed(runDate, depot)`, `autoConfirm(id)` (cut-off only; no user) |
-| `ReferenceService` | core | `outlet(id)`, `outlets(depot)`, `vehicle(id)`, `availableVehicles(runDate, depot)`, `travel(district, depot)`, `serviceMinutes(brand, dockType)`, `fuelUsed(vehicleId, isoYear, isoWeek)` |
+| `ReferenceService` | core | `outlet(id)`, `outlets(depot)`, `vehicle(id)`, `availableVehicles(runDate, depot)`, `travel(district, depot)`, `serviceMinutes(brand, dockType)`, `fuelUsed(vehicleId, isoYear, isoWeek)` — read-only, returns DTO records. `outlet`, `vehicle`, `travel` and `serviceMinutes` throw `NotFoundException` when nothing matches; `fuelUsed` returns 0 when no row exists; `vehicle(id)` shows availability for the current run date; `availableVehicles` applies the availability rule in §3 (also `outlets(depot, brand)` and `vehicles(runDate, depot)`) |
 | `NotificationService` | notification | `notifyUser(userId, …)`, `notifyRole(role, scope, severity, type, title, body, link)` |
 | `FileService` | core | `store(bytes, contentType, kind, clientId): fileId`, `get(fileId)` — photos and signatures (driver proof, issue photos) |
 | `PlanQueryService` | planning | `tripsForVehicle(runDate, vehicleId)`, `tripsForDepot(runDate, depot)`, `stopForOrder(orderId)`, `deferralForOrder(orderId)`, `publishedPlan(runDate, depot)` |

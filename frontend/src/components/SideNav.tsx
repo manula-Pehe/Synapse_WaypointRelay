@@ -210,7 +210,7 @@ export const SideNav: React.FC<SideNavProps> = ({
   ];
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 flex-shrink-0 flex-col justify-between border-r border-slate-200/90 bg-white">
+    <aside className="sticky top-0 hidden md:flex h-screen w-64 flex-shrink-0 flex-col justify-between border-r border-slate-200/90 bg-white">
       <div>
         {/* Brand / Logo Header */}
         <div className="flex items-center gap-3 px-6 py-5">

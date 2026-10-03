@@ -15,12 +15,11 @@ import com.synapse.waypoint.core.order.entity.Order;
 import com.synapse.waypoint.core.order.entity.OrderEvent;
 import com.synapse.waypoint.core.reference.entity.Outlet;
 import com.synapse.waypoint.core.reference.repository.OutletRepository;
+import com.synapse.waypoint.core.reference.service.OutletNames;
 
-/** Entity to DTO. Outlet names are "OUT001 · District" until outlets have a name column. */
+/** Entity to DTO. */
 @Component
 class OrderMapper {
-
-    private static final String OUTLET_NAME_FORMAT = "%s · %s";
 
     private final OutletRepository outlets;
 
@@ -45,7 +44,7 @@ class OrderMapper {
 
     private static OrderDto toDto(Order order, Outlet outlet) {
         return new OrderDto(order.getId(), order.getRef(), order.getOutletId(),
-                OUTLET_NAME_FORMAT.formatted(order.getOutletId(), outlet.getDistrict()), order.getBrand(),
+                OutletNames.of(order.getOutletId(), outlet.getDistrict()), order.getBrand(),
                 order.getTemperatureRequirement(), order.getUnits(), order.getWeightKg(), order.getVolumeM3(),
                 order.getRunDate(), order.getStatus(), order.getSource(), order.isAutoConfirm(),
                 order.getDaysSinceLastServed(), order.isDeferredYesterday(), order.getParentOrderId(),
