@@ -3,6 +3,7 @@ package com.synapse.waypoint.common.config;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,9 @@ class SecurityConfigTests {
 
     @Test
     void apiRequiresAuthentication() throws Exception {
-        mvc.perform(get("/api/orders")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/orders"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 
     @Test
