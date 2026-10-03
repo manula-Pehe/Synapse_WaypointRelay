@@ -15,8 +15,7 @@ Branch from `develop`, keep branches short-lived, and rebase or merge `develop` 
 ## Pull requests
 
 - Target `develop`.
-- CI (`backend`, `frontend`, `docker`) must pass.
-- At least one approval.
+- CI (`backend`, `frontend`, `docker`) must pass before merging.
 - Squash merge; the PR title becomes the commit message.
 - One feature per PR. Link the screen ID it implements (e.g. `S2 · Review and confirm`).
 
