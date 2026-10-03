@@ -54,4 +54,7 @@ public interface OrderService {
     OrderDto createRemainder(String parentOrderId, int units, String reason);
 
     List<OrderEventDto> history(String orderId);
+
+    /** Whether the orders of this run and depot have been closed (the cut-off has passed). */
+    boolean isClosed(LocalDate runDate, String depot);
 }
