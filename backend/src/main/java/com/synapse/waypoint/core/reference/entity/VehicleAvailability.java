@@ -43,6 +43,14 @@ public class VehicleAvailability {
         this.updatedAt = updatedAt;
     }
 
+    /** Records a new status for this vehicle and date. */
+    public void change(AvailabilityStatus newStatus, String newReason, String userId, Instant now) {
+        status = newStatus;
+        reason = newReason;
+        updatedBy = userId;
+        updatedAt = now;
+    }
+
     public VehicleAvailabilityId getId() {
         return id;
     }
