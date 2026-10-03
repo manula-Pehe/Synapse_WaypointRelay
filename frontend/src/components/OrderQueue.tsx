@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import AddOrderDrawer from './AddOrderDrawer';
+import OrderHistoryDrawer from './OrderHistoryDrawer';
 
 // --- Types for All Orders View ---
 export interface OrderItem {
@@ -166,8 +167,11 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
   // Sub-filter category when in 'all' view
   const [allViewCategory, setAllViewCategory] = useState<string>('All 85');
 
-  // Drawer open/close state
+  // Drawer open/close state for Add Order
   const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
+
+  // Drawer state for Order History
+  const [selectedOrderForHistory, setSelectedOrderForHistory] = useState<OrderItem | null>(null);
 
   const handleOpenAddOrder = () => {
     setIsAddOrderOpen(true);
@@ -473,7 +477,8 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
                 {orders.map((order) => (
                   <tr
                     key={order.id}
-                    className="transition-colors hover:bg-slate-50/60"
+                    onClick={() => setSelectedOrderForHistory(order)}
+                    className="cursor-pointer transition-colors hover:bg-slate-50/80"
                   >
                     <td className="px-5 py-4 font-bold text-slate-900 whitespace-nowrap">
                       {order.id}
@@ -574,6 +579,15 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
       <AddOrderDrawer
         isOpen={isAddOrderOpen}
         onClose={() => setIsAddOrderOpen(false)}
+      />
+
+      {/* Order History Slide-out Drawer */}
+      <OrderHistoryDrawer
+        isOpen={!!selectedOrderForHistory}
+        onClose={() => setSelectedOrderForHistory(null)}
+        orderId={selectedOrderForHistory?.id}
+        outletId={selectedOrderForHistory?.outlet.split(' ')[0]}
+        casesSummary={`${selectedOrderForHistory?.brand === 'Fresh' ? 'Chilled' : 'Style'} ${selectedOrderForHistory?.cases} cases`}
       />
     </div>
   );
