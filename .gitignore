@@ -1,6 +1,8 @@
 # Competition datasets — confidential, NEVER commit
 /data/
 *.csv
+# Invented sample files used by backend tests (never real dataset rows)
+!/backend/src/test/resources/**/*.csv
 
 # Local configuration and secrets (keep committed examples)
 .env

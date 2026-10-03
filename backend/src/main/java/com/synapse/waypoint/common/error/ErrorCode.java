@@ -18,6 +18,7 @@ public enum ErrorCode {
     PLAN_LOCKED(HttpStatus.CONFLICT),
     RULE_VIOLATION(HttpStatus.CONFLICT),
     DUPLICATE(HttpStatus.CONFLICT),
+    CONFLICT(HttpStatus.CONFLICT),
     INTERNAL(HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final HttpStatus status;

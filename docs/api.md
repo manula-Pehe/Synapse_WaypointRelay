@@ -31,7 +31,7 @@
 | 401 | `UNAUTHORIZED` |
 | 403 | `FORBIDDEN` |
 | 404 | `NOT_FOUND` (also returned for other outlets'/depots'/vehicles' data) |
-| 409 | `INVALID_STATUS`, `ORDERS_CLOSED`, `ORDERS_NOT_CLOSED`, `PLAN_LOCKED`, `RULE_VIOLATION`, `DUPLICATE` |
+| 409 | `INVALID_STATUS`, `ORDERS_CLOSED`, `ORDERS_NOT_CLOSED`, `PLAN_LOCKED`, `RULE_VIOLATION`, `DUPLICATE`, `CONFLICT` (record changed by someone else — reload) |
 
 ### Enumerations
 | Name | Values |
@@ -135,12 +135,14 @@ Anything else → `409 INVALID_STATUS`.
 
 - `GET /api/orders?runDate=&depot=&status=&outletId=&brand=&temp=` (dispatcher; store sees own outlet only) → list
 - `GET /api/orders/{id}` → `{ order, history: [ { at, actor, type, fromStatus, toStatus, details } ] }` — D10, S3p
+- `runDate` defaults to the current run date; `depot` matches case-insensitively; results are ordered by `ref`. A store manager always gets their own outlet, whatever `outletId` they pass.
+- `history[].actor` is the user id (`null` when the system or a timed job made the change); `type` is the new status name, or `EDITED` for a quantity change.
 - `GET /api/orders/close-status?runDate=&depot=` (any role) → `{ closed: true, closedAt, closedBy }`
 
 ### Dispatcher
 - `POST /api/dispatch/orders/close` `{ "runDate", "depot" }` → `{ closedAt, confirmed: 79, autoConfirmed: 3, notConfirmed: 3 }` — D1 button; 409 `ORDERS_CLOSED` if already closed
-- `POST /api/dispatch/orders/phone-in` `{ "outletId", "runDate", "temp", "units", "note" }` → order (`source=PHONE_IN`, `storeChecked=false`) — D1b
-- `GET /api/dispatch/orders/unconfirmed?runDate=&depot=` → `{ items: [ { outletId, outletName, phone, orders: [order…] } ] }` — D1u
+- `POST /api/dispatch/orders/phone-in` `{ "outletId", "runDate", "temp", "units", "note" }` → `201` + order (`source=PHONE_IN`, `status=CONFIRMED`, `storeChecked=false`; weight and volume are estimated from the outlet's past orders) — D1b
+- `GET /api/dispatch/orders/unconfirmed?runDate=&depot=` → `{ items: [ { outletId, outletName, phone, orders: [order…] } ], total }` — D1u. Lists `PREPARED` orders, ordered by outlet id; `phone` is `null` until outlets store one
 
 ---
 
@@ -286,6 +288,7 @@ Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, 
 | `OrderService` | core | `get(id)`, `findByRun(runDate, depot, filters)`, `confirm(id)`, `editUnits(id, units)`, `cancel(id, reason)`, `createStoreOrder(…)`, `createPhoneInOrder(…)`, `markPlanned(id, planId)`, `markMoved(id, newDate, reason)`, `markLoaded(id)`, `markOnTheWay(id)`, `recordOutcome(id, outcome, units)`, `createRemainder(parentId, units, reason)`, `history(id)`, `isClosed(runDate, depot)` |
 | `ReferenceService` | core | `outlet(id)`, `outlets(depot)`, `vehicle(id)`, `availableVehicles(runDate, depot)`, `travel(district, depot)`, `serviceMinutes(brand, dockType)`, `fuelUsed(vehicleId, isoYear, isoWeek)` |
 | `NotificationService` | notification | `notifyUser(userId, …)`, `notifyRole(role, scope, severity, type, title, body, link)` |
+| `FileService` | core | `store(bytes, contentType, kind, clientId): fileId`, `get(fileId)` — photos and signatures (driver proof, issue photos) |
 | `PlanQueryService` | planning | `tripsForVehicle(runDate, vehicleId)`, `tripsForDepot(runDate, depot)`, `stopForOrder(orderId)`, `deferralForOrder(orderId)`, `publishedPlan(runDate, depot)` |
 | `DeliveryQueryService` | driver | `deliveryForOrder(orderId)`, `driverStatus(vehicleId)`, `failedDeliveries(runDate)`, `openConflicts(runDate)`, `vehicleProblems(runDate)` |
 | `LoadingQueryService` | loader | `loadingStatus(runDate, depot)`, `shortfallForOrder(orderId)` |

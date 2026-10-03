@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String CONFLICT_MESSAGE = "This was changed by someone else. Please reload.";
 
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ApiError> handleDomain(DomainException ex) {
@@ -50,6 +52,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
         return respond(ErrorCode.FORBIDDEN, ApiError.of(ErrorCode.FORBIDDEN, "You don't have access to this."));
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> handleConcurrentChange(OptimisticLockingFailureException ex) {
+        return respond(ErrorCode.CONFLICT, ApiError.of(ErrorCode.CONFLICT, CONFLICT_MESSAGE));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

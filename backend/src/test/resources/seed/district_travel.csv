@@ -1,0 +1,3 @@
+district,depot,road_class,free_flow_kmh,depot_to_district_km,depot_to_district_freeflow_min,inter_stop_km,inter_stop_freeflow_min
+Testville,Peliyagoda,urban,35,12.5,30,2,6
+Mallton,Peliyagoda,highway,60,40,45,3,8

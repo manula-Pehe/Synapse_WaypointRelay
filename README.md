@@ -49,7 +49,7 @@ Shared: role-based sign-in, notifications, English / Sinhala / Tamil, light and 
                    PostgreSQL 16
 ```
 
-Modules communicate only through service interfaces. API: [`docs/api.md`](docs/api.md) · Decisions: [`docs/adr/`](docs/adr/)
+Modules communicate only through service interfaces. API: [`docs/api.md`](docs/api.md) · Data model: [`docs/data-model.md`](docs/data-model.md) · Decisions: [`docs/adr/`](docs/adr/)
 
 ## Getting started
 
@@ -69,12 +69,13 @@ Open http://localhost.
 
 ### Dataset
 The competition dataset is confidential and is **never committed**. `./data` and all `*.csv` files are git-ignored.
-On first start the backend loads reference data and the demo delivery day from `./data`.
+On first start the backend loads reference data, the demo delivery day (Thu 1 Oct 2026: 85 orders and the fleet) and the demo accounts from `./data`. It does this once; later starts skip it.
+If the folder or a file is missing, start-up stops with a message naming the file. Set `SEED_ENABLED=false` to start without seeding (no demo data or accounts).
 
 ### Local development
 ```bash
-# backend (needs a local PostgreSQL 16)
-cd backend && ./mvnw spring-boot:run
+# backend (needs a local PostgreSQL 16, e.g. `docker compose up -d db`)
+cd backend && JWT_SECRET="$(openssl rand -base64 48)" ./mvnw spring-boot:run
 
 # frontend
 cd frontend && npm ci && npm run dev
@@ -84,10 +85,10 @@ cd frontend && npm ci && npm run dev
 
 | Role | Sign in with |
 |---|---|
-| Store manager | _added with the seed data_ |
-| Dispatcher | _added with the seed data_ |
-| Loader | _added with the seed data_ |
-| Driver | _added with the seed data_ |
+| Store manager (Dilani, OUT001) | `dilani@waypoint.lk` / `Relay@2026` |
+| Dispatcher (Ruwan) | `ruwan@waypoint.lk` / `Relay@2026` |
+| Loader (Kasun, Peliyagoda) | depot `Peliyagoda` / PIN `1234` |
+| Driver (Nuwan, VEH036) | staff ID `DRV-0036` / PIN `3636` |
 
 Live URL: _to be added_ · Deployment guide: [`docs/deployment.md`](docs/deployment.md)
 
@@ -104,7 +105,7 @@ frontend/            React application
   src/ui/                shared components
   src/lib/               API client, auth, offline
 deploy/              server setup, deploy script, Caddy config
-docs/                API contract, deployment, decision records
+docs/                API contract, data model, deployment, decision records
 .github/workflows/   CI
 ```
 
