@@ -3,9 +3,10 @@ import DispatcherLayout from './components/DispatcherLayout';
 import OrderQueue from './components/OrderQueue';
 import FleetStatus from './components/FleetStatus';
 import LiveBoardPage from './components/LiveBoardPage';
+import OutletsReference from './components/OutletsReference';
 
 export function App() {
-  const [activeNav, setActiveNav] = useState('live-board');
+  const [activeNav, setActiveNav] = useState('outlets');
 
   const pageMeta: Record<string, { title: string; subtitle: string; planStatus?: string }> = {
     orders: {
@@ -23,6 +24,11 @@ export function App() {
       subtitle: 'Exceptions first · updates arrive as drivers sync',
       planStatus: 'Plan v1 · published',
     },
+    outlets: {
+      title: 'Outlets',
+      subtitle: '120 outlets · Peliyagoda 75 · Kandy 45',
+      planStatus: 'Plan v1 · not started',
+    },
   };
 
   const currentMeta = pageMeta[activeNav] || {
@@ -37,6 +43,8 @@ export function App() {
         return <FleetStatus />;
       case 'live-board':
         return <LiveBoardPage />;
+      case 'outlets':
+        return <OutletsReference />;
       case 'orders':
       default:
         return <OrderQueue />;
