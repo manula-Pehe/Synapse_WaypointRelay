@@ -1,6 +1,7 @@
 package com.synapse.waypoint.core.settings.service;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,8 @@ class DefaultSettingsService implements SettingsService {
 
     @Override
     public SettingsResponse current() {
-        return new SettingsResponse(clock.runDate(), clock.nowLocal(), DemoClock.ZONE.getId());
+        return new SettingsResponse(
+                clock.runDate(), clock.nowLocal().truncatedTo(ChronoUnit.SECONDS), DemoClock.ZONE.getId());
     }
 
     @Override
