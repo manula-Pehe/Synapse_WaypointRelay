@@ -19,9 +19,10 @@ import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
 import { StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
 import OutletsReference from './components/OutletsReference'
+import RunReport from './components/RunReport'
 
 function DispatcherWorkspace() {
-  const [activeNav, setActiveNav] = useState('outlets')
+  const [activeNav, setActiveNav] = useState('reports')
 
   const pageMeta: Record<string, { title: string; subtitle: string; planStatus?: string }> = {
     orders: {
@@ -44,6 +45,11 @@ function DispatcherWorkspace() {
       subtitle: '120 outlets · Peliyagoda 75 · Kandy 45',
       planStatus: 'Plan v1 · not started',
     },
+    reports: {
+      title: 'Run report · Thu 1 Oct',
+      subtitle: 'All depots · final at 2:00 PM',
+      planStatus: 'Plan v1 · published',
+    },
   }
 
   const currentMeta = pageMeta[activeNav] || {
@@ -55,6 +61,7 @@ function DispatcherWorkspace() {
   const content = activeNav === 'fleet' ? <FleetStatus />
     : activeNav === 'live-board' ? <LiveBoardPage />
     : activeNav === 'outlets' ? <OutletsReference />
+    : activeNav === 'reports' ? <RunReport />
     : <OrderQueue />
 
   return (
