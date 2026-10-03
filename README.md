@@ -27,7 +27,7 @@ Shared: role-based sign-in, notifications, English / Sinhala / Tamil, light and 
 | Database | PostgreSQL 16 |
 | Frontend | React 19, TypeScript (strict), Vite, Tailwind CSS 4, React Router 7, TanStack Query |
 | Offline | PWA (service worker) + IndexedDB outbox (Dexie) |
-| Delivery | Docker Compose, nginx, GitHub Actions |
+| Delivery | Vercel (frontend), Docker Compose + Caddy (backend), GitHub Actions |
 
 ## Architecture
 
@@ -89,7 +89,7 @@ cd frontend && npm ci && npm run dev
 | Loader | _added with the seed data_ |
 | Driver | _added with the seed data_ |
 
-Live URL: _to be added_
+Live URL: _to be added_ · Deployment guide: [`docs/deployment.md`](docs/deployment.md)
 
 A step-by-step walkthrough across all four roles will be added here.
 
@@ -103,7 +103,8 @@ frontend/            React application
   src/features/<role>/   screens per role
   src/ui/                shared components
   src/lib/               API client, auth, offline
-docs/                API contract, architecture, decision records
+deploy/              server setup, deploy script, Caddy config
+docs/                API contract, deployment, decision records
 .github/workflows/   CI
 ```
 
