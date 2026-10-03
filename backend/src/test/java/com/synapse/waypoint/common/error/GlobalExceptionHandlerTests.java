@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -37,5 +38,15 @@ class GlobalExceptionHandlerTests {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody().message()).doesNotContain("password");
+    }
+
+    @Test
+    void shouldReturnConflictAskingToReloadWhenSomeoneElseChangedTheRecord() {
+        ResponseEntity<ApiError> response = handler.handleConcurrentChange(
+                new OptimisticLockingFailureException("stale row"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isEqualTo(new ApiError("CONFLICT",
+                "This was changed by someone else. Please reload.", Map.of()));
     }
 }

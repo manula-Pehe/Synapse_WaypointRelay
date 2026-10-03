@@ -31,7 +31,7 @@
 | 401 | `UNAUTHORIZED` |
 | 403 | `FORBIDDEN` |
 | 404 | `NOT_FOUND` (also returned for other outlets'/depots'/vehicles' data) |
-| 409 | `INVALID_STATUS`, `ORDERS_CLOSED`, `ORDERS_NOT_CLOSED`, `PLAN_LOCKED`, `RULE_VIOLATION`, `DUPLICATE` |
+| 409 | `INVALID_STATUS`, `ORDERS_CLOSED`, `ORDERS_NOT_CLOSED`, `PLAN_LOCKED`, `RULE_VIOLATION`, `DUPLICATE`, `CONFLICT` (record changed by someone else — reload) |
 
 ### Enumerations
 | Name | Values |
