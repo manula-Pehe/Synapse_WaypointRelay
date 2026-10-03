@@ -25,6 +25,9 @@ public interface OrderService {
 
     OrderDto confirm(String orderId);
 
+    /** Confirms at the cut-off without a user and marks the order as auto-confirmed. */
+    OrderDto autoConfirm(String orderId);
+
     /** Only a PREPARED order can be edited. */
     OrderDto editUnits(String orderId, int units);
 

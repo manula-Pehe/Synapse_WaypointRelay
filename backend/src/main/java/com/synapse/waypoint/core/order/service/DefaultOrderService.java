@@ -84,6 +84,14 @@ class DefaultOrderService implements OrderService {
     }
 
     @Override
+    public OrderDto autoConfirm(String orderId) {
+        Order order = load(orderId);
+        OrderStatus from = order.getStatus();
+        order.confirmAutomatically(clock.now());
+        return saveWithEvent(order, from, Map.of("auto", true));
+    }
+
+    @Override
     public OrderDto editUnits(String orderId, int units) {
         requirePositive(units);
         Order order = load(orderId);

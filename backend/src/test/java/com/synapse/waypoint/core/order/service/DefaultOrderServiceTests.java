@@ -106,6 +106,30 @@ class DefaultOrderServiceTests {
     }
 
     @Test
+    void shouldAutoConfirmAPreparedOrderWithoutAUserAndMarkIt() {
+        Order order = OrderFixtures.save(orders, OUTLET, PREPARED);
+
+        OrderDto result = service.autoConfirm(order.getId());
+
+        assertThat(result.status()).isEqualTo(CONFIRMED);
+        assertThat(result.autoConfirm()).isTrue();
+        assertThat(result.confirmedAt()).isNotNull();
+        OrderEventDto event = service.history(order.getId()).get(0);
+        assertThat(event.type()).isEqualTo("CONFIRMED");
+        assertThat(event.actor()).isNull();
+        assertThat(event.details()).containsEntry("auto", true);
+    }
+
+    @Test
+    void shouldRefuseToAutoConfirmAnOrderThatIsNotPrepared() {
+        Order order = OrderFixtures.save(orders, OUTLET, CONFIRMED);
+
+        assertThatThrownBy(() -> service.autoConfirm(order.getId()))
+                .isInstanceOfSatisfying(DomainException.class,
+                        e -> assertThat(e.code()).isEqualTo(ErrorCode.INVALID_STATUS));
+    }
+
+    @Test
     void shouldRecordTheSignedInUserAsActorAndConfirmedBy() {
         Order order = OrderFixtures.save(orders, OUTLET, PREPARED);
         SignedInUser.asStoreManager(STORE_USER, OUTLET);
