@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AddOrderDrawer from './AddOrderDrawer';
 
 // --- Types for All Orders View ---
 export interface OrderItem {
@@ -159,21 +160,33 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
   onSendReminderAgain,
   onEnterByPhone,
 }) => {
-  // Requirement 1: State variable default to 'not-confirmed'
+  // State for view navigation
   const [activeFilter, setActiveFilter] = useState<'all' | 'not-confirmed'>('not-confirmed');
 
-  // Sub-filter state when in 'all' view
+  // Sub-filter category when in 'all' view
   const [allViewCategory, setAllViewCategory] = useState<string>('All 85');
+
+  // Drawer open/close state
+  const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
+
+  const handleOpenAddOrder = () => {
+    setIsAddOrderOpen(true);
+    onAddOrder?.();
+  };
+
+  const handleEnterByPhone = (storeId: string) => {
+    setIsAddOrderOpen(true);
+    onEnterByPhone?.(storeId);
+  };
 
   return (
     <div className="w-full space-y-6 font-sans">
-      {/* 3. Conditional Rendering: HIDE stats cards and SHOW warning banner when activeFilter === 'not-confirmed' */}
+      {/* 3. Conditional Rendering: HIDE stats cards and SHOW amber banner when activeFilter === 'not-confirmed' */}
       {activeFilter === 'not-confirmed' ? (
         /* Amber Warning Banner */
         <div className="flex flex-col justify-between gap-4 rounded-xl border border-amber-300 bg-amber-50/80 p-5 shadow-2xs md:flex-row md:items-center">
           <div className="flex items-start gap-3.5">
             <div className="mt-0.5 flex-shrink-0 text-amber-700">
-              {/* Warning Triangle Icon */}
               <svg
                 className="h-5 w-5"
                 viewBox="0 0 24 24"
@@ -223,7 +236,6 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
       ) : (
         /* Top 4 Summary Stats Cards for 'all' orders */
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Card 1: CONFIRMED ORDERS */}
           <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs">
             <div>
               <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
@@ -236,7 +248,6 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
             <p className="mt-3 text-xs text-slate-500">Fresh 75 · Style 5 · Tech 5</p>
           </div>
 
-          {/* Card 2: CHILLED (Amber / Brown styling) */}
           <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs">
             <div>
               <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
@@ -251,7 +262,6 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
             </p>
           </div>
 
-          {/* Card 3: VAN-ONLY OUTLETS */}
           <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs">
             <div>
               <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
@@ -264,7 +274,6 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
             <p className="mt-3 text-xs text-slate-500">3 chilled · only 1 fridge van</p>
           </div>
 
-          {/* Card 4: CARRIED OVER (Pink / Red styling) */}
           <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs">
             <div>
               <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
@@ -298,7 +307,7 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
             All 85
           </button>
 
-          {/* 'Not confirmed 4' Chip (Dark navy background when active) */}
+          {/* 'Not confirmed 4' Chip */}
           <button
             type="button"
             onClick={() => setActiveFilter('not-confirmed')}
@@ -349,21 +358,21 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
           )}
         </div>
 
-        {/* Action Buttons (visible in 'all' view) */}
-        {activeFilter === 'all' && (
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={onAddOrder}
-              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-blue-600 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-2xs transition hover:bg-blue-50"
-            >
-              <svg className="h-4 w-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              <span>Add order for outlet</span>
-            </button>
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={handleOpenAddOrder}
+            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-blue-600 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-2xs transition hover:bg-blue-50"
+          >
+            <svg className="h-4 w-4 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>Add order for outlet</span>
+          </button>
 
+          {activeFilter === 'all' && (
             <button
               type="button"
               onClick={onCreatePlan}
@@ -378,8 +387,8 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
               </svg>
               <span>Create plan</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* 4. Table Conditional Rendering */}
@@ -403,31 +412,22 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
                     key={store.id}
                     className="transition-colors hover:bg-slate-50/60"
                   >
-                    {/* Outlet */}
                     <td className="px-5 py-4 font-bold text-slate-900 whitespace-nowrap">
                       {store.outlet}
                     </td>
-
-                    {/* Prepared Order */}
                     <td className="px-5 py-4 text-slate-600 whitespace-nowrap">
                       {store.preparedOrder}
                     </td>
-
-                    {/* Last Seen in App */}
                     <td className="px-5 py-4 text-slate-600 whitespace-nowrap">
                       {store.lastSeen}
                     </td>
-
-                    {/* Contact */}
                     <td className="px-5 py-4 text-slate-600 whitespace-nowrap">
                       {store.contact}
                     </td>
-
-                    {/* Actions: "Enter by phone" Button */}
                     <td className="px-5 py-4 whitespace-nowrap">
                       <button
                         type="button"
-                        onClick={() => onEnterByPhone?.(store.id)}
+                        onClick={() => handleEnterByPhone(store.id)}
                         className="inline-flex min-h-[36px] items-center gap-2 rounded-lg border border-blue-600 bg-white px-3.5 py-1.5 text-xs font-semibold text-blue-700 shadow-2xs transition hover:bg-blue-50"
                       >
                         <svg
@@ -549,7 +549,6 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
       {/* 5. Bottom Info / Status Text */}
       {activeFilter === 'not-confirmed' ? (
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          {/* Info Circle Icon */}
           <svg
             className="h-4 w-4 flex-shrink-0 text-slate-400"
             viewBox="0 0 24 24"
@@ -570,6 +569,12 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
           Showing 8 of 85 · sorted by priority (days waited, chilled, window)
         </div>
       )}
+
+      {/* Add Order Slide-out Drawer */}
+      <AddOrderDrawer
+        isOpen={isAddOrderOpen}
+        onClose={() => setIsAddOrderOpen(false)}
+      />
     </div>
   );
 };
