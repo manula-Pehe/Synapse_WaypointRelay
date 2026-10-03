@@ -30,7 +30,7 @@ export interface UnconfirmedStore {
 }
 
 // --- Mock Data ---
-export const MOCK_ORDERS: OrderItem[] = [
+const MOCK_ORDERS: OrderItem[] = [
   {
     id: 'S1-001',
     outlet: 'OUT001 · Colombo',
@@ -113,7 +113,7 @@ export const MOCK_ORDERS: OrderItem[] = [
   },
 ];
 
-export const MOCK_UNCONFIRMED_STORES: UnconfirmedStore[] = [
+const MOCK_UNCONFIRMED_STORES: UnconfirmedStore[] = [
   {
     id: 'OUT012',
     outlet: 'OUT012 · Colombo',

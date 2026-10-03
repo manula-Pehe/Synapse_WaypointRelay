@@ -17,7 +17,7 @@ export interface OrderHistoryDrawerProps {
   onPrintLoadingList?: () => void;
 }
 
-export const DEFAULT_TIMELINE_EVENTS: TimelineEvent[] = [
+const DEFAULT_TIMELINE_EVENTS: TimelineEvent[] = [
   {
     id: 'evt-1',
     title: 'Prepared from order history',
