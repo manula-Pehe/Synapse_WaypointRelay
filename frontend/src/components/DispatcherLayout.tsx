@@ -33,7 +33,7 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
   hideTopBar = false,
 }) => {
   return (
-    <div className="flex min-h-screen w-full bg-[#f8fafc] text-slate-800 antialiased font-sans">
+    <div className="flex h-screen w-full bg-white overflow-hidden font-sans text-slate-800 antialiased">
       {/* Left Sidebar Navigation */}
       <SideNav
         activeItem={activeNav}
@@ -41,8 +41,8 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
         user={user}
       />
 
-      {/* Main Column */}
-      <div className="flex flex-1 flex-col overflow-x-hidden">
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col overflow-y-auto bg-[#f8fafc]">
         {/* Top Navigation Bar */}
         {!hideTopBar && (
           <TopBar
@@ -57,10 +57,10 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
         )}
 
         {/* Content Area Rendering Children */}
-        <main className="flex-1 p-8">
+        <div className="flex-1 p-8">
           {children}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };
