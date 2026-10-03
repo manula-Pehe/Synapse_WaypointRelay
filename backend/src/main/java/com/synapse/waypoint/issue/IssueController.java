@@ -1,5 +1,6 @@
 package com.synapse.waypoint.issue;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,7 @@ class IssueController {
         String id = UUID.randomUUID().toString();
         String ref = "ISS-" + id.replace("-", "").substring(0, 8).toUpperCase();
         jdbc.update("INSERT INTO issues(id,ref,outlet_id,order_id,type,units,wants,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
-                id, ref, outletId(), body.orderId(), body.type(), body.units(), body.wants(), user.id(), clock.now());
+                id, ref, outletId(), body.orderId(), body.type(), body.units(), body.wants(), user.id(), Timestamp.from(clock.now()));
         if (body.note() != null && !body.note().isBlank()) addMessage(id, body.note());
         return get(id, true);
     }
@@ -93,7 +94,7 @@ class IssueController {
     Issue resolve(@PathVariable String id) {
         get(id, false);
         jdbc.update("UPDATE issues SET status = 'RESOLVED', resolved_by = ?, resolved_at = ?, version = version + 1 WHERE id = ?",
-                user.id(), clock.now(), id);
+                user.id(), Timestamp.from(clock.now()), id);
         return get(id, false);
     }
 
@@ -106,7 +107,7 @@ class IssueController {
             throw new DomainException(ErrorCode.VALIDATION, "Upload a JPEG, PNG, or WebP image under 1 MB.");
         String photoId = UUID.randomUUID().toString();
         jdbc.update("INSERT INTO issue_photos(id,issue_id,content_type,content,uploaded_at) VALUES (?,?,?,?,?)",
-                photoId, id, type, file.getBytes(), clock.now());
+                photoId, id, type, file.getBytes(), Timestamp.from(clock.now()));
         return Map.of("id", photoId, "url", "/api/store/issues/" + id + "/photos/" + photoId);
     }
 
@@ -123,7 +124,7 @@ class IssueController {
 
     private void addMessage(String id, String text) {
         jdbc.update("INSERT INTO issue_messages(id,issue_id,author_id,text,created_at) VALUES (?,?,?,?,?)",
-                UUID.randomUUID().toString(), id, user.id(), text.strip(), clock.now());
+                UUID.randomUUID().toString(), id, user.id(), text.strip(), Timestamp.from(clock.now()));
     }
 
     private List<Issue> list(String clause, Object... args) {

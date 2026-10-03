@@ -1,5 +1,6 @@
 package com.synapse.waypoint.store;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -117,14 +118,14 @@ class StoreController {
             if (body.message() == null || body.message().isBlank())
                 throw new DomainException(ErrorCode.VALIDATION, "Tell dispatch what is wrong.");
             jdbc.update("INSERT INTO order_disputes(id,order_id,outlet_id,message,created_by,created_at) VALUES (?,?,?,?,?,?)",
-                    UUID.randomUUID().toString(), id, outletId(), body.message().strip(), user.id(), clock.now());
+                    UUID.randomUUID().toString(), id, outletId(), body.message().strip(), user.id(), Timestamp.from(clock.now()));
         }
         int changed = jdbc.update("UPDATE orders SET store_checked = true, updated_at = ?, version = version + 1 WHERE id = ? AND store_checked = false",
-                clock.now(), id);
+                Timestamp.from(clock.now()), id);
         if (changed != 1) throw new DomainException(ErrorCode.CONFLICT, "This phone order was checked already.");
         jdbc.update("""
                 INSERT INTO order_events(order_id,at,actor_user_id,type,from_status,to_status)
-                VALUES (?,?,?,?,?,?)""", id, clock.now(), user.id(), body.ok() ? "STORE_CHECKED" : "DISPUTED",
+                VALUES (?,?,?,?,?,?)""", id, Timestamp.from(clock.now()), user.id(), body.ok() ? "STORE_CHECKED" : "DISPUTED",
                 order.status().name(), order.status().name());
         entityManager.clear();
         return orders.get(id);
@@ -139,7 +140,7 @@ class StoreController {
         if (body.message().isBlank()) throw new DomainException(ErrorCode.VALIDATION, "A message is required.");
         String disputeId = UUID.randomUUID().toString();
         jdbc.update("INSERT INTO order_disputes(id,order_id,outlet_id,message,created_by,created_at) VALUES (?,?,?,?,?,?)",
-                disputeId, order.id(), outletId(), body.message().strip(), user.id(), clock.now());
+                disputeId, order.id(), outletId(), body.message().strip(), user.id(), Timestamp.from(clock.now()));
         return Map.of("id", disputeId, "status", "OPEN");
     }
 
@@ -159,7 +160,7 @@ class StoreController {
         if (Boolean.TRUE.equals(exists)) throw new DomainException(ErrorCode.DUPLICATE, "Receipt is already confirmed.");
         String receiptId = UUID.randomUUID().toString();
         jdbc.update("INSERT INTO receipts(id,order_id,received_units,note,received_by,received_at) VALUES (?,?,?,?,?,?)",
-                receiptId, id, body.receivedUnits(), body.note(), user.id(), clock.now());
+                receiptId, id, body.receivedUnits(), body.note(), user.id(), Timestamp.from(clock.now()));
         return Map.of("id", receiptId, "orderId", id, "receivedUnits", body.receivedUnits(), "at", clock.now());
     }
 
