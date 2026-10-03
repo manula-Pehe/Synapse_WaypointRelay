@@ -118,6 +118,8 @@
 					<systemPropertyVariables>
 						<!-- Tests only; the running app requires JWT_SECRET from the environment. -->
 						<app.jwt.secret>test-only-signing-secret-not-used-anywhere-else-0123456789</app.jwt.secret>
+						<!-- Seed tests switch it on with @TestPropertySource. -->
+						<app.seed.enabled>false</app.seed.enabled>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>

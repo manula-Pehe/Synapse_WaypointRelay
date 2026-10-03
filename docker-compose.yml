@@ -25,6 +25,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
       APP_DATA_DIR: /data
+      SEED_ENABLED: ${SEED_ENABLED:-true}
       TZ: ${TZ:-Asia/Colombo}
     volumes:
       - ${DATA_PATH:-./data}:/data:ro

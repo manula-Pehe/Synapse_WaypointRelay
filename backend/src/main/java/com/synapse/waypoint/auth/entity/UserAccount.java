@@ -19,6 +19,9 @@ import com.synapse.waypoint.common.security.Role;
 @Table(name = "users")
 public class UserAccount {
 
+    private static final String DEFAULT_LANGUAGE = "en";
+    private static final String DEFAULT_THEME = "system";
+
     @Id
     @Column(length = 40)
     private String id;
@@ -62,6 +65,26 @@ public class UserAccount {
 
     protected UserAccount() {
         // for JPA
+    }
+
+    /** A new, active account with English and the system theme as display defaults. */
+    public static UserAccount create(String id, String name, Role role, String email, String staffId,
+            String secretHash, String outletId, String depot, String vehicleId, Instant createdAt) {
+        UserAccount account = new UserAccount();
+        account.id = id;
+        account.name = name;
+        account.role = role;
+        account.email = email;
+        account.staffId = staffId;
+        account.secretHash = secretHash;
+        account.outletId = outletId;
+        account.depot = depot;
+        account.vehicleId = vehicleId;
+        account.language = DEFAULT_LANGUAGE;
+        account.theme = DEFAULT_THEME;
+        account.active = true;
+        account.createdAt = createdAt;
+        return account;
     }
 
     public String getId() {
