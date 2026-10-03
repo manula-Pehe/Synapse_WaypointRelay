@@ -182,6 +182,15 @@ class FleetChangesApiTests {
     }
 
     @Test
+    void shouldReject400WhenConfirmingAnUnknownDepot() throws Exception {
+        mvc.perform(confirm("{\"runDate\":\"2026-10-01\",\"depot\":\"Nowhere\"}", dispatcher()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION"));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM order_runs WHERE depot = 'Nowhere'", Integer.class))
+                .isZero();
+    }
+
+    @Test
     void shouldRejectAConfirmWithoutADepot() throws Exception {
         mvc.perform(confirm("{\"runDate\":\"2026-10-01\"}", dispatcher())).andExpect(status().isBadRequest());
     }

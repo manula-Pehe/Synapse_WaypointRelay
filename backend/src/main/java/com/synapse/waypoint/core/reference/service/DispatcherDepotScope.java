@@ -11,8 +11,9 @@ import com.synapse.waypoint.common.security.CurrentUser;
 import com.synapse.waypoint.core.reference.repository.OutletRepository;
 
 /**
- * Which depot a dispatcher may work on: a dispatcher with a depot sees only that depot (anything
- * else is 404), a dispatcher without one covers all depots.
+ * Which depot a dispatcher may work on: a depot name nobody uses is a validation error (400); a
+ * dispatcher with a depot sees only that depot (any other real depot is 404); a dispatcher without
+ * one covers all depots.
  */
 @Component
 class DispatcherDepotScope {
@@ -32,7 +33,7 @@ class DispatcherDepotScope {
         String wanted = requestedDepot == null || requestedDepot.isBlank()
                 ? currentUser.depot().orElseThrow(DispatcherDepotScope::depotRequired)
                 : requestedDepot.strip();
-        String depot = outlets.findDepotName(wanted).orElseThrow(() -> new NotFoundException(DEPOT, wanted));
+        String depot = outlets.findDepotName(wanted).orElseThrow(DispatcherDepotScope::unknownDepot);
         requireInScope(depot);
         return depot;
     }
@@ -43,6 +44,11 @@ class DispatcherDepotScope {
                 .ifPresent(own -> {
                     throw new NotFoundException(DEPOT, depot);
                 });
+    }
+
+    private static DomainException unknownDepot() {
+        return new DomainException(ErrorCode.VALIDATION, "Unknown depot.",
+                Map.of("depot", "no outlet belongs to this depot"));
     }
 
     private static DomainException depotRequired() {

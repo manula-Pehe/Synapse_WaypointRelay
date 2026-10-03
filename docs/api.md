@@ -122,12 +122,12 @@ Ordered by id. `runDate` defaults to the current run date.
 ### Fleet (dispatcher) — D2, D2v
 - `GET /api/dispatch/fleet?runDate=&depot=` → `{ items: [vehicle…], confirmedAt, confirmedBy, counts: { available, inWorkshop, offRoad, reeferAvailable } }`
   - `items` are the depot's vehicles with availability; `counts` are per status, and `reeferAvailable` counts only **available** reefers; `confirmedAt` / `confirmedBy` are `null` until the fleet is confirmed.
-  - `runDate` defaults to the current run date. `depot` defaults to the dispatcher's own depot; a dispatcher with no depot must send it (400 `VALIDATION`).
+  - `runDate` defaults to the current run date. `depot` defaults to the dispatcher's own depot; a dispatcher with no depot must send it (400 `VALIDATION`). A depot name no outlet uses → 400 `VALIDATION`; another real depot than the dispatcher's own → 404.
 - `PUT /api/dispatch/fleet/{vehicleId}` `{ "runDate": "2026-10-01", "status": "OFF_ROAD", "reason": "Brake issue" }` → vehicle (with its new availability) — D2v
   - `reason` is required (non-blank, max 200) unless `status` is `AVAILABLE`, otherwise 400 `VALIDATION`; for `AVAILABLE` the stored reason is cleared.
   - Unknown vehicle → 404. A dispatcher who has a depot cannot change another depot's vehicle (404); a dispatcher with no depot covers all depots.
   - `updatedBy` / `updatedAt` come from the signed-in user and the demo clock.
-- `POST /api/dispatch/fleet/confirm` `{ "runDate", "depot" }` → `{ confirmedAt, confirmedBy }` — writes the run's fleet confirmation. Confirming again is fine and updates the time. Another depot than the dispatcher's → 404; unknown depot → 404.
+- `POST /api/dispatch/fleet/confirm` `{ "runDate", "depot" }` → `{ confirmedAt, confirmedBy }` — writes the run's fleet confirmation. Confirming again is fine and updates the time. A depot name no outlet uses → 400 `VALIDATION` (as for close orders); another real depot than the dispatcher's own → 404.
 
 ---
 

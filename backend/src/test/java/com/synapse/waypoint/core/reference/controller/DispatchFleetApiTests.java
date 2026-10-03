@@ -95,9 +95,13 @@ class DispatchFleetApiTests {
     }
 
     @Test
-    void shouldReturn404ForAnUnknownDepot() throws Exception {
+    void shouldReturn400ForAnUnknownDepot() throws Exception {
         mvc.perform(get("/api/dispatch/fleet?depot=Nowhere").header(HttpHeaders.AUTHORIZATION, dispatcher()))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION"))
+                .andExpect(jsonPath("$.details.depot").exists());
+        mvc.perform(get("/api/dispatch/fleet?depot=Nowhere").header(HttpHeaders.AUTHORIZATION, depotDispatcher()))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
