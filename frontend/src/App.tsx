@@ -6,6 +6,23 @@ import { RoleGuard, RoleLayout, WorkspacePlaceholder } from './app/RoleLayout'
 import { LoginPage } from './features/auth/LoginPage'
 import { NotificationsPage } from './features/notifications/Notifications'
 import { ApiError } from './lib/api'
+import { useState } from 'react'
+import DispatcherLayout from './components/DispatcherLayout'
+import OrderQueue from './components/OrderQueue'
+import FleetStatus from './components/FleetStatus'
+
+
+function DispatcherWorkspace() {
+  const [activeNav, setActiveNav] = useState('orders')
+  const pageMeta = activeNav === 'fleet'
+    ? { title: 'Fleet · Peliyagoda · Thu 1 Oct', subtitle: 'Mark workshop vehicles before planning · weekly fuel shown per vehicle' }
+    : { title: 'Order queue · Thu 1 Oct run', subtitle: 'Orders closed Wed 4:00 PM · 85 confirmed orders' }
+  return (
+    <DispatcherLayout activeNav={activeNav} onNavChange={setActiveNav} title={pageMeta.title} subtitle={pageMeta.subtitle}>
+      {activeNav === 'fleet' ? <FleetStatus /> : <OrderQueue />}
+    </DispatcherLayout>
+  )
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,7 +47,7 @@ export default function App() {
             {(Object.entries(rolePaths) as [Role, string][]).map(([role, path]) => (
               <Route key={role} element={<RoleGuard role={role} />}>
                 <Route path={path} element={<RoleLayout />}>
-                  <Route index element={<WorkspacePlaceholder />} />
+                  <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : <WorkspacePlaceholder />} />
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="*" element={<Navigate to={path} replace />} />
                 </Route>

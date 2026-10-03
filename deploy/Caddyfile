@@ -1,0 +1,14 @@
+# Reverse proxy with automatic HTTPS (Let's Encrypt).
+# Install: sudo cp deploy/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy
+
+# Production — deployed from main
+waypoint-api.duckdns.org {
+	encode gzip
+	reverse_proxy 127.0.0.1:8082
+}
+
+# Development — deployed from develop
+waypoint-api-dev.duckdns.org {
+	encode gzip
+	reverse_proxy 127.0.0.1:8081
+}

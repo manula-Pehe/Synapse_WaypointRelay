@@ -4,8 +4,13 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
+  // Where `npm run dev` forwards /api — a local backend by default, or the shared dev server.
+  const apiTarget = env.VITE_API_TARGET || 'http://localhost:8080'
+
   return {
     plugins: [react(), tailwindcss()],
-    server: { proxy: { '/api': env.VITE_API_TARGET || 'http://localhost:8080' } },
+    server: {
+      proxy: { '/api': { target: apiTarget, changeOrigin: true } },
+    },
   }
 })

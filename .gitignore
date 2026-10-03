@@ -1,3 +1,9 @@
+# Competition datasets — confidential, NEVER commit
+/data/
+*.csv
+# Invented sample files used by backend tests (never real dataset rows)
+!/backend/src/test/resources/**/*.csv
+
 # Local project notes
 project-overview.md
 
@@ -22,9 +28,9 @@ Thumbs.db
 **/node_modules/
 **/dist/
 **/dist-ssr/
-**/coverage/
-**/target/
 **/build/
 **/.cache/
+**/target/
+**/coverage/
 *.log
 *.tsbuildinfo
