@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +16,12 @@ public class DatasetLocator {
 
     private final Path dataDir;
 
-    DatasetLocator(@Value("${app.data-dir}") Path dataDir) {
+    @Autowired
+    DatasetLocator(@Value("${app.data-dir}") String dataDir) {
+        this(Path.of(dataDir));
+    }
+
+    DatasetLocator(Path dataDir) {
         this.dataDir = dataDir;
     }
 
