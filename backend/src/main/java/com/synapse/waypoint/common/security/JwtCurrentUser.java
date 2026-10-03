@@ -21,6 +21,14 @@ class JwtCurrentUser implements CurrentUser {
     }
 
     @Override
+    public Optional<String> idIfSignedIn() {
+        if (SecurityContextHolder.getContext().getAuthentication() instanceof JwtAuthenticationToken signedIn) {
+            return Optional.ofNullable(signedIn.getToken().getSubject());
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public Role role() {
         return Role.valueOf(token().getClaimAsString(TokenClaims.ROLE));
     }

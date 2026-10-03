@@ -1,6 +1,7 @@
 package com.synapse.waypoint.core.order.entity;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -12,13 +13,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
+import com.synapse.waypoint.core.order.exception.InvalidStatusException;
+
 /**
  * A store's delivery order (table {@code orders}, V1). Status changes are made only through
- * {@code OrderService}, so this class exposes no status setter.
+ * {@code OrderService}; this class enforces the lifecycle but has no free status setter.
  */
 @Entity
 @Table(name = "orders")
 public class Order {
+
+    private static final int WEIGHT_SCALE = 2;
+    private static final int VOLUME_SCALE = 3;
 
     @Id
     @Column(length = 40)
@@ -113,6 +119,45 @@ public class Order {
         order.createdAt = now;
         order.updatedAt = now;
         return order;
+    }
+
+    /** Moves to {@code target}, or throws {@link InvalidStatusException} if the lifecycle does not allow it. */
+    public void changeStatus(OrderStatus target, Instant now) {
+        if (!status.canMoveTo(target)) {
+            throw InvalidStatusException.transition(status, target);
+        }
+        status = target;
+        updatedAt = now;
+    }
+
+    public void confirm(String userId, Instant now) {
+        changeStatus(OrderStatus.CONFIRMED, now);
+        confirmedAt = now;
+        confirmedBy = userId;
+    }
+
+    /** Changes the quantity of a PREPARED order; weight and volume follow in proportion. */
+    public void editUnits(int newUnits, Instant now) {
+        if (status != OrderStatus.PREPARED) {
+            throw InvalidStatusException.notEditable(status);
+        }
+        if (units > 0) {
+            weightKg = scaled(weightKg, newUnits, WEIGHT_SCALE);
+            volumeM3 = scaled(volumeM3, newUnits, VOLUME_SCALE);
+        }
+        units = newUnits;
+        updatedAt = now;
+    }
+
+    /** Defers the order to {@code newDate}; the order keeps its id. */
+    public void moveTo(LocalDate newDate, Instant now) {
+        changeStatus(OrderStatus.MOVED, now);
+        runDate = newDate;
+    }
+
+    private BigDecimal scaled(BigDecimal total, int newUnits, int scale) {
+        return total.multiply(BigDecimal.valueOf(newUnits)).divide(BigDecimal.valueOf(units), scale,
+                RoundingMode.HALF_UP);
     }
 
     public String getId() {

@@ -10,6 +10,9 @@ public interface CurrentUser {
 
     String id();
 
+    /** The user's id, or empty when nobody is signed in (timed jobs and other system work). */
+    Optional<String> idIfSignedIn();
+
     Role role();
 
     Optional<String> outletId();
