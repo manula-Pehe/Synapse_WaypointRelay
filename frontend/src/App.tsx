@@ -22,9 +22,11 @@ import OutletsReference from './components/OutletsReference'
 import RunReport from './components/RunReport'
 import CapacityOutlook from './components/CapacityOutlook'
 import IssuesInbox from './components/IssuesInbox'
+import IssueDetail from './components/IssueDetail'
 
 function DispatcherWorkspace() {
   const [activeNav, setActiveNav] = useState('issues')
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>('ISS-0142')
 
   const pageMeta: Record<string, { title: string; subtitle: string; planStatus?: string }> = {
     orders: {
@@ -70,9 +72,22 @@ function DispatcherWorkspace() {
     planStatus: 'Plan v1 · not started',
   }
 
+  const isIssueDetailActive = activeNav === 'issues' && selectedIssueId !== null
+
   const content = activeNav === 'fleet' ? <FleetStatus />
     : activeNav === 'live-board' ? <LiveBoardPage />
-    : activeNav === 'issues' ? <IssuesInbox />
+    : activeNav === 'issues' ? (
+        selectedIssueId ? (
+          <IssueDetail
+            issueId={selectedIssueId}
+            onBack={() => setSelectedIssueId(null)}
+          />
+        ) : (
+          <IssuesInbox
+            onIssueSelect={(issue) => setSelectedIssueId(issue.id)}
+          />
+        )
+      )
     : activeNav === 'capacity' ? <CapacityOutlook />
     : activeNav === 'outlets' ? <OutletsReference />
     : activeNav === 'reports' ? <RunReport />
@@ -81,11 +96,16 @@ function DispatcherWorkspace() {
   return (
     <DispatcherLayout
       activeNav={activeNav}
-      onNavChange={setActiveNav}
+      onNavChange={(nav) => {
+        setActiveNav(nav)
+        if (nav !== 'issues') {
+          setSelectedIssueId(null)
+        }
+      }}
       title={currentMeta.title}
       subtitle={currentMeta.subtitle}
       planStatus={currentMeta.planStatus}
-      hideTopBar={activeNav === 'capacity'}
+      hideTopBar={activeNav === 'capacity' || isIssueDetailActive}
     >
       {content}
     </DispatcherLayout>
