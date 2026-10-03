@@ -78,19 +78,41 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
 
         {/* Plan Status Badge */}
-        <div className="flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-200/80 bg-slate-100/70 px-3 py-1.5 text-xs font-medium text-slate-600">
-          <svg
-            className="h-3.5 w-3.5 text-slate-500"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+        {planStatus && (
+          <div
+            className={`flex min-h-[40px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ${
+              planStatus.includes('open')
+                ? 'border border-amber-200/90 bg-amber-50/80 font-semibold text-amber-800'
+                : 'border border-slate-200/80 bg-slate-100/70 font-medium text-slate-600'
+            }`}
           >
-            <path d="M15 14l-3-3m0 0l-3-3m3 3l3-3m-3 3l-3 3" />
-            <circle cx="12" cy="12" r="9" />
-          </svg>
-          <span>{planStatus}</span>
-        </div>
+            {planStatus.includes('open') ? (
+              <svg
+                className="h-3.5 w-3.5 text-amber-600"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              </svg>
+            ) : (
+              <svg
+                className="h-3.5 w-3.5 text-slate-500"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M15 14l-3-3m0 0l-3-3m3 3l3-3m-3 3l-3 3" />
+                <circle cx="12" cy="12" r="9" />
+              </svg>
+            )}
+            <span>{planStatus}</span>
+          </div>
+        )}
 
         {/* Notification Bell Button (40px touch target) */}
         <button
