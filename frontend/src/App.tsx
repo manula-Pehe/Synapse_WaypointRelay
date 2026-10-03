@@ -18,9 +18,10 @@ import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreI
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
 import { StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
+import OutletsReference from './components/OutletsReference'
 
 function DispatcherWorkspace() {
-  const [activeNav, setActiveNav] = useState('orders')
+  const [activeNav, setActiveNav] = useState('outlets')
 
   const pageMeta: Record<string, { title: string; subtitle: string; planStatus?: string }> = {
     orders: {
@@ -38,6 +39,11 @@ function DispatcherWorkspace() {
       subtitle: 'Exceptions first · updates arrive as drivers sync',
       planStatus: 'Plan v1 · published',
     },
+    outlets: {
+      title: 'Outlets',
+      subtitle: '120 outlets · Peliyagoda 75 · Kandy 45',
+      planStatus: 'Plan v1 · not started',
+    },
   }
 
   const currentMeta = pageMeta[activeNav] || {
@@ -48,6 +54,7 @@ function DispatcherWorkspace() {
 
   const content = activeNav === 'fleet' ? <FleetStatus />
     : activeNav === 'live-board' ? <LiveBoardPage />
+    : activeNav === 'outlets' ? <OutletsReference />
     : <OrderQueue />
 
   return (
