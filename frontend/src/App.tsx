@@ -1,12 +1,27 @@
-import { useState } from 'react';
-import DispatcherLayout from './components/DispatcherLayout';
-import OrderQueue from './components/OrderQueue';
-import FleetStatus from './components/FleetStatus';
-import LiveBoardPage from './components/LiveBoardPage';
-import OutletsReference from './components/OutletsReference';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './app/AuthProvider'
+import { rolePaths, useAuth, type Role } from './app/auth'
+import { RoleGuard, RoleLayout, WorkspacePlaceholder } from './app/RoleLayout'
+import { LoginPage } from './features/auth/LoginPage'
+import { NotificationsPage } from './features/notifications/Notifications'
+import { ApiError } from './lib/api'
+import { useState } from 'react'
+import DispatcherLayout from './components/DispatcherLayout'
+import OrderQueue from './components/OrderQueue'
+import FleetStatus from './components/FleetStatus'
+import LiveBoardPage from './components/LiveBoardPage'
+import { StoreLayout } from './features/store/StoreLayout'
+import { StoreHome, StoreOrders, StoreOrderDetail, NewStoreOrder } from './features/store/StoreOrders'
+import { StoreDeliveries } from './features/store/StoreDeliveries'
+import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreIssues'
+import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
+import { StoreSettings } from './features/store/StoreSettings'
+import { StoreHistory } from './features/store/StoreHistory'
+import OutletsReference from './components/OutletsReference'
 
-export function App() {
-  const [activeNav, setActiveNav] = useState('outlets');
+function DispatcherWorkspace() {
+  const [activeNav, setActiveNav] = useState('outlets')
 
   const pageMeta: Record<string, { title: string; subtitle: string; planStatus?: string }> = {
     orders: {
@@ -29,27 +44,18 @@ export function App() {
       subtitle: '120 outlets · Peliyagoda 75 · Kandy 45',
       planStatus: 'Plan v1 · not started',
     },
-  };
+  }
 
   const currentMeta = pageMeta[activeNav] || {
     title: 'Waypoint Relay',
     subtitle: 'Dispatch & Fleet Operations',
     planStatus: 'Plan v1 · not started',
-  };
+  }
 
-  const renderContent = () => {
-    switch (activeNav) {
-      case 'fleet':
-        return <FleetStatus />;
-      case 'live-board':
-        return <LiveBoardPage />;
-      case 'outlets':
-        return <OutletsReference />;
-      case 'orders':
-      default:
-        return <OrderQueue />;
-    }
-  };
+  const content = activeNav === 'fleet' ? <FleetStatus />
+    : activeNav === 'live-board' ? <LiveBoardPage />
+    : activeNav === 'outlets' ? <OutletsReference />
+    : <OrderQueue />
 
   return (
     <DispatcherLayout
@@ -59,10 +65,58 @@ export function App() {
       subtitle={currentMeta.subtitle}
       planStatus={currentMeta.planStatus}
     >
-      {renderContent()}
+      {content}
     </DispatcherLayout>
-  );
+  )
 }
 
-export default App;
-
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: (count, error) =>
+        !(error instanceof ApiError && error.status >= 400 && error.status < 500) && count < 2,
+    },
+  },
+})
+function HomeRedirect() {
+  const { user } = useAuth()
+  return <Navigate to={user ? rolePaths[user.role] : '/login'} replace />
+}
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            {(Object.entries(rolePaths) as [Role, string][]).map(([role, path]) => (
+              <Route key={role} element={<RoleGuard role={role} />}>
+                <Route path={path} element={<RoleLayout />}>
+                  {role === 'STORE_MANAGER' ? <>
+                    <Route element={<StoreLayout />}>
+                      <Route index element={<StoreHome />} />
+                      <Route path="orders" element={<StoreOrders />} />
+                      <Route path="orders/new" element={<NewStoreOrder />} />
+                      <Route path="orders/:id" element={<StoreOrderDetail />} />
+                      <Route path="deliveries" element={<StoreDeliveries />} />
+                      <Route path="issues" element={<StoreIssues />} />
+                      <Route path="issues/new" element={<NewIssue />} />
+                      <Route path="issues/:id" element={<StoreIssueDetail />} />
+                      <Route path="settings" element={<StoreSettings />} />
+                      <Route path="history" element={<StoreHistory />} />
+                    </Route>
+                  </> : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : <WorkspacePlaceholder />} />}
+                  {role === 'DISPATCHER' && <Route path="issues" element={<DispatchIssues />} />}
+                  <Route path="notifications" element={<NotificationsPage />} />
+                  <Route path="*" element={<Navigate to={path} replace />} />
+                </Route>
+              </Route>
+            ))}
+            <Route path="*" element={<HomeRedirect />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  )
+}
