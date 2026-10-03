@@ -21,6 +21,14 @@ export function groupNotifications(items: Notification[]) {
 }
 const readIds = new Map<string, Set<string>>()
 const keyFor = (user: User) => `${user.role}:${user.id}`
+export type AlertCategory = Notification['category']
+export function alertEnabled(user: User, category: AlertCategory) {
+  try { return localStorage.getItem(`waypoint.alerts.${keyFor(user)}.${category}`) !== 'false' }
+  catch { return true }
+}
+export function setAlertEnabled(user: User, category: AlertCategory, enabled: boolean) {
+  try { localStorage.setItem(`waypoint.alerts.${keyFor(user)}.${category}`, String(enabled)) } catch { /* Preference remains local to this session. */ }
+}
 function reads(user: User) {
   const key = keyFor(user)
   if (!readIds.has(key)) {
@@ -33,7 +41,7 @@ function reads(user: User) {
 }
 // Fictional UI fixtures. Replace this adapter when the notification contract lands.
 export async function getNotifications(user: User): Promise<Notification[]> {
-  return notificationFixtures(user.role).map((item) => ({ ...item, read: item.read || reads(user).has(item.id) }))
+  return notificationFixtures(user.role).filter(item => user.role !== 'STORE_MANAGER' || alertEnabled(user, item.category)).map((item) => ({ ...item, read: item.read || reads(user).has(item.id) }))
 }
 export async function markNotificationsRead(user: User, ids: string[]) {
   const saved = reads(user)

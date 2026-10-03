@@ -10,6 +10,13 @@ import { useState } from 'react'
 import DispatcherLayout from './components/DispatcherLayout'
 import OrderQueue from './components/OrderQueue'
 import FleetStatus from './components/FleetStatus'
+import { StoreLayout } from './features/store/StoreLayout'
+import { StoreHome, StoreOrders, StoreOrderDetail, NewStoreOrder } from './features/store/StoreOrders'
+import { StoreDeliveries } from './features/store/StoreDeliveries'
+import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreIssues'
+import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
+import { StoreSettings } from './features/store/StoreSettings'
+import { StoreHistory } from './features/store/StoreHistory'
 
 
 function DispatcherWorkspace() {
@@ -47,7 +54,21 @@ export default function App() {
             {(Object.entries(rolePaths) as [Role, string][]).map(([role, path]) => (
               <Route key={role} element={<RoleGuard role={role} />}>
                 <Route path={path} element={<RoleLayout />}>
-                  <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : <WorkspacePlaceholder />} />
+                  {role === 'STORE_MANAGER' ? <>
+                    <Route element={<StoreLayout />}>
+                      <Route index element={<StoreHome />} />
+                      <Route path="orders" element={<StoreOrders />} />
+                      <Route path="orders/new" element={<NewStoreOrder />} />
+                      <Route path="orders/:id" element={<StoreOrderDetail />} />
+                      <Route path="deliveries" element={<StoreDeliveries />} />
+                      <Route path="issues" element={<StoreIssues />} />
+                      <Route path="issues/new" element={<NewIssue />} />
+                      <Route path="issues/:id" element={<StoreIssueDetail />} />
+                      <Route path="settings" element={<StoreSettings />} />
+                      <Route path="history" element={<StoreHistory />} />
+                    </Route>
+                  </> : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : <WorkspacePlaceholder />} />}
+                  {role === 'DISPATCHER' && <Route path="issues" element={<DispatchIssues />} />}
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="*" element={<Navigate to={path} replace />} />
                 </Route>

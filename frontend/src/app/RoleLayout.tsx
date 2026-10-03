@@ -14,7 +14,7 @@ export function RoleLayout() {
   const text = useMessages()
   const location = useLocation()
   if (!user) return null
-  if (user.role === 'STORE_MANAGER' && location.pathname === '/store/notifications') return <Outlet />
+  if (user.role === 'STORE_MANAGER') return <Outlet />
   return (
     <div className="min-h-svh">
       <header className="border-b border-line bg-surface">
@@ -26,6 +26,7 @@ export function RoleLayout() {
             Waypoint Relay ↗
           </Link>
           <div className="flex flex-wrap items-center gap-3">
+            {user.role === 'DISPATCHER' && <Link to="/dispatch/issues" className="flex min-h-12 items-center rounded-lg px-3 text-sm font-semibold text-brand">Store issues</Link>}
             <NotificationBell />
             <span className="text-sm text-muted">{user.name}</span>
             <button

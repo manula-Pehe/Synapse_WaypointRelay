@@ -18,7 +18,7 @@ export function NotificationBell() {
   const unread = data?.filter((item) => !item.read).length ?? 0
   return <Link to={`${rolePaths[user.role]}/notifications`} aria-label={`${notificationMessages[language].title}, ${unread} ${notificationMessages[language].unread}`} className="relative flex min-h-12 min-w-12 items-center justify-center rounded-lg hover:bg-brand-soft">
     <NoticeIcon name="bell" className="size-6" />
-    {unread > 0 && <span aria-hidden="true" className="absolute right-1 top-1 size-2 rounded-full bg-brand" />}
+    {unread > 0 && <span aria-hidden="true" className="absolute right-0 top-0 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">{unread > 99 ? '99+' : unread}</span>}
   </Link>
 }
 function StoreNavigation() {

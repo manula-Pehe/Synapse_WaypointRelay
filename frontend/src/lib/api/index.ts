@@ -53,3 +53,13 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   }
   return data as T
 }
+
+export async function apiBlob(path: string): Promise<Blob> {
+  const requestToken = accessToken
+  const response = await fetch(`/api/${path.replace(/^\//, '')}`, {
+    headers: requestToken ? { Authorization: `Bearer ${requestToken}` } : {},
+  })
+  if (response.status === 401 && requestToken && requestToken === accessToken) onUnauthorized()
+  if (!response.ok) throw new ApiError(response.status, `HTTP_${response.status}`, 'Could not load the file.')
+  return response.blob()
+}
