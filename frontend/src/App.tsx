@@ -1,10 +1,33 @@
+import { useState } from 'react';
 import DispatcherLayout from './components/DispatcherLayout';
 import OrderQueue from './components/OrderQueue';
+import FleetStatus from './components/FleetStatus';
 
 export function App() {
+  const [activeNav, setActiveNav] = useState('orders');
+
+  const pageMeta = {
+    orders: {
+      title: 'Order queue · Thu 1 Oct run',
+      subtitle: 'Orders closed Wed 4:00 PM · 85 confirmed orders',
+    },
+    fleet: {
+      title: 'Fleet · Peliyagoda · Thu 1 Oct',
+      subtitle: 'Mark workshop vehicles before planning · weekly fuel shown per vehicle',
+    },
+  }[activeNav] || {
+    title: 'Waypoint Relay',
+    subtitle: 'Dispatch & Fleet Operations',
+  };
+
   return (
-    <DispatcherLayout>
-      <OrderQueue />
+    <DispatcherLayout
+      activeNav={activeNav}
+      onNavChange={setActiveNav}
+      title={pageMeta.title}
+      subtitle={pageMeta.subtitle}
+    >
+      {activeNav === 'fleet' ? <FleetStatus /> : <OrderQueue />}
     </DispatcherLayout>
   );
 }
