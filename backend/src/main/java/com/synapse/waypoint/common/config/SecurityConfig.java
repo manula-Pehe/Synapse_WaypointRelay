@@ -1,18 +1,19 @@
 package com.synapse.waypoint.common.config;
 
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpStatus;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+
+import com.synapse.waypoint.common.error.ErrorCode;
+import com.synapse.waypoint.common.error.JsonErrorWriter;
 
 /**
- * Base HTTP security: stateless API, CORS enabled, health check public,
- * unauthenticated API calls get 401.
- * Token authentication is added by the auth module.
+ * HTTP security: stateless API, CORS, public health check, and the standard
+ * {@code { code, message, details }} body for 401 and 403. Token authentication is added by the auth module.
  */
 @Configuration
 public class SecurityConfig {
@@ -25,9 +26,14 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
-                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/settings/clock").hasRole("DISPATCHER")
                         .anyRequest().authenticated())
-                .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint((request, response, ex) -> JsonErrorWriter.write(
+                                response, ErrorCode.UNAUTHORIZED, "Please sign in."))
+                        .accessDeniedHandler((request, response, ex) -> JsonErrorWriter.write(
+                                response, ErrorCode.FORBIDDEN, "You don't have access to this.")));
         return http.build();
     }
 }
