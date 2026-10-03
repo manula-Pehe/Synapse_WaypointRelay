@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
@@ -79,7 +80,7 @@ class DefaultOrderServiceTests {
         assertThat(history.get(0).fromStatus()).isEqualTo(from);
         assertThat(history.get(0).toStatus()).isEqualTo(to);
         assertThat(history.get(0).type()).isEqualTo(to.name());
-        assertThat(history.get(0).at()).isBetween(before, clock.now());
+        assertThat(history.get(0).at().toInstant()).isBetween(before.truncatedTo(ChronoUnit.SECONDS), clock.now());
     }
 
     @ParameterizedTest(name = "{0} cannot be {1}")

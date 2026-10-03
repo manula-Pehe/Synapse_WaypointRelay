@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.synapse.waypoint.common.time.ApiTimestamp;
 import com.synapse.waypoint.core.order.dto.OrderDto;
 import com.synapse.waypoint.core.order.dto.OrderEventDto;
 import com.synapse.waypoint.core.order.entity.Order;
@@ -38,7 +39,7 @@ class OrderMapper {
     }
 
     OrderEventDto toDto(OrderEvent event) {
-        return new OrderEventDto(event.getAt(), event.getActorUserId(), event.getType(), event.getFromStatus(),
+        return new OrderEventDto(ApiTimestamp.of(event.getAt()), event.getActorUserId(), event.getType(), event.getFromStatus(),
                 event.getToStatus(), event.getDetails());
     }
 
@@ -48,6 +49,7 @@ class OrderMapper {
                 order.getTemperatureRequirement(), order.getUnits(), order.getWeightKg(), order.getVolumeM3(),
                 order.getRunDate(), order.getStatus(), order.getSource(), order.isAutoConfirm(),
                 order.getDaysSinceLastServed(), order.isDeferredYesterday(), order.getParentOrderId(),
-                order.isStoreChecked(), order.getConfirmedAt(), order.getUpdatedAt());
+                order.isStoreChecked(), ApiTimestamp.of(order.getConfirmedAt()),
+                ApiTimestamp.of(order.getUpdatedAt()));
     }
 }
