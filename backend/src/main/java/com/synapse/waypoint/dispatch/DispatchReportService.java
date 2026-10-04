@@ -34,8 +34,8 @@ import com.synapse.waypoint.planning.service.PlanQueryService;
 @Transactional(readOnly = true)
 public class DispatchReportService {
 
-    private static final Set<OrderStatus> OUTCOMES = Set.of(OrderStatus.DELIVERED,
-            OrderStatus.PARTIAL, OrderStatus.FAILED);
+    private static final Set<OrderStatus> DELIVERIES = Set.of(OrderStatus.DELIVERED,
+            OrderStatus.PARTIAL);
 
     private final DispatcherDepotScope depotScope;
     private final PlanQueryService plans;
@@ -94,7 +94,7 @@ public class DispatchReportService {
                 .collect(Collectors.toMap(OrderDto::id, Function.identity()));
         Map<String, Instant> outcomeAt = new HashMap<>();
         for (OrderEvent event : events.findByOrderIdIn(ids)) {
-            if (event.getToStatus() != null && OUTCOMES.contains(event.getToStatus())) {
+            if (event.getToStatus() != null && DELIVERIES.contains(event.getToStatus())) {
                 outcomeAt.merge(event.getOrderId(), event.getAt(),
                         (first, second) -> first.isAfter(second) ? first : second);
             }
@@ -106,7 +106,7 @@ public class DispatchReportService {
             for (PlanStopDto stop : stops) {
                 OrderDto order = byId.get(stop.orderId());
                 Instant at = outcomeAt.get(stop.orderId());
-                if (order == null || !OUTCOMES.contains(order.status()) || at == null) continue;
+                if (order == null || !DELIVERIES.contains(order.status()) || at == null) continue;
                 completed++;
                 if (at.isAfter(stop.arriveTo().toInstant())) late++;
             }

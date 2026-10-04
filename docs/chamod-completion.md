@@ -27,3 +27,9 @@ This document tracks the work after the supplied design guide update. F1 and F10
 - The district schematic now consumes the same 15-second live trip response as F5. District trip totals, completed stops, and Planned / On the way / Completed counts use recorded trip progress from the published plan and order states.
 - A missing or draft plan has its own empty state. The SVG shows depot-to-district connections only; there are no location coordinates or GPS dots.
 - Updated the district aggregation test and verified the frontend build, lint, and test suite.
+
+## Final review
+
+- Failed outcomes remain in the report's failed count and exception list; the district late-delivery denominator counts delivered and partial outcomes only.
+- SVG trip counts and the depot label use the theme's on-brand text token in dark mode.
+- F5 intentionally uses only data recorded by the current backend, per the user's scope decision. Driver sync, vehicle problems, sync conflicts, dock shortfalls, and two-run skip history require their separate source workflows before they can appear as live facts.
