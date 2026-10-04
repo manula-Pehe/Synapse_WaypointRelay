@@ -18,6 +18,9 @@ public interface DeliveryQueryService {
     /** The live delivery for an order - an undone one  does not count. */
     Optional<DeliveryDto> deliveryForOrder(String orderId);
 
+    /** One delivery by id, whatever its outcome; an undone delivery does not count. */
+    Optional<DeliveryDto> deliveryById(String deliveryId);
+
     /**
      * How a vehicle's run is going, including when its phone last reached the server. A driver with
      * no signal shows as offline rather than as a stale position.

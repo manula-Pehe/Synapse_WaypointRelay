@@ -86,6 +86,14 @@ class DefaultDeliveryQueryService implements DeliveryQueryService {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<DeliveryDto> deliveryById(String deliveryId) {
+        return deliveries.findById(deliveryId)
+                .filter(delivery -> !delivery.isUndone())
+                .map(DefaultDeliveryQueryService::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public DriverStatusDto driverStatus(String requestedVehicleId) {
         // Dispatch reads any vehicle for the live board, but a driver only ever reads its own. The
         // check is here rather than in the controller so every caller gets it, including other modules.

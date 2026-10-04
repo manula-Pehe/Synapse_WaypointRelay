@@ -248,14 +248,14 @@ Ordered by id. `runDate` defaults to the current run date.
 { "orderId": "…", "orderRef": "S1-001", "status": "PLANNED",
   "arrival": { "from": "…", "to": "…", "lateRisk": 0.38, "vehicleId": "VEH036", "tripNo": 2, "changedReason": null },
   "deferral": null,          // moved order: { id, kind, rule, reason, newDate, needsDecision, storeChoice, splitOffered }
-  "delivery": null,          // after delivery: { outcome, units, photoUrl, signatureUrl, receivedBy, at }
+  "delivery": null,          // after delivery: { id, outcome, units, photoUrl, signatureUrl, receivedBy, at }
   "shortfall": null,         // { missingUnits, reason, remainderOrderRef }
   "driverStatus": null,      // { offline: true, lastSyncAt }
   "receipt": null }          // { receivedUnits, at }
 ```
   `arrival` comes from the published plan only (`null` for a draft or an unplanned order). A run lists the outlet's orders dated that day **and** the orders that run's published plan moved away — those now carry the new date, so they appear on both dates. On the original date `deferral` is that run's deferral; on the new date it is shown while the order is still `MOVED`.
 - `POST /api/store/orders/{id}/receipt` `{ "receivedUnits": 78, "note": "" }` — S5
-- `POST /api/store/failed/{deliveryId}/choice` `{ "choice": "REPLAN_TOMORROW" | "TRY_LATER_TODAY" | "CANCEL" }` — S3f
+- `POST /api/store/failed/{deliveryId}/choice` `{ "choice": "REPLAN_TOMORROW" | "TRY_LATER_TODAY" | "CANCEL" }` — S3f. `204` on success. The delivery must belong to the caller's outlet (else 404 `NOT_FOUND`), have outcome `FAILED` (else 409 `INVALID_STATUS`) and not be decided yet (else 409 `DUPLICATE`). The answer is recorded as the delivery's decision, exactly as a dispatcher's D6f decision would be, and the depot's dispatchers get an INFO notification "Store chose <CHOICE> for failed <ref>" → `/dispatch`. A decided failure is skipped by the 2 PM re-plan job.
 - `POST /api/store/breakdown/{stopId}/choice` `{ "accept": true }` — S3k
 
 ### Issues (store + dispatcher)

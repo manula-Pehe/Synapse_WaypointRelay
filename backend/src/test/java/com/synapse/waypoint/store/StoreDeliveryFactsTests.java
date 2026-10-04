@@ -37,6 +37,7 @@ class StoreDeliveryFactsTests {
 
         DeliveryProofView proof = facts.delivery("o-1").orElseThrow();
 
+        assertThat(proof.id()).isEqualTo("d-1");
         assertThat(proof.outcome()).isEqualTo(DeliveryOutcome.DELIVERED);
         assertThat(proof.units()).isEqualTo(7);
         assertThat(proof.photoUrl()).isEqualTo("/api/files/ph-1");
