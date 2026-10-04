@@ -63,11 +63,12 @@ class OrderBehaviourTests {
     }
 
     @Test
-    void shouldRefuseEditingUnitsOnceConfirmed() {
+    void shouldAllowEditingUnitsOnceConfirmed() {
         Order order = orderWith(OrderStatus.CONFIRMED, 10);
 
-        assertThatThrownBy(() -> order.editUnits(5, T1)).isInstanceOf(InvalidStatusException.class);
-        assertThat(order.getUnits()).isEqualTo(10);
+        order.editUnits(5, T1);
+        assertThat(order.getUnits()).isEqualTo(5);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
     }
 
     @Test

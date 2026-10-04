@@ -188,12 +188,12 @@ class DefaultOrderServiceTests {
     }
 
     @Test
-    void shouldRefuseEditingUnitsAfterConfirmation() {
+    void shouldAllowEditingUnitsAfterConfirmationBeforeCutoff() {
         Order order = OrderFixtures.save(orders, OUTLET, CONFIRMED);
 
-        assertThatThrownBy(() -> service.editUnits(order.getId(), 4))
-                .isInstanceOfSatisfying(DomainException.class,
-                        e -> assertThat(e.code()).isEqualTo(ErrorCode.INVALID_STATUS));
+        OrderDto edited = service.editUnits(order.getId(), 4);
+        assertThat(edited.units()).isEqualTo(4);
+        assertThat(edited.status()).isEqualTo(CONFIRMED);
     }
 
     @Test

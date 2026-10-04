@@ -13,9 +13,13 @@ import OrderQueue from './components/OrderQueue'
 import FleetStatus from './components/FleetStatus'
 import LiveBoardPage from './components/LiveBoardPage'
 import { StoreLayout } from './features/store/StoreLayout'
-import { StoreHome, StoreOrders, StoreOrderDetail, NewStoreOrder } from './features/store/StoreOrders'
+import { StoreHome, StoreOrders, StoreOrderDetail } from './features/store/StoreOrders'
+import { StoreReview } from './features/store/StoreReview'
+import { NewStoreOrder } from './features/store/NewStoreOrder'
 import { StoreDeliveries } from './features/store/StoreDeliveries'
+import { StoreArrival } from './features/store/StoreArrival'
 import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreIssues'
+import { StoreMoved } from './features/store/StoreMoved'
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
 import { DriverDecisions } from './features/dispatch/issues/DriverDecisions'
 import { StoreSettings } from './features/store/StoreSettings'
@@ -27,6 +31,7 @@ import IssuesInbox from './components/IssuesInbox'
 import IssueDetail from './components/IssueDetail'
 
 function DispatcherWorkspace() {
+  const { logout } = useAuth()
   const [activeNav, setActiveNav] = useState('issues')
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>('ISS-0142')
 
@@ -104,6 +109,7 @@ function DispatcherWorkspace() {
   return (
     <DispatcherLayout
       activeNav={activeNav}
+      onSignOut={logout}
       onNavChange={(nav) => {
         setActiveNav(nav)
         if (nav !== 'issues') {
@@ -148,8 +154,11 @@ export default function App() {
                       <Route index element={<StoreHome />} />
                       <Route path="orders" element={<StoreOrders />} />
                       <Route path="orders/new" element={<NewStoreOrder />} />
+                      <Route path="orders/review" element={<StoreReview />} />
                       <Route path="orders/:id" element={<StoreOrderDetail />} />
                       <Route path="deliveries" element={<StoreDeliveries />} />
+                      <Route path="deliveries/:orderId" element={<StoreArrival />} />
+                      <Route path="deliveries/:orderId/moved" element={<StoreMoved />} />
                       <Route path="issues" element={<StoreIssues />} />
                       <Route path="issues/new" element={<NewIssue />} />
                       <Route path="issues/:id" element={<StoreIssueDetail />} />

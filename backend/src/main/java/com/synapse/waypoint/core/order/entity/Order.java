@@ -142,9 +142,9 @@ public class Order {
         autoConfirm = true;
     }
 
-    /** Changes the quantity of a PREPARED order; weight and volume follow in proportion. */
+    /** Changes a prepared or confirmed order before the cut-off; weight and volume follow in proportion. */
     public void editUnits(int newUnits, Instant now) {
-        if (status != OrderStatus.PREPARED) {
+        if (status != OrderStatus.PREPARED && status != OrderStatus.CONFIRMED) {
             throw InvalidStatusException.notEditable(status);
         }
         if (units > 0) {

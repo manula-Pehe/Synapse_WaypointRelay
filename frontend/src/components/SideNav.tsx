@@ -9,6 +9,7 @@ export interface SideNavProps {
     role: string;
     depots: string;
   };
+  onSignOut?: () => void;
 }
 
 interface NavItem {
@@ -20,6 +21,7 @@ interface NavItem {
 export const SideNav: React.FC<SideNavProps> = ({
   activeItem: controlledActiveItem,
   onItemSelect,
+  onSignOut,
   user = {
     name: 'Ruwan P.',
     role: 'Central dispatch · plans',
@@ -288,6 +290,7 @@ export const SideNav: React.FC<SideNavProps> = ({
           <AccountMenu
             isOpen={isAccountMenuOpen}
             onClose={() => setIsAccountMenuOpen(false)}
+            onSignOut={onSignOut}
             user={{
               name: user.name,
               email: 'ruwan.p@waypoint.lk',
