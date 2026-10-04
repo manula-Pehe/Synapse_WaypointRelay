@@ -122,6 +122,9 @@
 						<app.seed.enabled>false</app.seed.enabled>
 						<!-- Job tests switch it on with @TestPropertySource. -->
 						<app.jobs.enabled>false</app.jobs.enabled>
+						<!-- Cached test contexts each retain a pool; keep their combined demand below PostgreSQL's CI limit. -->
+						<spring.datasource.hikari.maximum-pool-size>2</spring.datasource.hikari.maximum-pool-size>
+						<spring.datasource.hikari.minimum-idle>0</spring.datasource.hikari.minimum-idle>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
