@@ -1,6 +1,10 @@
 package com.synapse.waypoint.driver.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +17,10 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.synapse.waypoint.common.error.DomainException;
+import com.synapse.waypoint.common.error.ErrorCode;
+import com.synapse.waypoint.common.security.CurrentUser;
+import com.synapse.waypoint.common.security.Role;
 import com.synapse.waypoint.common.time.DemoClock;
 import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
 import com.synapse.waypoint.driver.dto.ConflictDto;
@@ -48,6 +56,7 @@ class DefaultDeliveryQueryServiceTests {
     private TripRunRepository tripRuns;
     private ConflictRepository conflicts;
     private VehicleProblemRepository vehicleProblems;
+    private CurrentUser currentUser;
     private DefaultDeliveryQueryService service;
 
     @BeforeEach
@@ -56,13 +65,25 @@ class DefaultDeliveryQueryServiceTests {
         tripRuns = mock(TripRunRepository.class);
         conflicts = mock(ConflictRepository.class);
         vehicleProblems = mock(VehicleProblemRepository.class);
+        currentUser = mock(CurrentUser.class);
+
+        // Dispatch by default, because most of these tests are the live board's view.
+        when(currentUser.role()).thenReturn(Role.DISPATCHER);
 
         DemoClock clock = mock(DemoClock.class);
         when(clock.now()).thenReturn(NOW);
         when(clock.runDate()).thenReturn(RUN_DATE);
 
-        service = new DefaultDeliveryQueryService(deliveries, tripRuns, conflicts, vehicleProblems,
-                clock);
+        service = serviceAs(currentUser);
+    }
+
+    /** A second service over the same mocks, with the caller signed in as the given role. */
+    private DefaultDeliveryQueryService serviceAs(CurrentUser user) {
+        DemoClock clock = mock(DemoClock.class);
+        when(clock.now()).thenReturn(NOW);
+        when(clock.runDate()).thenReturn(RUN_DATE);
+        return new DefaultDeliveryQueryService(deliveries, tripRuns, conflicts, vehicleProblems, clock,
+                user);
     }
 
     @Test
@@ -103,6 +124,50 @@ class DefaultDeliveryQueryServiceTests {
         assertThat(status.stopsDone()).isEqualTo(2);
         assertThat(status.driverId()).isEqualTo(DRIVER);
         assertThat(status.openProblems()).isZero();
+    }
+
+    /**
+     * A driver asking for its own truck is fine; asking about anyone else's is refused, so the
+     * endpoint cannot be used to read another driver's run.
+     */
+    @Test
+    void aDriverIsPinnedToItsOwnVehicleHoweverItAsks() {
+        CurrentUser driver = signedInAs(Role.DRIVER);
+        when(driver.vehicleId()).thenReturn(Optional.of(VEHICLE));
+        givenAVehicleThatLastSyncedAt(NOW.minusSeconds(30));
+        DefaultDeliveryQueryService asDriver = serviceAs(driver);
+
+        assertThat(asDriver.driverStatus(VEHICLE).offline()).isFalse();
+
+        // Asking for another truck answers with this driver's own run rather than that one's, so a
+        // guessed id cannot read someone else's deliveries.
+        when(deliveries.findByVehicleIdOrderByCompletedAtDesc("VEH999")).thenReturn(List.of());
+        DriverStatusDto status = asDriver.driverStatus("VEH999");
+
+        assertThat(status.offline()).isFalse();
+        verify(deliveries, never()).findByVehicleIdOrderByCompletedAtDesc("VEH999");
+    }
+
+    /** A driver with no vehicle assigned has no run, so asking is refused rather than leaking. */
+    @Test
+    void aDriverWithNoVehicleCannotReadAStatus() {
+        CurrentUser driver = signedInAs(Role.DRIVER);
+        when(driver.vehicleId()).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> serviceAs(driver).driverStatus(VEHICLE))
+                .isInstanceOf(DomainException.class);
+    }
+
+    /**
+     * Mockito stubs default methods too, so {@code is()} has to be stubbed explicitly; stubbing
+     * {@code role()} alone leaves {@code is(...)} returning false and the service looks like it is
+     * being called by dispatch.
+     */
+    private CurrentUser signedInAs(Role role) {
+        CurrentUser user = mock(CurrentUser.class);
+        when(user.role()).thenReturn(role);
+        when(user.is(any())).thenAnswer(invocation -> invocation.getArgument(0) == role);
+        return user;
     }
 
     /** The one the live board depends on: no signal is not the same as no work. */

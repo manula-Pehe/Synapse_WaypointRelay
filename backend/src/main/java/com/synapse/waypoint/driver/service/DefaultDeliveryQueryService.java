@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.synapse.waypoint.common.time.DemoClock;
+import com.synapse.waypoint.common.error.DomainException;
+import com.synapse.waypoint.common.error.ErrorCode;
+import com.synapse.waypoint.common.security.CurrentUser;
+import com.synapse.waypoint.common.security.Role;
 import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
 import com.synapse.waypoint.driver.dto.ConflictDto;
 import com.synapse.waypoint.driver.dto.DeliveryDto;
@@ -47,14 +51,31 @@ class DefaultDeliveryQueryService implements DeliveryQueryService {
     private final ConflictRepository conflicts;
     private final VehicleProblemRepository vehicleProblems;
     private final DemoClock clock;
+    private final CurrentUser currentUser;
 
     DefaultDeliveryQueryService(DeliveryRepository deliveries, TripRunRepository tripRuns,
-            ConflictRepository conflicts, VehicleProblemRepository vehicleProblems, DemoClock clock) {
+            ConflictRepository conflicts, VehicleProblemRepository vehicleProblems, DemoClock clock,
+            CurrentUser currentUser) {
         this.deliveries = deliveries;
         this.tripRuns = tripRuns;
         this.conflicts = conflicts;
         this.vehicleProblems = vehicleProblems;
         this.clock = clock;
+        this.currentUser = currentUser;
+    }
+
+    /**
+     * The vehicle a caller is allowed to ask about.
+     *
+     * A driver is pinned to its own vehicle however it spells the request; everyone else (dispatch on
+     * the live board) may ask about any.
+     */
+    private String scopedVehicle(String requested) {
+        if (!currentUser.is(Role.DRIVER)) {
+            return requested;
+        }
+        return currentUser.vehicleId().orElseThrow(() -> new DomainException(ErrorCode.FORBIDDEN,
+                "this account has no vehicle"));
     }
 
     @Override
@@ -65,7 +86,10 @@ class DefaultDeliveryQueryService implements DeliveryQueryService {
 
     @Override
     @Transactional(readOnly = true)
-    public DriverStatusDto driverStatus(String vehicleId) {
+    public DriverStatusDto driverStatus(String requestedVehicleId) {
+        // Dispatch reads any vehicle for the live board, but a driver only ever reads its own. The
+        // check is here rather than in the controller so every caller gets it, including other modules.
+        String vehicleId = scopedVehicle(requestedVehicleId);
         // The live board asks about "now", so this one uses the current run date rather than a
         // supplied one; the rest are historical views.
         List<Delivery> todays = withinRunDate(
