@@ -238,6 +238,7 @@ class DefaultSyncService implements SyncService {
                 payload.kind(),
                 payload.canDrive(),
                 payload.fridgeTempC(),
+                payload.unitsOnBoard(),
                 payload.note(),
                 userId,
                 now,

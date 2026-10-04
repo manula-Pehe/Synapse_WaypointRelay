@@ -11,6 +11,8 @@ public record ReportProblemRequest(
         String kind,
         Boolean canDrive,
         Double fridgeTempC,
+        /** Cases still on the truck; absent when there is no load (US-10.1, and what D6b re-plans against). */
+        Integer unitsOnBoard,
         String note,
         /** The phone's own id, so a queued report retried after a dropped signal is stored once. */
         String clientId) {

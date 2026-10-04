@@ -212,6 +212,7 @@ class DefaultDeliveryQueryService implements DeliveryQueryService {
                 problem.getKind(),
                 problem.isCanDrive(),
                 problem.getFridgeTempC(),
+                problem.getUnitsOnBoard(),
                 problem.getNote(),
                 problem.getStatus(),
                 problem.getReply(),

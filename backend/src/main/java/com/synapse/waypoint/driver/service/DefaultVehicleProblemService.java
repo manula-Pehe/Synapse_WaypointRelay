@@ -64,6 +64,7 @@ class DefaultVehicleProblemService implements VehicleProblemService {
                 // Absent means the driver could not say, and the safe reading is they cannot drive on.
                 request.canDrive() == null || request.canDrive(),
                 request.fridgeTempC() == null ? null : BigDecimal.valueOf(request.fridgeTempC()),
+                request.unitsOnBoard(),
                 request.note(),
                 userId,
                 clock.now(),
@@ -119,6 +120,7 @@ class DefaultVehicleProblemService implements VehicleProblemService {
                 problem.getKind(),
                 problem.isCanDrive(),
                 problem.getFridgeTempC(),
+                problem.getUnitsOnBoard(),
                 problem.getNote(),
                 problem.getStatus(),
                 problem.getReply(),

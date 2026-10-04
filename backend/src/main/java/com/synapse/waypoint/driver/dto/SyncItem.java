@@ -72,6 +72,8 @@ public record SyncItem(
             @NotNull VehicleProblemKind kind,
             boolean canDrive,
             BigDecimal fridgeTempC,
+            /** Cases still on the truck, so the breakdown re-plan knows what it is moving (US-10.1). */
+            @PositiveOrZero Integer unitsOnBoard,
             String note) {
     }
 
