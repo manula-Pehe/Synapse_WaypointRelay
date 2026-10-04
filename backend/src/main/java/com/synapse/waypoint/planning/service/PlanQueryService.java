@@ -27,5 +27,8 @@ public interface PlanQueryService {
     /** Why the published plan left the order out (the latest such deferral), if it did. */
     Optional<DeferralDto> deferralForOrder(String orderId);
 
+    /** The deferrals of the outlet's orders in the published plans of the run date; empty when none. */
+    List<DeferralDto> deferralsForOutlet(LocalDate runDate, String outletId);
+
     Optional<PlanDto> publishedPlan(LocalDate runDate, String depot);
 }

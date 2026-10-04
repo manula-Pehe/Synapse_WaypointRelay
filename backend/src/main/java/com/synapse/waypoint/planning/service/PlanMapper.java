@@ -12,6 +12,7 @@ import com.synapse.waypoint.common.error.NotFoundException;
 import com.synapse.waypoint.common.time.ApiTimestamp;
 import com.synapse.waypoint.core.order.dto.OrderDto;
 import com.synapse.waypoint.core.reference.dto.VehicleDto;
+import com.synapse.waypoint.planning.domain.StoreChoice;
 import com.synapse.waypoint.planning.domain.TripWindowType;
 import com.synapse.waypoint.planning.dto.DeferralDto;
 import com.synapse.waypoint.planning.dto.PlanDto;
@@ -60,10 +61,10 @@ class PlanMapper {
                 ApiTimestamp.of(trip.getDepartAt()), toStop(stop, order));
     }
 
-    DeferralDto toDeferral(Deferral deferral, OrderDto order) {
+    DeferralDto toDeferral(Deferral deferral, OrderDto order, StoreChoice storeChoice) {
         return new DeferralDto(deferral.getId(), deferral.getOrderId(), order.ref(), order.outletId(),
                 deferral.getKind(), deferral.getRule(), deferral.getReason(), deferral.getPriorityScore(),
-                deferral.getDaysWaited(), deferral.getNewDate(), deferral.isNeedsDecision(), null);
+                deferral.getDaysWaited(), deferral.getNewDate(), deferral.isNeedsDecision(), storeChoice);
     }
 
     private PlanVehicleDto toVehicle(VehicleDto vehicle, List<Trip> trips, Map<String, List<Stop>> stopsByTrip,
