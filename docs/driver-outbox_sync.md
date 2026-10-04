@@ -189,8 +189,7 @@ Identical queue, one extra cache key per dock. Three things to know:
 | What | Why |
 |---|---|
 | Uploads that queue offline | Proof needs signal before it uploads (see above) |
-| R8r — returned goods | Hand back at the depot with a signature; `returns` exists in V20, no endpoint or screen yet |
-| F12 — Sinhala / Tamil stop list | i18n keys exist; the stop list still renders outlet ids raw |
+| A signature capture on the handback | R8r records the reason and the driver; the signature image is the loader's half |
 
 ## Already landed since this doc was written
 
@@ -198,3 +197,11 @@ Identical queue, one extra cache key per dock. Three things to know:
 - `GET /api/dispatch/conflicts` + resolve — the D8 decision card reads it directly.
 - The transport now uses `lib/api` rather than bare `fetch`.
 - Offline sign-in (`pin.ts`) and its tests.
+- **R8r — returned goods.** `GOODS_RETURNED` is a sync action like any other, so the handback is
+  queued on the phone and works with no signal; the screen is `/driver/hand-back`, reached from the
+  trip-end screen. It writes a `returns` row and does not touch the order — stock coming back on the
+  shelf is not a delivery, so the shortfall stays outstanding.
+- **F12 — Sinhala / Tamil stop list.** `outletLabel()` (`features/driver/outlet.ts`) is the one place a
+  store is rendered, and it reads the `outletName` the server already sends per stop. Everything else
+  on the stop list goes through `t()`, including the two sentences that used to be hard-coded English.
+  A name is a name in all three languages, which is why F12 is the label rather than the whole screen.
