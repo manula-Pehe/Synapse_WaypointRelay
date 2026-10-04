@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.synapse.waypoint.common.error.DomainException;
 import com.synapse.waypoint.common.security.CurrentUser;
@@ -34,15 +35,22 @@ import com.synapse.waypoint.core.order.service.OrderService;
 import com.synapse.waypoint.driver.dto.SyncItem;
 import com.synapse.waypoint.driver.dto.SyncRequest;
 import com.synapse.waypoint.driver.dto.SyncResponse;
+import com.synapse.waypoint.driver.entity.Conflict;
 import com.synapse.waypoint.driver.entity.Delivery;
 import com.synapse.waypoint.driver.entity.DeliveryReason;
+import com.synapse.waypoint.driver.entity.StoreWait;
 import com.synapse.waypoint.driver.entity.SyncActionType;
 import com.synapse.waypoint.driver.entity.SyncLog;
 import com.synapse.waypoint.driver.entity.SyncResult;
 import com.synapse.waypoint.driver.entity.TripRun;
+import com.synapse.waypoint.driver.entity.VehicleProblem;
+import com.synapse.waypoint.driver.entity.VehicleProblemKind;
+import com.synapse.waypoint.driver.repository.ConflictRepository;
 import com.synapse.waypoint.driver.repository.DeliveryRepository;
+import com.synapse.waypoint.driver.repository.StoreWaitRepository;
 import com.synapse.waypoint.driver.repository.SyncLogRepository;
 import com.synapse.waypoint.driver.repository.TripRunRepository;
+import com.synapse.waypoint.driver.repository.VehicleProblemRepository;
 
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
@@ -50,7 +58,7 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * The offline guarantee: an action that arrives twice is carried out once.
  *
- * <p>These run without a database — the repositories are mocked — so the rule behind the whole sync
+ * <p>These run without a database - the repositories are mocked — so the rule behind the whole sync
  * design can be checked on any machine. Persistence is exercised by the database-backed tests in CI.
  */
 class DefaultSyncServiceTests {
@@ -62,6 +70,9 @@ class DefaultSyncServiceTests {
     private SyncLogRepository syncLog;
     private DeliveryRepository deliveries;
     private TripRunRepository tripRuns;
+    private StoreWaitRepository storeWaits;
+    private VehicleProblemRepository vehicleProblems;
+    private ConflictRepository conflicts;
     private OrderService orders;
     private DefaultSyncService service;
 
@@ -70,6 +81,9 @@ class DefaultSyncServiceTests {
         syncLog = mock(SyncLogRepository.class);
         deliveries = mock(DeliveryRepository.class);
         tripRuns = mock(TripRunRepository.class);
+        storeWaits = mock(StoreWaitRepository.class);
+        vehicleProblems = mock(VehicleProblemRepository.class);
+        conflicts = mock(ConflictRepository.class);
         orders = mock(OrderService.class);
 
         DemoClock clock = mock(DemoClock.class);
@@ -83,8 +97,13 @@ class DefaultSyncServiceTests {
 
         when(deliveries.save(any(Delivery.class))).thenAnswer(call -> call.getArgument(0));
         when(syncLog.save(any(SyncLog.class))).thenAnswer(call -> call.getArgument(0));
+        when(tripRuns.save(any(TripRun.class))).thenAnswer(call -> call.getArgument(0));
+        when(storeWaits.save(any(StoreWait.class))).thenAnswer(call -> call.getArgument(0));
+        when(vehicleProblems.save(any(VehicleProblem.class))).thenAnswer(call -> call.getArgument(0));
+        when(conflicts.save(any(Conflict.class))).thenAnswer(call -> call.getArgument(0));
 
-        service = new DefaultSyncService(syncLog, deliveries, tripRuns, orders, clock, user, mapper);
+        service = new DefaultSyncService(syncLog, deliveries, tripRuns, storeWaits, vehicleProblems,
+                conflicts, orders, clock, user, mapper);
     }
 
     /** F1: the same clientId sent twice is applied once. */
@@ -92,7 +111,7 @@ class DefaultSyncServiceTests {
     void sameClientIdTwiceIsAppliedOnce() {
         SyncRequest request = new SyncRequest(List.of(delivered("c-1", "ord-1", "stp-1", 42)));
 
-        // First attempt — the phone has no record of this clientId yet.
+        // First attempt - the phone has no record of this clientId yet.
         when(syncLog.existsById("c-1")).thenReturn(false);
         SyncResponse first = service.sync(DRIVER, request);
         assertThat(first.results()).extracting(SyncResponse.Result::result)
@@ -104,7 +123,8 @@ class DefaultSyncServiceTests {
         assertThat(second.results()).extracting(SyncResponse.Result::result)
                 .containsExactly(SyncResult.DUPLICATE);
 
-        // One delivery row, one history row, one order status change — the retry changed nothing.
+
+        // One delivery row, one history row, one order status change - the retry changed nothing.
         verify(deliveries, times(1)).save(any(Delivery.class));
         verify(syncLog, times(1)).save(any(SyncLog.class));
         verify(orders, times(1)).recordOutcome("ord-1", DeliveryOutcome.DELIVERED, 42);
@@ -185,34 +205,130 @@ class DefaultSyncServiceTests {
         verify(orders, never()).recordOutcome(anyString(), any(), anyInt());
     }
 
-    /** A stop already has a live delivery: the phone cannot overwrite it, the dispatcher decides. */
+    /**
+     * F8: the delivery already at the stop was witnessed, so it stands. The clash becomes a conflict
+     * row for the dispatcher and the phone is told CONFLICT - not an error, and not a lost record.
+     */
     @Test
-    void aSecondDeliveryAtTheSameStopIsAConflict() {
+    void aDeliveryAfterReassignmentLeavesTheWitnessedOneStandingAndRaisesAConflict() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+        Delivery earlier = Delivery.record(new Delivery.RecordedDelivery("dlv-earlier", "stp-1",
+                "ord-1", "VEH999", DeliveryOutcome.DELIVERED, 20, null, "Nimal", null, null,
+                NOW.minusSeconds(120), NOW.minusSeconds(60), "usr-other", "c-0"));
+        when(deliveries.findByStopIdAndUndoneAtIsNull("stp-1")).thenReturn(Optional.of(earlier));
+
+        SyncResponse response = service.sync(DRIVER,
+                new SyncRequest(List.of(delivered("c-1", "ord-1", "stp-1", 42))));
+
+        assertThat(response.results()).singleElement()
+                .satisfies(result -> assertThat(result.result()).isEqualTo(SyncResult.CONFLICT));
+
+        // The witnessed delivery stands and no second one is written over it.
+        verify(deliveries, never()).save(any(Delivery.class));
+        verify(orders, never()).recordOutcome(anyString(), any(), anyInt());
+
+        ArgumentCaptor<Conflict> raised = ArgumentCaptor.forClass(Conflict.class);
+        verify(conflicts).save(raised.capture());
+        assertThat(raised.getValue().getDeliveryId()).isEqualTo("dlv-earlier");
+        assertThat(raised.getValue().getOrderId()).isEqualTo("ord-1");
+        assertThat(raised.getValue().getStopId()).isEqualTo("stp-1");
+        assertThat(raised.getValue().getDetails())
+                .containsEntry("existingOutcome", "DELIVERED")
+                .containsEntry("existingUnits", 20)
+                .containsEntry("incomingUnits", 42)
+                .containsEntry("incomingDriverId", DRIVER);
+        assertThat(raised.getValue().isOpen()).isTrue();
+    }
+
+    /** One clash must not cost the driver the rest of the run. */
+    @Test
+    void aConflictDoesNotStopTheRestOfTheBatch() {
         when(syncLog.existsById(anyString())).thenReturn(false);
         when(deliveries.findByStopIdAndUndoneAtIsNull("stp-1")).thenReturn(Optional.of(
-                Delivery.record(new Delivery.RecordedDelivery("dlv-earlier", "stp-1", "ord-0",
-                        VEHICLE, DeliveryOutcome.DELIVERED, 20, null, "Nimal", null, null,
-                        NOW, NOW, DRIVER, "c-0"))));
+                Delivery.record(new Delivery.RecordedDelivery("dlv-earlier", "stp-1", "ord-1",
+                        "VEH999", DeliveryOutcome.DELIVERED, 20, null, "Nimal", null, null,
+                        NOW.minusSeconds(120), NOW.minusSeconds(60), "usr-other", "c-0"))));
 
-        assertThatThrownBy(() -> service.sync(DRIVER, new SyncRequest(List.of(
-                delivered("c-1", "ord-1", "stp-1", 42)))))
-                .isInstanceOf(DomainException.class)
-                .hasMessageContaining("dispatcher decision");
+        SyncResponse response = service.sync(DRIVER, new SyncRequest(List.of(
+                delivered("c-1", "ord-1", "stp-1", 42),
+                delivered("c-2", "ord-2", "stp-2", 30))));
 
-        verify(deliveries, never()).save(any(Delivery.class));
+        assertThat(response.results()).extracting(SyncResponse.Result::result)
+                .containsExactly(SyncResult.CONFLICT, SyncResult.APPLIED);
+        verify(orders, times(1)).recordOutcome("ord-2", DeliveryOutcome.DELIVERED, 30);
     }
 
     @Test
     void acceptingATripRecordsTheDriverOnIt() {
         when(syncLog.existsById(anyString())).thenReturn(false);
         when(tripRuns.findById("trp-1")).thenReturn(Optional.empty());
-        when(tripRuns.save(any(TripRun.class))).thenAnswer(call -> call.getArgument(0));
 
         service.sync(DRIVER, new SyncRequest(List.of(new SyncItem("c-1", SyncActionType.TRIP_ACCEPTED,
                 NOW, Map.of("tripId", "trp-1")))));
 
         verify(tripRuns).save(any(TripRun.class));
         verify(orders, never()).recordOutcome(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void arrivingMarksTheTripAsUnderWay() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+        TripRun run = TripRun.accepted("trp-1", DRIVER, NOW.minusSeconds(600));
+        when(tripRuns.findAll()).thenReturn(List.of(run));
+
+        service.sync(DRIVER, new SyncRequest(List.of(new SyncItem("c-1", SyncActionType.ARRIVED, NOW,
+                Map.of("stopId", "stp-1", "arrivedAt", NOW.toString())))));
+
+        assertThat(run.getStartedAt()).isEqualTo(NOW);
+    }
+
+    /** R4w: the wait is kept with its length worked out, even when the delivery then succeeds. */
+    @Test
+    void aStoreWaitIsRecordedWithHowLongTheDriverWaited() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+
+        service.sync(DRIVER, new SyncRequest(List.of(new SyncItem("c-1", SyncActionType.STORE_WAIT,
+                NOW, Map.of("stopId", "stp-4",
+                        "startedAt", NOW.minusSeconds(1_200).toString(),
+                        "endedAt", NOW.toString(),
+                        "note", "gate was shut")))));
+
+        ArgumentCaptor<StoreWait> saved = ArgumentCaptor.forClass(StoreWait.class);
+        verify(storeWaits).save(saved.capture());
+        assertThat(saved.getValue().getStopId()).isEqualTo("stp-4");
+        assertThat(saved.getValue().getMinutes()).isEqualTo(20);
+        assertThat(saved.getValue().getNote()).isEqualTo("gate was shut");
+    }
+
+    @Test
+    void aVehicleProblemIsReportedAgainstTheDriversOwnVehicle() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+
+        service.sync(DRIVER, new SyncRequest(List.of(new SyncItem("c-1",
+                SyncActionType.VEHICLE_PROBLEM, NOW,
+                Map.of("tripId", "trp-1", "kind", "FRIDGE_FAULT", "canDrive", true,
+                        "fridgeTempC", "11.4", "note", "running warm")))));
+
+        ArgumentCaptor<VehicleProblem> saved = ArgumentCaptor.forClass(VehicleProblem.class);
+        verify(vehicleProblems).save(saved.capture());
+        VehicleProblem problem = saved.getValue();
+        assertThat(problem.getVehicleId()).isEqualTo(VEHICLE);
+        assertThat(problem.getTripId()).isEqualTo("trp-1");
+        assertThat(problem.getKind()).isEqualTo(VehicleProblemKind.FRIDGE_FAULT);
+        assertThat(problem.isCanDrive()).isTrue();
+        assertThat(problem.getFridgeTempC()).isEqualByComparingTo("11.4");
+        assertThat(problem.isOpen()).isTrue();
+    }
+
+    /** An unreadable payload is the phone's problem, so it is a 400 and not a retryable 500. */
+    @Test
+    void anUnreadablePayloadIsRefusedAsBadRequest() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+
+        assertThatThrownBy(() -> service.sync(DRIVER, new SyncRequest(List.of(new SyncItem(
+                "c-1", SyncActionType.VEHICLE_PROBLEM, NOW, Map.of("kind", "NOT_A_KIND"))))))
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("cannot read a VEHICLE_PROBLEM payload");
     }
 
     @Test
@@ -226,21 +342,6 @@ class DefaultSyncServiceTests {
 
         assertThat(mine.getLastSyncAt()).isEqualTo(NOW);
         assertThat(someoneElse.getLastSyncAt()).isNull();
-    }
-
-    /**
-     * Known gap, not a design decision: ARRIVED, STORE_WAIT and VEHICLE_PROBLEM are in the API
-     * contract but have no handler yet, so they are refused — and that refusal aborts the whole batch.
-     * Worth closing before the screens that queue those actions are built.
-     */
-    @Test
-    void anActionWithNoHandlerYetIsRefusedWithAClearMessage() {
-        when(syncLog.existsById(anyString())).thenReturn(false);
-
-        assertThatThrownBy(() -> service.sync(DRIVER, new SyncRequest(List.of(new SyncItem(
-                "c-1", SyncActionType.ARRIVED, NOW, Map.of("stopId", "stp-1"))))))
-                .isInstanceOf(DomainException.class)
-                .hasMessageContaining("ARRIVED is not accepted yet");
     }
 
     private SyncItem delivered(String clientId, String orderId, String stopId, int units) {
