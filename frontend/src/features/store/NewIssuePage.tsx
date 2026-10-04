@@ -9,14 +9,14 @@ const kinds = [['MISSING','Short'],['DAMAGED','Damaged'],['WRONG_ITEM','Wrong it
 export function NewIssuePage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const fromReceipt = location.state as { orderId?: string; units?: number; type?: string } | null
+  const fromReceipt = location.state as { orderId?: string; units?: number; type?: string; note?: string } | null
   const client = useQueryClient()
   const orders = useQuery({ queryKey: ['store', 'orders'], queryFn: () => storeApi.orders() })
   const [orderId, setOrderId] = useState(fromReceipt?.orderId ?? '')
   const [type, setType] = useState<string>(kinds.some(([value]) => value === fromReceipt?.type) ? fromReceipt!.type! : 'DAMAGED')
   const [units, setUnits] = useState(fromReceipt?.units && fromReceipt.units > 0 ? fromReceipt.units : 1)
   const [wants, setWants] = useState<'REPLACE' | 'NOTHING'>('REPLACE')
-  const [note, setNote] = useState('')
+  const [note, setNote] = useState(fromReceipt?.note ?? '')
   const [photos, setPhotos] = useState<File[]>([])
   const [photoError, setPhotoError] = useState('')
   const mutation = useMutation({ mutationFn: async () => { const issue = await storeApi.createIssue({ orderId: orderId || null, type, units: type === 'OTHER' ? null : units, wants, note }); const uploads = await Promise.allSettled(photos.map(photo => storeApi.uploadPhoto(issue.id, photo))); return { issue, photoFailed: uploads.some(result => result.status === 'rejected') } }, onSuccess: async ({ issue, photoFailed }) => { await client.invalidateQueries({ queryKey: ['store', 'issues'] }); navigate(`/store/issues/${issue.id}`, { state: { created: true, photoFailed } }) } })

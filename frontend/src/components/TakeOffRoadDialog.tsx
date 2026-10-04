@@ -18,7 +18,7 @@ export const TakeOffRoadDialog: React.FC<TakeOffRoadDialogProps> = ({
   onClose,
   onConfirm,
   vehicleId = 'VEH006',
-  vehicleDetails = 'Truck · fridge · 6,840 kg · 33.4 m³',
+  vehicleDetails = 'Truck · fridge · 4,000 kg · 20.0 m³',
 }) => {
   const [selectedReason, setSelectedReason] = useState<string>('Workshop');
   const [fromDate] = useState<string>('Thu 1 Oct');

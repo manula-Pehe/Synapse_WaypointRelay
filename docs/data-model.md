@@ -93,9 +93,9 @@ Owned by core; other modules use `FileService`.
 
 | Column | Type | Notes |
 |---|---|---|
-| id | VARCHAR(40) PK | |
+| id | VARCHAR(40) PK | `f-<uuid>` |
 | kind | VARCHAR(20) | PHOTO · SIGNATURE |
-| content_type | VARCHAR(60) | image/jpeg, image/png |
+| content_type | VARCHAR(60) | image/jpeg, image/png, image/webp |
 | size_bytes | INTEGER | ≤ 10 MB (resize on the device) |
 | data | BYTEA | |
 | client_id | VARCHAR(40) UNIQUE NULL | offline uploads |

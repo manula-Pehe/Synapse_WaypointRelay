@@ -1,275 +1,51 @@
-import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query'
+import { dispatchApi, type RunReport as RunReportData } from '../features/dispatch/core/api'
 
-export interface RunReportProps {
-  onExportCsv?: () => void;
-  onFilterChange?: (filter: string) => void;
+const card = 'rounded-xl border border-line bg-surface p-5'
+const csvCell = (value: string | number | null) => {
+  const text = String(value ?? '')
+  const safe = /^[=+@\-\t\r]/.test(text) ? `'${text}` : text
+  return `"${safe.replaceAll('"', '""')}"`
 }
 
-interface DistrictLateStat {
-  district: string;
-  countText: string;
-  fillPct: number;
-  color: 'red' | 'blue';
+function exportCsv(report: RunReportData) {
+  const rows: (string | number | null)[][] = [
+    ['Run date', report.runDate], ['Depot', report.depot],
+    ['On time percent', report.onTimePercent], ['On time stops', report.onTimeStops],
+    ['Completed stops', report.completedStops], ['Deferred', report.deferred],
+    ['Failed', report.failed], ['Partial', report.partial], [],
+    ['District', 'Late stops', 'Completed stops'],
+    ...report.lateByDistrict.map(row => [row.district, row.late, row.completed]),
+    [], ['Exception type', 'Detail', 'Order ID'],
+    ...report.exceptions.map(item => [item.type, item.detail, item.orderId]),
+  ]
+  const blob = new Blob([rows.map(row => row.map(csvCell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `dispatch-run-${report.runDate}-${report.depot}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
 }
 
-const DISTRICT_STATS: DistrictLateStat[] = [
-  {
-    district: 'Nuwara Eliya',
-    countText: '3 of 5',
-    fillPct: 38,
-    color: 'red',
-  },
-  {
-    district: 'Badulla',
-    countText: '2 of 5',
-    fillPct: 24,
-    color: 'red',
-  },
-  {
-    district: 'Colombo',
-    countText: '2 of 28',
-    fillPct: 5,
-    color: 'blue',
-  },
-  {
-    district: 'Kalutara',
-    countText: '1 of 6',
-    fillPct: 10,
-    color: 'blue',
-  },
-  {
-    district: 'Galle',
-    countText: '1 of 9',
-    fillPct: 7,
-    color: 'blue',
-  },
-];
-
-export const RunReport: React.FC<RunReportProps> = ({
-  onExportCsv,
-  onFilterChange,
-}) => {
-  const [activeFilter, setActiveFilter] = useState<'today' | 'week' | 'month'>('today');
-
-  const handleFilterClick = (filter: 'today' | 'week' | 'month', label: string) => {
-    setActiveFilter(filter);
-    onFilterChange?.(label);
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* 1. Top Action Row: Filter Pills on Left, Export on Right */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        {/* Filter Pills */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => handleFilterClick('today', 'Thu 1 Oct')}
-            className={`min-h-[36px] rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-              activeFilter === 'today'
-                ? 'bg-[#183a6b] text-white shadow-xs'
-                : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            Thu 1 Oct
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleFilterClick('week', 'This week')}
-            className={`min-h-[36px] rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-              activeFilter === 'week'
-                ? 'bg-[#183a6b] text-white shadow-xs'
-                : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            This week
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleFilterClick('month', 'Last 30 days')}
-            className={`min-h-[36px] rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-              activeFilter === 'month'
-                ? 'bg-[#183a6b] text-white shadow-xs'
-                : 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            Last 30 days
-          </button>
-        </div>
-
-        {/* Export CSV Button */}
-        <button
-          type="button"
-          onClick={onExportCsv}
-          className="inline-flex min-h-[36px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs transition hover:bg-slate-50 active:scale-[0.98]"
-        >
-          <svg
-            className="h-4 w-4 text-slate-600"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="6 9 6 2 18 2 18 9" />
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-            <rect x="6" y="14" width="12" height="8" />
-          </svg>
-          <span>Export CSV</span>
-        </button>
-      </div>
-
-      {/* 2. KPI Cards (Grid of 5) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {/* Card 1: ON TIME */}
-        <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs">
-          <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-            ON TIME
-          </div>
-          <div className="mt-1 text-3xl font-bold tracking-tight text-emerald-600">
-            89%
-          </div>
-          <div className="mt-1 text-xs text-slate-500">
-            70 of 79 delivered
-          </div>
-        </div>
-
-        {/* Card 2: DEFERRED */}
-        <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs">
-          <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-            DEFERRED
-          </div>
-          <div className="mt-1 text-3xl font-bold tracking-tight text-rose-600">
-            5
-          </div>
-          <div className="mt-1 text-xs text-slate-500">
-            1 unavoidable · 4 chosen
-          </div>
-        </div>
-
-        {/* Card 3: FAILED */}
-        <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs">
-          <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-            FAILED
-          </div>
-          <div className="mt-1 text-3xl font-bold tracking-tight text-red-700">
-            1
-          </div>
-          <div className="mt-1 text-xs text-slate-500">
-            OUT012 · store closed
-          </div>
-        </div>
-
-        {/* Card 4: PARTIAL */}
-        <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs">
-          <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-            PARTIAL
-          </div>
-          <div className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
-            2
-          </div>
-          <div className="mt-1 text-xs text-slate-500">
-            remainders booked Fri
-          </div>
-        </div>
-
-        {/* Card 5: SKIPPED 2+ RUNS */}
-        <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-2xs">
-          <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-            SKIPPED 2+ RUNS
-          </div>
-          <div className="mt-1 text-3xl font-bold tracking-tight text-emerald-600">
-            0
-          </div>
-          <div className="mt-1 text-xs text-slate-500">
-            fairness held
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Bottom Two-Column Layout */}
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
-        {/* Left Panel: Late deliveries by district (~60% width) */}
-        <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs lg:col-span-7">
-          <h2 className="mb-5 text-sm font-bold text-slate-900">
-            Late deliveries by district
-          </h2>
-
-          <div className="space-y-4">
-            {DISTRICT_STATS.map((item) => (
-              <div key={item.district} className="flex items-center gap-4">
-                {/* District Name */}
-                <span className="w-28 shrink-0 text-xs font-medium text-slate-700">
-                  {item.district}
-                </span>
-
-                {/* Horizontal Progress Bar */}
-                <div className="relative h-3.5 flex-1 overflow-hidden rounded-md bg-slate-100">
-                  <div
-                    className={`h-full rounded-md transition-all ${
-                      item.color === 'red' ? 'bg-[#9e2a2b]' : 'bg-[#183a6b]'
-                    }`}
-                    style={{ width: `${item.fillPct}%` }}
-                  />
-                </div>
-
-                {/* Count Ratio */}
-                <span className="min-w-[48px] shrink-0 text-right text-xs font-bold text-slate-900">
-                  {item.countText}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Panel: Exceptions handled (~40% width) */}
-        <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs lg:col-span-5">
-          <h2 className="mb-5 text-sm font-bold text-slate-900">
-            Exceptions handled
-          </h2>
-
-          <div className="space-y-4 text-xs">
-            {/* Sync conflicts */}
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-slate-500">Sync conflicts</span>
-              <span className="text-right text-slate-800">
-                <strong className="font-bold text-slate-900">
-                  1 · resolved (physical fact kept)
-                </strong>
-              </span>
-            </div>
-
-            {/* Vehicle problems */}
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-slate-500">Vehicle problems</span>
-              <span className="text-right text-slate-800">
-                <strong className="font-bold text-slate-900">2</strong> · VEH007 breakdown, VEH036 fridge
-              </span>
-            </div>
-
-            {/* Plan versions */}
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-slate-500">Plan versions</span>
-              <span className="text-right text-slate-800">
-                <strong className="font-bold text-slate-900">v2 · 1 change</strong> after publishing (dock weight)
-              </span>
-            </div>
-
-            {/* Store issues */}
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-slate-500">Store issues</span>
-              <span className="text-right text-slate-800">
-                <strong className="font-bold text-slate-900">2 · 1 resolved</strong>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+export default function RunReport({ runDate, depot }: { runDate: string; depot: string }) {
+  const query = useQuery({ queryKey: ['dispatch-report', runDate, depot], queryFn: () => dispatchApi.runReport(runDate, depot) })
+  if (query.isPending) return <p role="status">Loading run report…</p>
+  if (query.error) return <p role="alert" className="rounded-xl bg-danger-soft p-5 text-danger">Could not load report: {query.error.message}</p>
+  const report = query.data
+  return <div className="space-y-5 text-ink">
+    <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-muted">Recorded results · {depot} · {runDate}</p><button className="min-h-10 rounded-lg border border-line bg-surface px-4 text-sm font-semibold" onClick={() => exportCsv(report)}>Export CSV</button></div>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {[
+        ['On time', report.onTimePercent == null ? '—' : `${report.onTimePercent}%`, `${report.onTimeStops} of ${report.completedStops} completed stops`],
+        ['Deferred', report.deferred == null ? '—' : String(report.deferred), report.deferred == null ? 'No published plan' : 'Published plan'],
+        ['Failed', String(report.failed), 'Recorded order outcomes'],
+        ['Partial', String(report.partial), 'Recorded order outcomes'],
+      ].map(([label, value, note]) => <div key={label} className={card}><p className="text-xs font-bold uppercase tracking-wide text-muted">{label}</p><p className="mt-1 text-3xl font-bold text-brand">{value}</p><p className="mt-1 text-xs text-muted">{note}</p></div>)}
     </div>
-  );
-};
-
-export default RunReport;
+    <div className="grid gap-5 lg:grid-cols-2">
+      <section className={card}><h2 className="font-bold">Late deliveries by district</h2><p className="mt-1 text-xs text-muted">Based on recorded outcome times and planned arrival windows.</p><div className="mt-4 space-y-4">{report.lateByDistrict.length === 0 && <p className="text-sm text-muted">No published trip stops.</p>}{report.lateByDistrict.map(row => <div key={row.district} className="grid grid-cols-[7rem_1fr_auto] items-center gap-3 text-sm"><span>{row.district}</span><div className="h-3 rounded-full bg-surface-2"><div className="h-3 rounded-full bg-status-risk" style={{ width: `${row.completed ? (100 * row.late / row.completed) : 0}%` }} /></div><strong>{row.late} of {row.completed}</strong></div>)}</div></section>
+      <section className={card}><h2 className="font-bold">Recorded exceptions · {report.exceptions.length}</h2><p className="mt-1 text-xs text-muted">Failed and partial outcomes, plus deferrals awaiting a decision.</p><div className="mt-4 space-y-3">{report.exceptions.length === 0 && <p className="text-sm text-muted">No recorded exceptions.</p>}{report.exceptions.map((item, index) => <div key={`${item.type}-${item.orderId}-${index}`} className="rounded-lg bg-surface-2 p-3 text-sm"><strong>{item.type.replaceAll('_', ' ')}</strong><p className="mt-1 text-muted">{item.detail}</p></div>)}</div></section>
+    </div>
+  </div>
+}

@@ -301,7 +301,7 @@ export const IssueDetail: React.FC<IssueDetailProps> = ({
             <div className="flex items-center justify-between py-2.5 text-xs sm:text-sm">
               <span className="text-slate-500">Order</span>
               <span className="font-semibold text-slate-900">
-                S1-001 · chilled · 80 cases
+                S1-001 · chilled · 70 cases
               </span>
             </div>
 

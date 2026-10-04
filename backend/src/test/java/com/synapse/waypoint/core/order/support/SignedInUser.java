@@ -26,6 +26,18 @@ public final class SignedInUser {
         signIn(userId, Role.DISPATCHER, Map.of());
     }
 
+    public static void asDriver(String userId, String vehicleId) {
+        signIn(userId, Role.DRIVER, Map.of(TokenClaims.VEHICLE_ID, vehicleId));
+    }
+
+    public static void asLoader(String userId, String depot) {
+        signIn(userId, Role.LOADER, Map.of(TokenClaims.DEPOT, depot));
+    }
+
+    public static void asDepotDispatcher(String userId, String depot) {
+        signIn(userId, Role.DISPATCHER, Map.of(TokenClaims.DEPOT, depot));
+    }
+
     public static void signOut() {
         SecurityContextHolder.clearContext();
     }
