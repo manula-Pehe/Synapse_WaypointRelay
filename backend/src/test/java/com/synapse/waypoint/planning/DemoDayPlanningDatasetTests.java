@@ -62,7 +62,9 @@ class DemoDayPlanningDatasetTests {
     void shouldPlanTheDemoDayWithoutRuleViolations() throws IOException {
         PlanningInput input = loadDemoDayWithEveryOrderConfirmed();
 
+        long startedAt = System.nanoTime();
         PlanningResult result = new PlanningEngine().plan(input);
+        System.out.printf("S1 planning took %d ms%n", (System.nanoTime() - startedAt) / 1_000_000);
 
         System.out.printf("S1 %s: orders=%d served=%d deferred=%d (unavoidable=%d, chosen=%d) violations=%d fridge=%d/%d%n",
                 DEPOT, input.orders().size(), result.summary().served(), result.summary().deferred(),
@@ -72,6 +74,8 @@ class DemoDayPlanningDatasetTests {
                 result.deferrals().stream().collect(Collectors.groupingBy(
                         deferral -> deferral.kind() + "/" + deferral.rule(), TreeMap::new, Collectors.counting())),
                 result.warnings().size());
+        System.out.printf("S1 deferred by brand/temp: %s%n", result.deferrals().stream().collect(Collectors.groupingBy(
+                deferral -> deferral.order().brand() + "/" + deferral.order().temperature(), TreeMap::new, Collectors.counting())));
         writeSubmission(input, result);
 
         assertThat(result.violations()).isEmpty();
