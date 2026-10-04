@@ -5,7 +5,7 @@ import type { DriverStop, DriverTrip } from './types'
 /**
  * The driver app's own endpoints (F3, F5, F10).
  *
- * Every *read* the screens need is one call — `today()` covers R1, R2 and R0 — so a run is one
+ * Every *read* the screens need is one call - `today()` covers R1, R2 and R0 - so a run is one
  * request at sign-in rather than one per screen. Writes do not appear here: those go through the
  * outbox in `lib/offline`, which is the rule that lets the app work with no signal.
  */
@@ -141,7 +141,7 @@ interface List<T> {
   total: number
 }
 
-/** D8 — one card per sync clash. `KEEP_FIELD` keeps what the driver recorded. */
+/** D8 - one card per sync clash. `KEEP_FIELD` keeps what the driver recorded. */
 export const dispatchApi = {
   conflicts: (runDate?: string) =>
     api<List<ConflictPayload>>(`dispatch/conflicts${runDate ? `?runDate=${runDate}` : ''}`),
@@ -152,7 +152,7 @@ export const dispatchApi = {
       body: JSON.stringify({ keepField }),
     }),
 
-  /** D6f — failed stops waiting on a decision. */
+  /** D6f - failed stops waiting on a decision. */
   failed: (runDate?: string) =>
     api<List<FailedDeliveryPayload>>(`dispatch/failed${runDate ? `?runDate=${runDate}` : ''}`),
 
@@ -162,7 +162,7 @@ export const dispatchApi = {
       body: JSON.stringify({ decision }),
     }),
 
-  /** F10 — the problems drivers have raised, so dispatch can answer them. */
+  /** F10 - the problems drivers have raised, so dispatch can answer them. */
   problems: () => api<List<VehicleProblemPayload>>('dispatch/problems'),
 
   replyProblem: (id: string, text: string) =>
@@ -173,21 +173,21 @@ export const dispatchApi = {
 }
 
 export const driverApi = {
-  /** R1/R2/R0 — one call for the whole run, so it is the one thing cached for offline use. */
+  /** R1/R2/R0 - one call for the whole run, so it is the one thing cached for offline use. */
   today: () => api<TodayPayload>('driver/today'),
 
   /**
-   * R0 — accepts the load. This is the one write that goes straight to the server: it is a
+   * R0 - accepts the load. This is the one write that goes straight to the server: it is a
    * decision about a truck the driver is looking at, it is made once, and a queued copy would
    * leave the screen disagreeing with the server after a sync.
    */
   acceptTrip: (tripId: string) =>
     api<TodayPayload>(`driver/trips/${encodeURIComponent(tripId)}/accept`, { method: 'POST' }),
 
-  /** R9 — a problem report. Queued through the outbox like every other driver write. */
+  /** R9 - a problem report. Queued through the outbox like every other driver write. */
   problems: () => api<List<VehicleProblemPayload>>('driver/problems'),
 
-  /** F5 — proof upload. Multipart, and idempotent on clientId so a retry is not a second file. */
+  /** F5 - proof upload. Multipart, and idempotent on clientId so a retry is not a second file. */
   uploadProof: (file: File, kind: 'photo' | 'signature', clientId: string) => {
     const body = new FormData()
     body.append('file', file)
@@ -200,7 +200,7 @@ export const driverApi = {
 export { toStop, toTrip }
 
 /**
- * R9ok — dispatch's most recent instruction on this driver's own problems, or null when there is
+ * R9ok - dispatch's most recent instruction on this driver's own problems, or null when there is
  * nothing to read. Returns a string rather than the row because that is all the screen shows.
  */
 export function useDriverReply(): string | null {

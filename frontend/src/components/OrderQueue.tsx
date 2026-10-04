@@ -210,7 +210,7 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
                 4 stores haven't confirmed their chilled order for Thursday
               </h2>
               <p className="mt-1 text-xs text-amber-800/90 sm:text-sm">
-                They got the 3:00 PM reminder. Unconfirmed chilled orders are not planned after 4:00 PM — call them, or enter the order for them if they tell you by phone.
+                They got the 3:00 PM reminder. Unconfirmed chilled orders are not planned after 4:00 PM - call them, or enter the order for them if they tell you by phone.
               </p>
             </div>
           </div>
@@ -262,7 +262,7 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
               </div>
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              3× a normal day — only 4 fridge vehicles
+              3× a normal day - only 4 fridge vehicles
             </p>
           </div>
 
@@ -566,7 +566,7 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
             <line x1="12" y1="8" x2="12.01" y2="8" />
           </svg>
           <span>
-            Late adds are still allowed after 4:00 PM until the plan is published — they are tagged "Entered by dispatcher" and the store is asked to check them.
+            Late adds are still allowed after 4:00 PM until the plan is published - they are tagged "Entered by dispatcher" and the store is asked to check them.
           </span>
         </div>
       ) : (

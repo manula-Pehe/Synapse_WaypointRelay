@@ -20,7 +20,7 @@ import com.synapse.waypoint.core.order.entity.TemperatureRequirement;
 import com.synapse.waypoint.core.order.service.CloseOrdersService;
 import com.synapse.waypoint.core.order.service.OrderService;
 
-/** Order list and detail — docs/api.md §4. */
+/** Order list and detail - docs/api.md §4. */
 @RestController
 @RequestMapping("/api/orders")
 class OrderController {

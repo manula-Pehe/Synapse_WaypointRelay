@@ -10,7 +10,7 @@ import com.synapse.waypoint.driver.dto.TodayDto;
 import com.synapse.waypoint.driver.service.TodayService;
 
 /**
- * The driver's own run — docs/api.md §7.
+ * The driver's own run - docs/api.md §7.
  *
  * Reads are always for the signed-in driver's vehicle; there is no vehicle parameter, so one driver
  * cannot ask for another's run.

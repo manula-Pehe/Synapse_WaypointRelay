@@ -119,7 +119,7 @@ public class Delivery {
         return new Delivery(recorded);
     }
 
-    /** A short or failed delivery must say why — the record is the proof (F6). */
+    /** A short or failed delivery must say why - the record is the proof (F6). */
     public boolean hasReasonForShortfall() {
         return outcome != DeliveryOutcome.DELIVERED && reason == null;
     }

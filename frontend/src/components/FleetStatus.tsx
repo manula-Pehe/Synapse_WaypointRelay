@@ -12,7 +12,7 @@ export interface VehicleItem {
   highlighted?: boolean;
 }
 
-// Sample values only — invented, not taken from the competition dataset.
+// Sample values only - invented, not taken from the competition dataset.
 const DEFAULT_FLEET_DATA: VehicleItem[] = [
   {
     id: 'VEH001',

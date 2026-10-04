@@ -62,7 +62,7 @@ const DEFAULT_TIMELINE_EVENTS: TimelineEvent[] = [
   },
   {
     id: 'evt-8',
-    title: 'Received — confirmed by store',
+    title: 'Received - confirmed by store',
     timestamp: 'Thu 7:20 AM · Dilani J.',
     dotColor: 'green',
   },

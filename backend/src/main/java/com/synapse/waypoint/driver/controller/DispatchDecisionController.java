@@ -22,7 +22,7 @@ import com.synapse.waypoint.driver.entity.FailedDeliveryDecision;
 import com.synapse.waypoint.driver.service.DispatchDecisionService;
 
 /**
- * The dispatcher's decisions on what drivers did — docs/api.md §8.
+ * The dispatcher's decisions on what drivers did - docs/api.md §8.
  *
  * F8 (D8) settles a clash between an offline delivery and a board edit; F9 (D6f) decides what happens
  * to a delivery that failed. Both are here because both end with the driver's own record carrying

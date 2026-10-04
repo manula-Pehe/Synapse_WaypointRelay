@@ -22,7 +22,13 @@ export interface Fleet { items: Vehicle[]; confirmedAt: string | null; confirmed
 export interface Outlet { id: string; name: string; brand: string; district: string; depot: string; dockType: string; parkingConstraint: string; windowOpen: string; windowClose: string; mallWindowOpen: string | null; mallWindowClose: string | null }
 export interface Notice { id: string; severity: 'CRITICAL' | 'WARNING' | 'INFO'; type: string; title: string; body: string; link: string | null; createdAt: string; readAt: string | null }
 export interface NoticeList extends List<Notice> { unreadCount: number }
-export interface Plan { id: string; runDate: string; depot: string; version: number; status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED'; vehicles: { vehicleId: string; trips: { id: string; tripNo: number; brand: string; district: string; stops: { orderId: string; outletId: string }[] }[] }[] }
+export interface PlanReadiness { ordersClosed: boolean; fleetConfirmed: boolean; confirmedOrders: number; availableVehicles: number; reeferAvailable: number; warnings: string[] }
+export interface PlanStop { id: string; orderId: string; orderRef: string; outletId: string; seq: number; loadSeq: number; units: number; temp: string; arriveFrom: string; arriveTo: string; lateRisk: number | null }
+export interface PlanTrip { id: string; tripNo: number; brand: string; district: string; windowType: string; departAt: string; minutes: number; weightKg: number; volumeM3: number; stops: PlanStop[] }
+export interface PlanVehicle { vehicleId: string; type: string; temp: string; weightCapKg: number; volumeCapM3: number; freshMinutesUsed: number; freshBudget: number; daytimeMinutesUsed: number; daytimeBudget: number; trips: PlanTrip[] }
+export interface PlanSummary { served: number; deferred: number; unavoidable: number; chosen: number; violations: number; fridgeVehiclesUsed: number; fridgeVehiclesAvailable: number; warnings: number }
+export interface Plan { id: string; runDate: string; depot: string; version: number; status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED'; summary: PlanSummary; vehicles: PlanVehicle[] }
+export interface PlanDeferral { id: string; orderId: string; orderRef: string; outletId: string; kind: 'UNAVOIDABLE' | 'CHOSEN'; rule: string; reason: string; priorityScore: number; daysWaited: number; newDate: string; needsDecision: boolean; storeChoice: string | null }
 export interface LiveBoard {
   runDate: string; depot: string; generatedAt: string; onTimePercent: number | null
   completedStops: number; onTimeStops: number; deferredToday: number | null
@@ -57,6 +63,10 @@ export const dispatchApi = {
   markNotificationRead: (id: string) => api<Notice>(`notifications/${encodeURIComponent(id)}/read`, { method: 'POST' }),
   markAllNotificationsRead: () => api<{ updated: number }>('notifications/read-all', { method: 'POST' }),
   latestPlan: (runDate: string, depot: string) => api<Plan>(`dispatch/plans?${params({ runDate, depot })}`),
+  planReadiness: (runDate: string, depot: string) => api<PlanReadiness>(`dispatch/plans/readiness?${params({ runDate, depot })}`),
+  createPlan: (runDate: string, depot: string) => api<Plan>('dispatch/plans', { method: 'POST', body: json({ runDate, depot }) }),
+  planDeferrals: (id: string) => api<List<PlanDeferral>>(`dispatch/plans/${encodeURIComponent(id)}/deferrals`),
+  publishPlan: (id: string) => api<Plan>(`dispatch/plans/${encodeURIComponent(id)}/publish`, { method: 'POST' }),
   live: (runDate: string, depot: string) => api<LiveBoard>(`dispatch/live?${params({ runDate, depot })}`),
   runReport: (runDate: string, depot: string) => api<RunReport>(`dispatch/reports/run?${params({ runDate, depot })}`),
 }

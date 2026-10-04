@@ -138,7 +138,7 @@ export const TakeOffRoadDialog: React.FC<TakeOffRoadDialogProps> = ({
             />
           </svg>
           <p className="text-xs text-amber-900 leading-relaxed">
-            This is 1 of only 4 available fridge vehicles at Peliyagoda. Thursday's chilled demand is 3× normal — more chilled orders will wait.
+            This is 1 of only 4 available fridge vehicles at Peliyagoda. Thursday's chilled demand is 3× normal - more chilled orders will wait.
           </p>
         </div>
 

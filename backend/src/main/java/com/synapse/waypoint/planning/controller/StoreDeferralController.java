@@ -13,7 +13,7 @@ import com.synapse.waypoint.planning.domain.StoreChoice;
 import com.synapse.waypoint.planning.dto.StoreDeferralDto;
 import com.synapse.waypoint.planning.service.DeferralChoiceService;
 
-/** Store answers to deferrals — docs/api.md §6 (S4k, S4r, S4x, S4u, S2c). Store-manager-only by path rule. */
+/** Store answers to deferrals - docs/api.md §6 (S4k, S4r, S4x, S4u, S2c). Store-manager-only by path rule. */
 @RestController
 @RequestMapping("/api/store/deferrals")
 class StoreDeferralController {

@@ -48,7 +48,7 @@ class OrderChangeGuard {
         String depot = outlets.findById(outletId).map(Outlet::getDepot)
                 .orElseThrow(() -> new NotFoundException("Outlet", outletId));
         if (runs.findByRunDateAndDepot(runDate, depot).filter(OrderRun::isClosed).isPresent()) {
-            throw new DomainException(ErrorCode.ORDERS_CLOSED, "Orders closed — changes go to the next run",
+            throw new DomainException(ErrorCode.ORDERS_CLOSED, "Orders closed - changes go to the next run",
                     Map.of("runDate", runDate.toString(), "depot", depot));
         }
     }

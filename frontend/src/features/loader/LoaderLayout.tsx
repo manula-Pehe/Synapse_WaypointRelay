@@ -25,7 +25,7 @@ export function LoaderLayout({ children, context }: { children: ReactNode; conte
         hour: 'numeric',
         minute: '2-digit',
       })
-    : '—'
+    : '-'
   const switchLoader = () => {
     logout()
     navigate('/loader/sign-in', { replace: true })
