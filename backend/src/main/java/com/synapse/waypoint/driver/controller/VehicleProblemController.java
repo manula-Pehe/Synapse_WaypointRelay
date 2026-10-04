@@ -15,7 +15,7 @@ import com.synapse.waypoint.driver.dto.VehicleProblemDto;
 import com.synapse.waypoint.driver.service.VehicleProblemService;
 
 /**
- * Vehicle problems from the cab — docs/api.md §7, F10 (R9, R9ok).
+ * Vehicle problems from the cab - docs/api.md §7, F10 (R9, R9ok).
  *
  * The driver's report and dispatch's reply are the two ends of one thread: the driver posts, dispatch
  * answers on the same problem, and the driver reads the answer on the same screen (R9ok) so nobody

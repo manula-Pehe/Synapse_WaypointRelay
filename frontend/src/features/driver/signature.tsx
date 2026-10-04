@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useDriverTheme } from './theme'
 
 /**
- * R4s — a simple signature pad.
+ * R4s - a simple signature pad.
  *
  * A pointer-events canvas rather than a signature library - the brief allows adding one, but a pad
  * this simple is a few lines and keeps the offline bundle small on a cheap phone.

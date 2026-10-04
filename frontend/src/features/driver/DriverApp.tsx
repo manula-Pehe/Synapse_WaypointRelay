@@ -163,12 +163,12 @@ function DriverRoutes() {
       <Route
         path="problem"
         element={
-          // R9ok — dispatch's instruction, read from the server so the driver is not phoning.
+          // R9ok - dispatch's instruction, read from the server so the driver is not phoning.
           <VehicleProblem {...shared} trip={view} reply={latestReply} />
         }
       />
       <Route path="trip-end" element={<TripEnd {...shared} trip={view} />} />
-      {/* R8r — goods that stayed on the truck go back on the shelf at the depot. */}
+      {/* R8r - goods that stayed on the truck go back on the shelf at the depot. */}
       <Route path="hand-back" element={<HandBack {...shared} trip={view} />} />
     </Routes>
   )

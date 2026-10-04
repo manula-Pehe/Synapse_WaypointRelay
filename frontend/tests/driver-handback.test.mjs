@@ -5,7 +5,7 @@ import { t, rememberLanguage, storedLanguage } from '../src/features/driver/i18n
 import { SYNC_TYPES } from '../src/lib/offline/types.ts'
 
 /**
- * F12 — the stop list in Sinhala and Tamil, and R8r — goods handed back at the depot.
+ * F12 - the stop list in Sinhala and Tamil, and R8r - goods handed back at the depot.
  *
  * The rule under test is that a driver reads a store, not an identifier: the server sends the
  * outlet name with each stop, and everything the driver reads on the stop list goes through t().

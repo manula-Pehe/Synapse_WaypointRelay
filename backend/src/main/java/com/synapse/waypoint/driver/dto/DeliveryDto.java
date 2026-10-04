@@ -20,6 +20,8 @@ public record DeliveryDto(
         String receivedBy,
         boolean hasPhoto,
         boolean hasSignature,
+        String photoFileId,
+        String signatureFileId,
         Instant completedAt,
         boolean undone,
         FailedDeliveryDecision decision,

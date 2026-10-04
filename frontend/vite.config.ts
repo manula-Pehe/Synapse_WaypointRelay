@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  // Where `npm run dev` forwards /api — a local backend by default, or the shared dev server.
+  // Where `npm run dev` forwards /api - a local backend by default, or the shared dev server.
   const apiTarget = env.VITE_API_TARGET || 'http://localhost:8080'
 
   return {
@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
         injectRegister: 'auto',
         includeAssets: ['favicon.svg', 'icons.svg'],
         manifest: {
-          name: 'Waypoint Relay — Driver',
+          name: 'Waypoint Relay - Driver',
           short_name: 'Waypoint',
           description: 'Driver app for Waypoint Relay',
           theme_color: '#10131B',

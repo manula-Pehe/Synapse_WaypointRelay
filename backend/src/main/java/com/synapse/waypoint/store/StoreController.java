@@ -21,7 +21,6 @@ import com.synapse.waypoint.common.dto.ListResponse;
 import com.synapse.waypoint.common.error.DomainException;
 import com.synapse.waypoint.common.error.ErrorCode;
 import com.synapse.waypoint.common.security.CurrentUser;
-import com.synapse.waypoint.common.security.Role;
 import com.synapse.waypoint.common.time.DemoClock;
 import com.synapse.waypoint.core.order.dto.CreateOrderRequest;
 import com.synapse.waypoint.core.order.dto.CloseStatusDto;
@@ -32,9 +31,6 @@ import com.synapse.waypoint.core.order.entity.TemperatureRequirement;
 import com.synapse.waypoint.core.order.service.OrderService;
 import com.synapse.waypoint.core.reference.entity.Outlet;
 import com.synapse.waypoint.core.reference.repository.OutletRepository;
-import com.synapse.waypoint.notification.entity.NotificationSeverity;
-import com.synapse.waypoint.notification.recipient.NotificationScope;
-import com.synapse.waypoint.notification.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/store")
@@ -46,14 +42,13 @@ class StoreController {
     private final JdbcTemplate jdbc;
     private final StoreOrderAccess access;
     private final EntityManager entityManager;
-    private final NotificationService notifications;
+    private final StoreDeliveryService deliveries;
 
     StoreController(OrderService orders, CurrentUser user, DemoClock clock, OutletRepository outlets,
                     JdbcTemplate jdbc, StoreOrderAccess access, EntityManager entityManager,
-                    NotificationService notifications) {
+                    StoreDeliveryService deliveries) {
         this.orders = orders; this.user = user; this.clock = clock; this.outlets = outlets;
-        this.jdbc = jdbc; this.access = access; this.entityManager = entityManager;
-        this.notifications = notifications;
+        this.jdbc = jdbc; this.access = access; this.entityManager = entityManager; this.deliveries = deliveries;
     }
 
     private String outletId() {
@@ -85,13 +80,7 @@ class StoreController {
 
     @GetMapping("/deliveries")
     ListResponse<DeliveryView> deliveries(@RequestParam(required = false) LocalDate runDate) {
-        LocalDate date = runDate == null ? clock.today() : runDate;
-        return ListResponse.of(access.find(date, date).stream().map(order -> {
-            List<ReceiptView> receipts = jdbc.query("SELECT received_units,received_at FROM receipts WHERE order_id = ?",
-                    (rs, row) -> new ReceiptView(rs.getInt(1), rs.getTimestamp(2).toInstant()), order.id());
-            return new DeliveryView(order.id(), order.ref(), order.status(), null, null, null, null,
-                    receipts.isEmpty() ? null : receipts.get(0));
-        }).toList());
+        return ListResponse.of(deliveries.forRun(runDate));
     }
 
     @PutMapping("/orders/{id}")
@@ -168,18 +157,11 @@ class StoreController {
         String receiptId = UUID.randomUUID().toString();
         jdbc.update("INSERT INTO receipts(id,order_id,received_units,note,received_by,received_at) VALUES (?,?,?,?,?,?)",
                 receiptId, id, body.receivedUnits(), body.note(), user.id(), Timestamp.from(clock.now()));
-        notifications.notifyRole(Role.STORE_MANAGER, NotificationScope.outlet(order.outletId()),
-                NotificationSeverity.INFO, "RECEIPT_CONFIRMED", "Receipt confirmed for " + order.ref(),
-                "Your receipt of " + body.receivedUnits() + " cases for order " + order.ref() + " has been recorded.",
-                "/store/deliveries/" + id + "/receipt");
         return Map.of("id", receiptId, "orderId", id, "receivedUnits", body.receivedUnits(), "at", clock.now());
     }
 
     record Home(String outlet, String brand, LocalDate runDate, java.time.Instant now, boolean ordersClosed, String cutOffAt,
                 List<OrderDto> tomorrow, List<OrderDto> today, int openIssues) {}
-    record DeliveryView(String orderId, String orderRef, OrderStatus status, Object arrival,
-                        Object deferral, Object delivery, Object shortfall, ReceiptView receipt) {}
-    record ReceiptView(int receivedUnits, java.time.Instant at) {}
     record Units(@Min(1) int units) {}
     record CancelReason(@Size(max = 100) String reason) {}
     record NewStoreOrder(@NotNull LocalDate runDate, @NotNull TemperatureRequirement temp, @Min(1) int units,

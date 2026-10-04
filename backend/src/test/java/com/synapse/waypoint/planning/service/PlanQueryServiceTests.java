@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.synapse.waypoint.core.order.service.CloseOrdersService;
 import com.synapse.waypoint.core.order.support.SignedInUser;
 import com.synapse.waypoint.planning.domain.DeferralKind;
+import com.synapse.waypoint.planning.domain.StoreChoice;
 import com.synapse.waypoint.planning.dto.PlanTripDto;
 import com.synapse.waypoint.planning.support.PlanScenario;
 
@@ -103,6 +104,35 @@ class PlanQueryServiceTests {
         assertThat(query.tripsForDepot(RUN_DATE, PlanScenario.OTHER_DEPOT)).isEmpty();
         assertThat(query.stopForOrder(DEFERRED_ORDER)).isEmpty();
         assertThat(query.deferralForOrder(PlanScenario.orderId("PL-1"))).isEmpty();
+    }
+
+    @Test
+    void shouldListTheDeferralsOfOneOutletForTheRunOnlyOnceThePlanIsPublished() {
+        String planId = plans.create(RUN_DATE, DEPOT).id();
+        assertThat(query.deferralsForOutlet(RUN_DATE, PlanScenario.HEAVY_STORE)).isEmpty();
+
+        plans.publish(planId);
+
+        assertThat(query.deferralsForOutlet(RUN_DATE, PlanScenario.HEAVY_STORE)).singleElement()
+                .satisfies(deferral -> assertThat(deferral.orderRef()).isEqualTo("PL-3"));
+        assertThat(query.deferralsForOutlet(RUN_DATE, PlanScenario.STORE_1)).isEmpty();
+        assertThat(query.deferralsForOutlet(RUN_DATE.plusDays(1), PlanScenario.HEAVY_STORE)).isEmpty();
+    }
+
+    @Test
+    void shouldShowTheStoresChoiceOnItsDeferral() {
+        String planId = publish();
+        String deferralId = query.deferralForOrder(DEFERRED_ORDER).orElseThrow().id();
+        assertThat(query.deferralForOrder(DEFERRED_ORDER)).get().extracting("storeChoice").isNull();
+
+        jdbc.update("""
+                INSERT INTO deferral_choices (id, deferral_id, choice, units, chosen_by, chosen_at)
+                VALUES ('dch-1', ?, 'REDUCE', 3, ?, now())""", deferralId,
+                PlanScenario.storeUser(PlanScenario.HEAVY_STORE));
+
+        assertThat(query.deferralForOrder(DEFERRED_ORDER)).get().extracting("storeChoice")
+                .isEqualTo(StoreChoice.REDUCE);
+        assertThat(plans.deferrals(planId)).singleElement().extracting("storeChoice").isEqualTo(StoreChoice.REDUCE);
     }
 
     private String publish() {

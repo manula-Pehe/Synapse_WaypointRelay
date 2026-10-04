@@ -7,7 +7,7 @@ import com.synapse.waypoint.core.order.entity.TemperatureRequirement;
 
 /**
  * The cut-off rule for orders nobody confirmed: Fresh ambient orders are confirmed for the store.
- * Chilled, Style and Tech orders never are — an unconfirmed one is left out of the run.
+ * Chilled, Style and Tech orders never are - an unconfirmed one is left out of the run.
  */
 @Component
 public class AutoConfirmPolicy {

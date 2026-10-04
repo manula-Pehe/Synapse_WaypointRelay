@@ -66,7 +66,7 @@ export function StoreReview() {
   return <div className="store-review">
     <div className="review-mobile-cutoff">◷ {now ? storeCutoffLabel(now, home.data.cutOffAt, closed) : 'Loading cut-off…'}</div>
     {closed && <div className="review-closed" role="status">▦ Orders for {date(runDate)} closed at {storeTimeLabel(new Date(home.data.cutOffAt))}. Changes now go on the next run.</div>}
-    {closed && orders.some(order => order.status === 'PREPARED' && order.temp === 'CHILLED') && <div className="review-missed" role="alert"><strong>⊗ Your chilled order wasn’t confirmed — it is not on this run.</strong><span>Call dispatch before the plan is published, or order for the next run.</span></div>}
+    {closed && orders.some(order => order.status === 'PREPARED' && order.temp === 'CHILLED') && <div className="review-missed" role="alert"><strong>⊗ Your chilled order wasn’t confirmed - it is not on this run.</strong><span>Call dispatch before the plan is published, or order for the next run.</span></div>}
     {allConfirmed && <div className="review-success" role="status"><strong>⊙ {orders.length === 1 ? 'Order is confirmed' : 'All orders are confirmed'}</strong><span>They go into tonight’s plan. You’ll get the arrival window after the plan is published.</span></div>}
     <Feedback error={actionError} success={message} />
     <div className="review-columns"><div className="review-order-list">

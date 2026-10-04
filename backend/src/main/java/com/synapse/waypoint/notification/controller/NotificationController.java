@@ -13,7 +13,7 @@ import com.synapse.waypoint.notification.dto.NotificationResponse;
 import com.synapse.waypoint.notification.dto.ReadAllResponse;
 import com.synapse.waypoint.notification.service.NotificationInboxService;
 
-/** The signed-in user's own notifications — docs/api.md §5. */
+/** The signed-in user's own notifications - docs/api.md §5. */
 @RestController
 @RequestMapping("/api/notifications")
 class NotificationController {

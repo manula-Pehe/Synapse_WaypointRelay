@@ -219,8 +219,19 @@ Ordered by id. `runDate` defaults to the current run date.
 - `POST /api/dispatch/plans/{id}/revise` `{ "reason", "changes": [ { "orderId", "toTripId" } ] }` → plan v2 — D3r
 - `POST /api/dispatch/plans/{id}/breakdown` `{ "vehicleId", "problemId" }` → `{ suggestions: [ { vehicleId, tripNo, stops, newArrive } ] }`; then `revise` — D6b
 
+`GET /api/dispatch/plans/{id}/deferrals` returns `storeChoice` (`KEEP` · `REDUCE` · `CANCEL` · `SPLIT`, `null` until the store answers).
+
 ### Store-facing
-- `POST /api/store/deferrals/{id}/choice` `{ "choice": "REDUCE", "units": 120 }` → deferral (S4k, S4r, S4x, S4u, S2c)
+- `POST /api/store/deferrals/{id}/choice` `{ "choice": "REDUCE", "units": 120 }` → store deferral (S4k, S4r, S4x, S4u, S2c)
+```json
+{ "id": "dfr-1", "kind": "UNAVOIDABLE", "rule": "NO_VEHICLE_FITS", "reason": "…", "newDate": "2026-10-02",
+  "needsDecision": false, "storeChoice": "REDUCE", "splitOffered": true }
+```
+  `splitOffered` is true when `kind` is `UNAVOIDABLE`. Only the store manager of the deferral's outlet can answer (another outlet's deferral, or one not in a published plan → 404 `NOT_FOUND`).
+  - `KEEP` leaves the order as it is. `CANCEL` cancels it ("Store cancelled after deferral"). `REDUCE` needs `units` from 1 up to the order's units minus one and rescales weight and volume. `SPLIT` is allowed only when `splitOffered` and only records the request; `units` is optional (same bounds).
+  - Cancel and reduce work after the cut-off, but only while the order is `MOVED`: any other status → 409 `INVALID_STATUS`.
+  - Each deferral takes one answer: a second one, whatever the first was → 409 `DUPLICATE`. Bad or missing `choice`/`units`, or `SPLIT` when not offered → 400 `VALIDATION`.
+  - The depot's dispatchers get an INFO notification "Store chose <CHOICE> for <ref>" → `/dispatch`. Reduce and cancel write an order event (`EDITED` / `CANCELLED`).
 
 ---
 
@@ -232,16 +243,17 @@ Ordered by id. `runDate` defaults to the current run date.
 - `POST /api/store/orders/{id}/confirm` → order · `POST /api/store/orders/{id}/cancel` → order — S2, S2x
 - `POST /api/store/orders` `{ "runDate", "temp", "units", "note" }` → order (`source=STORE`) — S2n; 409 `ORDERS_CLOSED` when that run is closed
 - `POST /api/store/orders/{id}/check` `{ "ok": true }` or `{ "ok": false, "message": "…" }` — S2e, S2e-msg
-- `GET /api/store/deliveries?runDate=` → list of
+- `GET /api/store/deliveries?runDate=` → list of (own outlet only; `runDate` defaults to the current run date)
 ```json
 { "orderId": "…", "orderRef": "S1-001", "status": "PLANNED",
   "arrival": { "from": "…", "to": "…", "lateRisk": 0.38, "vehicleId": "VEH036", "tripNo": 2, "changedReason": null },
-  "deferral": null,
+  "deferral": null,          // moved order: { id, kind, rule, reason, newDate, needsDecision, storeChoice, splitOffered }
   "delivery": null,          // after delivery: { outcome, units, photoUrl, signatureUrl, receivedBy, at }
   "shortfall": null,         // { missingUnits, reason, remainderOrderRef }
   "driverStatus": null,      // { offline: true, lastSyncAt }
   "receipt": null }          // { receivedUnits, at }
 ```
+  `arrival` comes from the published plan only (`null` for a draft or an unplanned order). A run lists the outlet's orders dated that day **and** the orders that run's published plan moved away — those now carry the new date, so they appear on both dates. On the original date `deferral` is that run's deferral; on the new date it is shown while the order is still `MOVED`.
 - `POST /api/store/orders/{id}/receipt` `{ "receivedUnits": 78, "note": "" }` — S5
 - `POST /api/store/failed/{deliveryId}/choice` `{ "choice": "REPLAN_TOMORROW" | "TRY_LATER_TODAY" | "CANCEL" }` — S3f
 - `POST /api/store/breakdown/{stopId}/choice` `{ "accept": true }` — S3k
