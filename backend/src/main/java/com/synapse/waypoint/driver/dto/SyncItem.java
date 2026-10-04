@@ -1,5 +1,6 @@
 package com.synapse.waypoint.driver.dto;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -11,14 +12,15 @@ import jakarta.validation.constraints.PositiveOrZero;
 import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
 import com.synapse.waypoint.driver.entity.DeliveryReason;
 import com.synapse.waypoint.driver.entity.SyncActionType;
+import com.synapse.waypoint.driver.entity.VehicleProblemKind;
 
 /**
  * One action from the phone's outbox.
  *
- * <p>clientId as generated on the device and is the idempotency key: the server stores it
- * uniquely, so a batch that is sent twice -which happens every time a phone reconnects mid-request -
+ * <p>clientId was generated on the device and is the idempotency key: the server stores it
+ * uniquely, so a batch that is sent twice - which happens every time a phone reconnects mid-request -
  * is applied once. payload stays untyped here because the shape depends on type; the
- * per-ction records below are what it is converted to.
+ * per-action records below are what it is converted to.
  */
 public record SyncItem(
         @NotBlank String clientId,
@@ -66,9 +68,9 @@ public record SyncItem(
     /** R9 — a vehicle problem reported from the cab. */
     public record VehicleProblem(
             String tripId,
-            @NotBlank String kind,
+            @NotNull VehicleProblemKind kind,
             boolean canDrive,
-            Double fridgeTempC,
+            BigDecimal fridgeTempC,
             String note) {
     }
 
