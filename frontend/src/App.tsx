@@ -17,6 +17,7 @@ import { StoreHome, StoreOrders, StoreOrderDetail, NewStoreOrder } from './featu
 import { StoreDeliveries } from './features/store/StoreDeliveries'
 import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreIssues'
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
+import { DriverDecisions } from './features/dispatch/issues/DriverDecisions'
 import { StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
 import OutletsReference from './components/OutletsReference'
@@ -44,6 +45,11 @@ function DispatcherWorkspace() {
       title: 'Live board · Thu 1 Oct · 6:45 AM',
       subtitle: 'Exceptions first · updates arrive as drivers sync',
       planStatus: 'Plan v1 · published',
+    },
+    'driver-decisions': {
+      title: 'Driver decisions',
+      subtitle: 'Sync conflicts, failed deliveries and vehicle problems · one queue',
+      planStatus: 'From driver data',
     },
     issues: {
       title: 'Issues',
@@ -77,6 +83,7 @@ function DispatcherWorkspace() {
 
   const content = activeNav === 'fleet' ? <FleetStatus />
     : activeNav === 'live-board' ? <LiveBoardPage />
+    : activeNav === 'driver-decisions' ? <DriverDecisions />
     : activeNav === 'issues' ? (
         selectedIssueId ? (
           <IssueDetail
