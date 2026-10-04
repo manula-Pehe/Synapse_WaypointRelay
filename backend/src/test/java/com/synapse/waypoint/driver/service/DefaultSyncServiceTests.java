@@ -379,6 +379,43 @@ class DefaultSyncServiceTests {
         assertThat(returned.getRecordedBy()).isEqualTo(DRIVER);
     }
 
+    /**
+     * US-11.2 — responsibility for the handback is the signature, not just the reason.
+     */
+    @Test
+    void aHandbackKeepsTheSignatureTakenAtTheDepot() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+
+        service.sync(DRIVER, new SyncRequest(List.of(new SyncItem("c-1",
+                SyncActionType.GOODS_RETURNED, NOW,
+                Map.of("tripId", "trp-1", "orderId", "ord-1", "units", 12,
+                        "reason", DeliveryReason.STORE_CLOSED.name(),
+                        "signatureFileId", "file-sig-1")))));
+
+        ArgumentCaptor<GoodsReturn> saved = ArgumentCaptor.forClass(GoodsReturn.class);
+        verify(goodsReturns).save(saved.capture());
+        assertThat(saved.getValue().getSignatureFileId()).isEqualTo("file-sig-1");
+    }
+
+    /**
+     * A handback recorded where there is no depot counter to sign is still recorded. Losing the
+     * stock to a missing signature would be worse than recording it unsigned.
+     */
+    @Test
+    void aHandbackWithoutASignatureIsStillRecorded() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+
+        service.sync(DRIVER, new SyncRequest(List.of(new SyncItem("c-1",
+                SyncActionType.GOODS_RETURNED, NOW,
+                Map.of("tripId", "trp-1", "orderId", "ord-1", "units", 12,
+                        "reason", DeliveryReason.DAMAGED.name())))));
+
+        ArgumentCaptor<GoodsReturn> saved = ArgumentCaptor.forClass(GoodsReturn.class);
+        verify(goodsReturns).save(saved.capture());
+        assertThat(saved.getValue().getSignatureFileId()).isNull();
+        assertThat(saved.getValue().getUnits()).isEqualTo(12);
+    }
+
     /** A handback is stock coming back, not an outcome on the order - the shelf still owes for it. */
     @Test
     void handingGoodsBackDoesNotSettleTheOrder() {
