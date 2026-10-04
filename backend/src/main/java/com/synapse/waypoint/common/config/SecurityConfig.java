@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/settings").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/settings/clock").hasRole(Role.DISPATCHER.name())
                         .requestMatchers("/api/store/**").hasRole(Role.STORE_MANAGER.name())
                         .requestMatchers("/api/dispatch/**").hasRole(Role.DISPATCHER.name())

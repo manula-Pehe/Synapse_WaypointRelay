@@ -11,7 +11,7 @@
 |---|---|
 | Base path | `/api` (nginx / Vite proxy forwards to the backend) |
 | Format | JSON, field names **camelCase** |
-| Auth | `Authorization: Bearer <token>` on every request except `POST /api/auth/login` and `GET /actuator/health` |
+| Auth | `Authorization: Bearer <token>` on every request except `POST /api/auth/login`, `GET /api/settings`, and `GET /actuator/health` |
 | Dates | `YYYY-MM-DD` (e.g. `2026-10-01`) |
 | Date-times | ISO-8601 with offset (e.g. `2026-10-01T05:30:00+05:30`); stored in UTC |
 | Wall-clock times | `HH:mm` (e.g. `05:00`) for outlet windows |
@@ -255,12 +255,12 @@ Ordered by id. `runDate` defaults to the current run date.
 
 ## 8. Loader
 
-- `GET /api/loader/trips?runDate=` → list of `{ tripId, vehicleId, tripNo, district, brand, stops, units, chilled, departAt, status }` (empty + `listsAvailableAt` before publish) — L1b, L1w
-- `GET /api/loader/trips/{id}` → `{ trip, vehicle, stops: [ { stopId, loadSeq, outletId, units, weightKg, volumeM3, accessNote, ticked } ], fridgeCheck }` — L2, L2d
+- `GET /api/loader/trips?runDate=` → `{ items: [{ tripId, vehicleId, tripNo, district, brand, stops, units, chilled, departAt, status, ticked, vehicleAvailable }], total, listsAvailableAt }` (empty items before publish) — L1b, L1w
+- `GET /api/loader/trips/{id}` → `{ trip, vehicleType, weightCapKg, volumeCapM3, loadedWeightKg, loadedVolumeM3, stops: [ { stopId, loadSeq, orderId, orderRef, outletId, outletName, units, weightKg, volumeM3, accessNote, storeNote, ticked, missingUnits } ], fridgeCheck }` — L2, L2d
 - `POST /api/loader/trips/{id}/fridge-check` `{ "running": true, "tempC": 3, "doorsOk": true }` → `{ passed }` — L2f
-- `POST /api/loader/stops/{stopId}/tick` — L2
+- `POST /api/loader/stops/{stopId}/tick` → updated trip detail — L2
 - `POST /api/loader/stops/{stopId}/shortfall` `{ "missingUnits": 2, "reason": "MISSING", "note": "" }` → `{ remainderOrderRef }` — L3
-- `POST /api/loader/trips/{id}/handover` `{ "driverStaffId": "DRV-0036" }` → `{ status: "LOADED", at }` — L5
+- `POST /api/loader/trips/{id}/handover` `{ "driverStaffId": "DRV-0036" }` → `{ status: "LOADED", at }` — L5. Departure is reported only after driver order updates.
 
 ---
 

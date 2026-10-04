@@ -29,6 +29,8 @@ import NetworkMap from './features/dispatch/core/NetworkMap'
 import UIShowcase from './ui/UIShowcase'
 import RunReport from './components/RunReport'
 import CapacityOutlook from './components/CapacityOutlook'
+import { LoaderSignIn } from './features/loader/LoaderSignIn'
+import { LoaderHome } from './features/loader/LoaderHome'
 
 function DispatcherWorkspace() {
   const { user, logout } = useAuth()
@@ -101,6 +103,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/loader/sign-in" element={<LoaderSignIn />} />
             <Route path="/ui" element={<UIShowcase />} />
             {(Object.entries(rolePaths) as [Role, string][]).map(([role, path]) => (
               <Route key={role} element={<RoleGuard role={role} />}>
@@ -124,7 +127,7 @@ export default function App() {
                       <Route path="more" element={<StoreMore />} />
                       <Route path="history" element={<StoreHistory />} />
                     </Route>
-                  </> : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : <WorkspacePlaceholder />} />}
+                  </> : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : role === 'LOADER' ? <LoaderHome /> : <WorkspacePlaceholder />} />}
                   {role === 'DISPATCHER' && <Route path="issues" element={<DispatchIssues />} />}
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="*" element={<Navigate to={path} replace />} />
