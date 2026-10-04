@@ -1,17 +1,21 @@
 services:
   db:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ:-Asia/Colombo}
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       retries: 10
+
   backend:
     build: ./backend
+    restart: unless-stopped
     depends_on:
       db: { condition: service_healthy }
     environment:
@@ -19,9 +23,21 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
+      APP_DATA_DIR: /data
+      SEED_ENABLED: ${SEED_ENABLED:-false}
+      JOBS_ENABLED: ${JOBS_ENABLED:-true}
+      TZ: ${TZ:-Asia/Colombo}
+    volumes:
+      - ${DATA_PATH:-./data}:/data:ro
+    # Bound to localhost only: reached through nginx locally or Caddy on the server.
+    ports: ["127.0.0.1:${API_PORT:-8080}:8080"]
+
   frontend:
     build: ./frontend
+    restart: unless-stopped
     depends_on: [backend]
-    ports: ["80:80"]
+    ports: ["${WEB_PORT:-80}:80"]
+
 volumes:
   pgdata:

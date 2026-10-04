@@ -1,0 +1,36 @@
+# Competition datasets — confidential, NEVER commit
+/data/
+*.csv
+# Invented sample files used by backend tests (never real dataset rows)
+!/backend/src/test/resources/**/*.csv
+
+# Local project notes
+project-overview.md
+
+# Local configuration and secrets (keep committed examples)
+.env
+.env.*
+!.env.example
+!**/.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Generated files
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/build/
+**/.cache/
+**/target/
+**/coverage/
+*.log
+*.tsbuildinfo

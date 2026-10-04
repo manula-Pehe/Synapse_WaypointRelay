@@ -1,0 +1,4 @@
+scenario,vehicle_id,status
+S1,VEH001,available
+S1,VEH036,in_workshop
+S2,VEH090,available
