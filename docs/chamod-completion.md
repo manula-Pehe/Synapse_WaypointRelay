@@ -21,3 +21,9 @@ This document tracks the work after the supplied design guide update. F1 and F10
 - Replaced the sample report with a run/depot-aware screen and CSV export of the returned data. The old sample date filters and example values were removed.
 - A failed outcome cannot count as on-time, even if recorded before the window closes. Runs without a published plan show unknown plan-derived metrics as `null`, and district totals count only stops with recorded outcomes.
 - Verified with the focused report and live aggregation backend tests, frontend build, and lint.
+
+## F9 — network map
+
+- The district schematic now consumes the same 15-second live trip response as F5. District trip totals, completed stops, and Planned / On the way / Completed counts use recorded trip progress from the published plan and order states.
+- A missing or draft plan has its own empty state. The SVG shows depot-to-district connections only; there are no location coordinates or GPS dots.
+- Updated the district aggregation test and verified the frontend build, lint, and test suite.
