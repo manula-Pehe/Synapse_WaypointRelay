@@ -11,4 +11,6 @@ public interface DeferralRepository extends JpaRepository<Deferral, String> {
     List<Deferral> findByPlanId(String planId);
 
     List<Deferral> findByOrderId(String orderId);
+
+    void deleteByPlanId(String planId);
 }
