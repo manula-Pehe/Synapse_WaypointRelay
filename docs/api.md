@@ -266,10 +266,11 @@ Ordered by id. `runDate` defaults to the current run date.
 
 ## 9. Driver
 
-- `GET /api/driver/today` → `{ vehicle, runDate, trips: [ { tripId, tripNo, district, departAt, loadingStatus, stops: [ { stopId, orderId, orderRef, seq, outlet, units, temp, arriveFrom, arriveTo, status } ] } ] }` — R1, R2
-- `POST /api/driver/trips/{id}/accept` — R0
-- `POST /api/driver/files` (multipart: `file`, `kind=PHOTO|SIGNATURE`, `clientId`) → `{ fileId, url }`
-- `POST /api/driver/problems` `{ "tripId", "kind", "canDrive", "fridgeTempC", "note" }` — R9
+- `GET /api/driver/today` → `{ runDate, vehicleId, vehicleType, loadedCases, loadAccepted, trips: [ { id, tripNo, brand, district, departAt, stops: [ { id, seq, orderId, orderRef, outletId, outletName, district, dockType, windowOpen, windowClose, units, temp, earlyByMinutes, reassigned } ] } ] }` — R1, R2, R0. Stops come from `PlanQueryService.tripsForVehicle`, scoped to the signed-in driver's own vehicle
+- `POST /api/driver/trips/{id}/accept` → the same `TodayDto` — R0. Refuses a trip belonging to another vehicle, then flips its orders to on-the-way
+- `POST /api/driver/files` (multipart: `file`, `kind=PHOTO|SIGNATURE`, `clientId`) → `{ id }`. `clientId` makes a retry return the existing id rather than storing the file twice
+- `POST /api/driver/problems` `{ "tripId", "kind", "canDrive", "fridgeTempC", "unitsOnBoard", "note", "clientId" }` — R9. `clientId` makes a retried report idempotent. `unitsOnBoard` is how many cases are stranded on the vehicle, and is what Chethiya's breakdown re-plan (D6b) moves; it is absent when the driver did not say, which is not the same as zero
+- `GET /api/driver/problems` → `{ items, total }` — the driver's own problems, newest first
 - `GET /api/driver/summary` — R10
 
 ### Sync (driver; loader if time)
@@ -278,18 +279,20 @@ Ordered by id. `runDate` defaults to the current run date.
 // request — ordered
 { "items": [
   { "clientId": "c0a8…", "type": "DELIVERY_RECORDED", "createdAt": "…",
-    "payload": { "stopId": "stp-1", "outcome": "DELIVERED", "units": 42, "receivedBy": "Sunil",
+    "payload": { "stopId": "stp-1", "orderId": "ord-1", "outcome": "DELIVERED", "units": 42, "receivedBy": "Sunil",
                  "photoFileId": "f-1", "signatureFileId": "f-2", "arrivedAt": "…", "completedAt": "…" } }
 ] }
 // 200
 { "results": [ { "clientId": "c0a8…", "result": "APPLIED" } ] }
 ```
-Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, `STORE_WAIT`, `VEHICLE_PROBLEM` (+ loader: `LOAD_TICK`, `SHORTFALL`, `HANDOVER` if time).
+Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, `STORE_WAIT`, `VEHICLE_PROBLEM`, `GOODS_RETURNED` (+ loader: `LOAD_TICK`, `SHORTFALL`, `HANDOVER` if time).
+
+`GOODS_RETURNED` (R8r) carries `{ "tripId", "orderId", "units" (> 0), "reason": "STORE_CLOSED" | "NO_ACCESS" | "REFUSED" | "DAMAGED", "signatureFileId" }` and writes a `returns` row. It does not touch the order: stock coming back on the shelf is not a delivery, so the shortfall stays outstanding. `signatureFileId` is the mark taken at the depot counter (US-11.2) and is absent when the phone could not capture one — a handback is recorded unsigned rather than lost.
 
 ### Dispatcher cards from driver data
-- `GET /api/dispatch/conflicts?runDate=` · `POST /api/dispatch/conflicts/{id}/resolve` `{ "resolution": "KEEP_FIELD" | "OVERRIDE" }` — D8, D8m
-- `GET /api/dispatch/failed?runDate=` · `POST /api/dispatch/failed/{id}/decide` `{ "decision": "REPLAN_TOMORROW" | "TRY_LATER_TODAY" | "CANCEL" }` — D6f, D6fm
-- `POST /api/dispatch/problems/{id}/reply` `{ "text" }` — R9ok
+- `GET /api/dispatch/conflicts?runDate=` → `{ items, total }` · `POST /api/dispatch/conflicts/{id}/resolve` `{ "keepField": "KEEP_FIELD" | "OVERRIDE" }` — D8, D8m. Absent `keepField` means keep what the driver recorded
+- `GET /api/dispatch/failed?runDate=` → `{ items, total }` · `POST /api/dispatch/failed/{id}/decide` `{ "decision": "REPLAN_TOMORROW" | "TRY_LATER_TODAY" | "CANCEL" }` — D6f, D6fm
+- `GET /api/dispatch/problems` → `{ items, total }` · `POST /api/dispatch/problems/{id}/reply` `{ "text" }` — R9ok
 
 ---
 

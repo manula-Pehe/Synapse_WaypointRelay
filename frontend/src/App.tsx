@@ -5,6 +5,7 @@ import { rolePaths, useAuth, type Role } from './app/auth'
 import { RoleGuard, RoleLayout, WorkspacePlaceholder } from './app/RoleLayout'
 import { LoginPage } from './features/auth/LoginPage'
 import { NotificationsPage } from './features/notifications/Notifications'
+import DriverApp from './features/driver/DriverApp'
 import { ApiError } from './lib/api'
 import { useState } from 'react'
 import DispatcherLayout from './components/DispatcherLayout'
@@ -21,6 +22,7 @@ import { StoreMoved } from './features/store/StoreMoved'
 import { StoreDeliveryProblem } from './features/store/StoreDeliveryProblem'
 import { StoreReceipt } from './features/store/StoreReceipt'
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
+import { DriverDecisions } from './features/dispatch/issues/DriverDecisions'
 import { StoreMore, StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
 import { DispatchOrders, DispatchFleet, DispatchOutlets } from './features/dispatch/core/DispatchDataPages'
@@ -50,6 +52,7 @@ function DispatcherWorkspace() {
     fleet: { title: 'Fleet', subtitle: 'Mark unavailable vehicles before planning' },
     plan: { title: 'Plan', subtitle: 'Planning screens are owned by Chethiya' },
     'live-board': { title: 'Live board', subtitle: 'Recorded delivery progress and attention items' },
+    'driver-decisions': { title: 'Driver decisions', subtitle: 'Sync conflicts, failed deliveries and vehicle problems, from driver data' },
     issues: { title: 'Issues', subtitle: 'Store issues and replies' },
     'network-map': { title: 'Network map', subtitle: 'District trips from the selected plan' },
     capacity: { title: 'Capacity outlook · sample preview', subtitle: 'Forecast backend is not available yet' },
@@ -60,6 +63,7 @@ function DispatcherWorkspace() {
   const content = settings.error ? <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-800">Could not load run settings: {settings.error.message}</p>
     : activeNav === 'fleet' ? (runDate && depot ? <DispatchFleet runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'live-board' ? (runDate && depot ? <LiveBoardPage runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : activeNav === 'driver-decisions' ? <DriverDecisions />
     : activeNav === 'issues' ? <DispatchIssues />
     : activeNav === 'capacity' ? <CapacityOutlook />
     : activeNav === 'outlets' ? <DispatchOutlets depot={depot} />
@@ -127,7 +131,11 @@ export default function App() {
                       <Route path="more" element={<StoreMore />} />
                       <Route path="history" element={<StoreHistory />} />
                     </Route>
-                  </> : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : role === 'LOADER' ? <LoaderHome /> : <WorkspacePlaceholder />} />}
+</> : role === 'DRIVER' ? (
+                    // The driver app is a phone-width app in a cab, so it takes the whole route
+                    // rather than an index page inside the desktop shell.
+                    <Route path="*" element={<DriverApp />} />
+                  ) : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : role === 'LOADER' ? <LoaderHome /> : <WorkspacePlaceholder />} />}
                   {role === 'DISPATCHER' && <Route path="issues" element={<DispatchIssues />} />}
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="*" element={<Navigate to={path} replace />} />
