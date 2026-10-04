@@ -18,7 +18,6 @@ final class DeferralReasons {
             case WRONG_DEPOT -> "No available vehicle belongs to this outlet's depot.";
             case FUEL_QUOTA -> "Every suitable vehicle has used up its weekly fuel quota.";
             case TIME_BUDGET -> "The trip is too long for any vehicle's time budget.";
-            case WINDOW -> "No vehicle can reach the outlet inside its delivery window.";
             default -> "No available vehicle can carry this order.";
         };
     }
@@ -34,7 +33,6 @@ final class DeferralReasons {
             case MAX_TRIPS -> "The vehicles that could take it have no trip left today.";
             case TIME_BUDGET -> "The vehicles that could take it have no time left in their budget.";
             case FUEL_QUOTA -> "The vehicles that could take it are at their weekly fuel quota.";
-            case WINDOW -> "No remaining slot reaches the outlet inside its delivery window.";
             default -> "Higher-priority orders filled the vehicles that could take it.";
         };
     }

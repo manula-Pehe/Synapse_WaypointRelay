@@ -10,7 +10,7 @@ import com.synapse.waypoint.planning.engine.rule.RuleViolation;
 
 /**
  * Entry point of the planning domain: allocates the orders, explains the deferrals, then verifies the
- * whole plan with the same rule checker. Pure and deterministic; time comes only from the input's run date.
+ * whole plan with the same hard-rule checker; late arrivals are only reported as warnings. Pure and deterministic; time comes only from the input's run date.
  */
 public class PlanningEngine {
 
@@ -38,8 +38,13 @@ public class PlanningEngine {
                 .flatMap(day -> checker.violations(day).stream())
                 .toList();
 
+        RuleChecker lateArrivalCheck = RuleChecker.warnings(calculator);
+        List<RuleViolation> warnings = allocation.days().stream()
+                .flatMap(day -> lateArrivalCheck.violations(day).stream())
+                .toList();
+
         return new PlanningResult(trips, deferrals, summarize(input, trips, deferrals, allocation, violations),
-                violations);
+                violations, warnings);
     }
 
     private PlanSummary summarize(PlanningInput input, List<PlannedTrip> trips, List<PlannedDeferral> deferrals,

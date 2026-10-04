@@ -10,7 +10,10 @@ import com.synapse.waypoint.planning.engine.TripCalculator;
 import com.synapse.waypoint.planning.engine.TripDraft;
 import com.synapse.waypoint.planning.engine.VehicleDay;
 
-/** Each stop's predicted arrival must fall inside the outlet's window (the mall window for mall outlets). */
+/**
+ * Each stop's predicted arrival should fall inside the outlet's window (the mall window for mall outlets).
+ * A soft rule: used for warnings, not for accepting or rejecting a plan.
+ */
 public class WindowRule implements PlanningRule {
 
     private final TripCalculator calculator;

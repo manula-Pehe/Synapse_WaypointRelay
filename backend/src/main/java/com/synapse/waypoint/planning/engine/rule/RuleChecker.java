@@ -18,7 +18,10 @@ public class RuleChecker {
         this.rules = List.copyOf(rules);
     }
 
-    /** All rules, cheapest checks first. */
+    /**
+     * The hard rules, cheapest first: a plan that breaks one is infeasible. Arrival windows are not
+     * among them (the organisers' checker only enforces the trip-time budget); see {@link #warnings}.
+     */
     public static RuleChecker standard(TripCalculator calculator) {
         return new RuleChecker(List.of(
                 new WrongDepotRule(),
@@ -29,8 +32,12 @@ public class RuleChecker {
                 new OverVolumeRule(),
                 new MaxTripsRule(),
                 new TimeBudgetRule(calculator),
-                new FuelQuotaRule(calculator),
-                new WindowRule(calculator)));
+                new FuelQuotaRule(calculator)));
+    }
+
+    /** The soft rules: breaking one is reported to the dispatcher but never rejects a plan. */
+    public static RuleChecker warnings(TripCalculator calculator) {
+        return new RuleChecker(List.of(new WindowRule(calculator)));
     }
 
     public Optional<RuleViolation> firstViolation(VehicleDay day) {

@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -66,6 +68,10 @@ class DemoDayPlanningDatasetTests {
                 DEPOT, input.orders().size(), result.summary().served(), result.summary().deferred(),
                 result.summary().unavoidable(), result.summary().chosen(), result.summary().violations(),
                 result.summary().fridgeVehiclesUsed(), result.summary().fridgeVehiclesAvailable());
+        System.out.printf("S1 deferrals by rule: %s; late-arrival warnings=%d%n",
+                result.deferrals().stream().collect(Collectors.groupingBy(
+                        deferral -> deferral.kind() + "/" + deferral.rule(), TreeMap::new, Collectors.counting())),
+                result.warnings().size());
         writeSubmission(input, result);
 
         assertThat(result.violations()).isEmpty();

@@ -73,4 +73,20 @@ class PlanningEngineTests {
     void shouldReadNoClockSoTheSameInputGivesTheSamePlan() {
         assertThat(engine.plan(smallDay())).isEqualTo(engine.plan(smallDay()));
     }
+
+    @Test
+    void shouldStillServeAStopThatArrivesLateAndWarnAboutIt() {
+        PlanningInput input = anInput()
+                .outlet(anOutlet().id("O1").window("04:00", "04:05"))
+                .vehicle(aVehicle())
+                .order(anOrder().ref("LATE").outlet("O1"))
+                .build();
+
+        PlanningResult result = engine.plan(input);
+
+        assertThat(result.summary().served()).isEqualTo(1);
+        assertThat(result.violations()).isEmpty();
+        assertThat(result.warnings()).hasSize(1);
+        assertThat(result.trips().get(0).stops().get(0).lateRisk()).isEqualByComparingTo("1");
+    }
 }

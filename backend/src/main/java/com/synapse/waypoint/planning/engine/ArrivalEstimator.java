@@ -10,7 +10,8 @@ import com.synapse.waypoint.planning.engine.input.DeliveryWindow;
 /**
  * Arrival window = predicted arrival ± 15 minutes, clipped to the outlet's window.
  * Late risk = 1 − slack ÷ 60, limited to 0–1, where slack is the minutes between the predicted arrival
- * and the window closing: an hour or more of slack is risk 0, arriving exactly at close is risk 1.
+ * and the window closing: an hour or more of slack is risk 0, arriving at or after close is risk 1.
+ * A late arrival shows the window collapsed to the closing time.
  */
 public class ArrivalEstimator {
 
@@ -19,8 +20,8 @@ public class ArrivalEstimator {
     private static final int RISK_SCALE = 3;
 
     public ArrivalWindow estimate(DeliveryWindow window, LocalTime predictedArrival) {
-        LocalTime from = later(predictedArrival.minusMinutes(MARGIN_MINUTES), window.open());
         LocalTime to = earlier(predictedArrival.plusMinutes(MARGIN_MINUTES), window.close());
+        LocalTime from = earlier(later(predictedArrival.minusMinutes(MARGIN_MINUTES), window.open()), to);
         return new ArrivalWindow(from, to, lateRisk(window, predictedArrival));
     }
 

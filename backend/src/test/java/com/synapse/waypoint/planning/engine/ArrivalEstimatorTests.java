@@ -47,4 +47,13 @@ class ArrivalEstimatorTests {
         assertThat(estimator.estimate(window, LocalTime.of(7, 30)).lateRisk()).isEqualByComparingTo("0.5");
         assertThat(estimator.estimate(window, LocalTime.of(7, 45)).lateRisk()).isEqualByComparingTo("0.75");
     }
+
+    @Test
+    void shouldGiveFullLateRiskAndAConsistentWindowWhenArrivingAfterClose() {
+        ArrivalWindow arrival = estimator.estimate(window, LocalTime.of(8, 40));
+
+        assertThat(arrival.lateRisk()).isEqualByComparingTo("1");
+        assertThat(arrival.from()).isEqualTo(LocalTime.of(8, 0));
+        assertThat(arrival.to()).isEqualTo(LocalTime.of(8, 0));
+    }
 }

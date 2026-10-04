@@ -323,6 +323,22 @@ class PlanningRulesTests {
         }
 
         @Test
+        void shouldNotRejectALateArrivalBecauseWindowsAreNotAHardRule() {
+            VehicleDay late = day(aVehicle(), stop(anOrder(), anOutlet().window("04:00", "04:05")));
+
+            assertThat(checker.firstViolation(late)).isEmpty();
+        }
+
+        @Test
+        void shouldReportALateArrivalAsAWarning() {
+            VehicleDay late = day(aVehicle(), stop(anOrder(), anOutlet().window("04:00", "04:05")));
+
+            assertThat(RuleChecker.warnings(CALCULATOR).violations(late)).extracting(RuleViolation::rule)
+                    .containsExactly(RuleCode.WINDOW);
+            assertThat(RuleChecker.warnings(CALCULATOR).violations(day(aVehicle(), plainStop()))).isEmpty();
+        }
+
+        @Test
         void shouldListEveryViolationForVerification() {
             VehicleDay broken = day(aVehicle().capacity("10", "10"), stop(anOrder().chilled().weightKg("500"), anOutlet()));
 
