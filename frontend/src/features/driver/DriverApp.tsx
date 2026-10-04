@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { enqueue, startSyncRunner, useSyncStatus } from '../../lib/offline'
 import { useDriverTheme } from './theme'
 import DriverThemeProvider from './ThemeProvider'
@@ -19,6 +19,7 @@ import Menu from './screens/Menu'
 import VehicleProblem from './screens/VehicleProblem'
 import TripEnd from './screens/TripEnd'
 import HandBack from './screens/HandBack'
+import NoTrip from './screens/NoTrip'
 import type { DriverStop } from './types'
 
 /**
@@ -51,22 +52,28 @@ type UpdateStop = (id: string, patch: Partial<DriverStop>) => void
 function DriverRoutes() {
   const { toggle } = useDriverTheme()
   const [language, setLanguage] = useState<Language>(storedLanguage)
+  const { pathname } = useLocation()
   const { state } = useSyncStatus()
-  const { run, trip, acceptLoad, refresh } = useRun()
+  const { run, trip, empty, acceptLoad, refresh } = useRun()
   const latestReply = useDriverReply()
 
   // Stops change on this phone as the driver works, so the run is kept alongside the server's copy
   // and merged back in on the next refresh.
   const [localStops, setLocalStops] = useState<DriverStop[] | null>(null)
 
-  const stops = useMemo(() => localStops ?? trip.stops, [localStops, trip.stops])
+  const shared = { language, onToggleTheme: toggle }
 
-  const view = useMemo(() => ({ ...trip, stops }), [trip, stops])
+  // Every screen below needs a trip to render, and there is no trip to invent. `view` is null until
+  // the server sends a real one, and the guard after the hooks keeps the answer to "the plan is not
+  // published yet" or "no signal" rather than a list of stops that were never real.
+  const stops = useMemo(() => localStops ?? trip?.stops ?? [], [localStops, trip])
+
+  const view = useMemo(() => (trip ? { ...trip, stops } : null), [trip, stops])
   const byId = useMemo(() => new Map(stops.map((stop) => [stop.id, stop])), [stops])
 
   const updateStop: UpdateStop = (id, patch) => {
     setLocalStops((current) => {
-      const base = current ?? trip.stops
+      const base = current ?? trip?.stops ?? []
       return base.map((stop) => (stop.id === id ? { ...stop, ...patch } : stop))
     })
   }
@@ -85,7 +92,36 @@ function DriverRoutes() {
     rememberLanguage(language)
   }, [language])
 
-  const shared = { language, onToggleTheme: toggle }
+  // Screens a driver reaches with no run at all: signing in (there is no trip before the plan is
+  // out), the outbox, and the menu behind the header on every screen.
+  const withoutRun = pathname.startsWith('/driver/sign-in')
+    || pathname.startsWith('/driver/sync')
+    || pathname.startsWith('/driver/menu')
+
+  // Every remaining screen needs a trip, and there is none to invent, so the guard goes here:
+  // after the hooks, before the routes. This is also what a judge sees before dispatch has
+  // published the plan.
+  if (!view || !run) {
+    if (withoutRun) {
+      return (
+        <Routes>
+          <Route path="sign-in" element={<SignIn {...shared} offline={state === 'offline'} />} />
+          <Route path="sync" element={<SyncSummary {...shared} />} />
+          <Route path="menu" element={<Menu {...shared} onLanguage={setLanguage} />} />
+          <Route path="*" element={<Navigate to="sign-in" replace />} />
+        </Routes>
+      )
+    }
+    return (
+      <NoTrip
+        {...shared}
+        reason={empty ?? 'loading'}
+        onRetry={() => {
+          void refresh()
+        }}
+      />
+    )
+  }
 
   return (
     <Routes>
