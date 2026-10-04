@@ -12,8 +12,9 @@ import OrderQueue from './components/OrderQueue'
 import FleetStatus from './components/FleetStatus'
 import LiveBoardPage from './components/LiveBoardPage'
 import { StoreLayout } from './features/store/StoreLayout'
-import { StoreHome, StoreOrders, StoreOrderDetail, NewStoreOrder } from './features/store/StoreOrders'
+import { StoreHome, StoreOrders, StoreOrderDetail } from './features/store/StoreOrders'
 import { StoreReview } from './features/store/StoreReview'
+import { NewStoreOrder } from './features/store/NewStoreOrder'
 import { StoreDeliveries } from './features/store/StoreDeliveries'
 import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreIssues'
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
@@ -26,6 +27,7 @@ import IssuesInbox from './components/IssuesInbox'
 import IssueDetail from './components/IssueDetail'
 
 function DispatcherWorkspace() {
+  const { logout } = useAuth()
   const [activeNav, setActiveNav] = useState('issues')
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>('ISS-0142')
 
@@ -97,6 +99,7 @@ function DispatcherWorkspace() {
   return (
     <DispatcherLayout
       activeNav={activeNav}
+      onSignOut={logout}
       onNavChange={(nav) => {
         setActiveNav(nav)
         if (nav !== 'issues') {
