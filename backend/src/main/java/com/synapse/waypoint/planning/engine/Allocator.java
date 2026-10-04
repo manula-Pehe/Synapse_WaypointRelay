@@ -63,12 +63,12 @@ public class Allocator {
     private final class Attempt {
 
         private final StopCandidate stop;
-        private final List<VehicleInput> vehiclesByPreference;
+        private final List<List<VehicleInput>> vehicleTiers;
         private RuleViolation lastBlock;
 
         Attempt(StopCandidate stop) {
             this.stop = stop;
-            this.vehiclesByPreference = input.vehicles().stream().sorted(preferenceFor(stop.order())).toList();
+            this.vehicleTiers = tiersFor(stop.order());
         }
 
         Optional<RuleViolation> lastBlock() {
@@ -76,11 +76,11 @@ public class Allocator {
         }
 
         boolean placeInto(Map<String, VehicleDay> days) {
-            return joinExistingTrip(days) || openNewTrip(days);
+            return vehicleTiers.stream().anyMatch(tier -> joinExistingTrip(days, tier) || openNewTrip(days, tier));
         }
 
-        private boolean joinExistingTrip(Map<String, VehicleDay> days) {
-            for (VehicleInput vehicle : vehiclesByPreference) {
+        private boolean joinExistingTrip(Map<String, VehicleDay> days, List<VehicleInput> tier) {
+            for (VehicleInput vehicle : tier) {
                 VehicleDay day = days.get(vehicle.id());
                 if (day != null && tryJoin(days, day)) {
                     return true;
@@ -107,8 +107,8 @@ public class Allocator {
             return false;
         }
 
-        private boolean openNewTrip(Map<String, VehicleDay> days) {
-            for (VehicleInput vehicle : vehiclesByPreference) {
+        private boolean openNewTrip(Map<String, VehicleDay> days, List<VehicleInput> tier) {
+            for (VehicleInput vehicle : tier) {
                 VehicleDay day = days.getOrDefault(vehicle.id(), VehicleDay.idle(vehicle));
                 VehicleDay candidate = day.withTrip(new TripDraft(List.of(stop)));
                 if (accepts(candidate)) {
@@ -126,12 +126,21 @@ public class Allocator {
         }
     }
 
-    /** Smallest vehicle first; fridge vehicles last unless the order is chilled. */
-    private static Comparator<VehicleInput> preferenceFor(OrderInput order) {
-        return Comparator
-                .comparing((VehicleInput vehicle) -> vehicle.isReefer() && !order.isChilled())
-                .thenComparing(VehicleInput::weightCapKg)
+    /**
+     * Vehicles to try, in order: smallest first. An ambient order tries every other vehicle completely
+     * before it touches a fridge vehicle, so fridge capacity stays free for chilled orders.
+     */
+    private List<List<VehicleInput>> tiersFor(OrderInput order) {
+        Comparator<VehicleInput> smallestFirst = Comparator
+                .comparing(VehicleInput::weightCapKg)
                 .thenComparing(VehicleInput::volumeCapM3)
                 .thenComparing(VehicleInput::id);
+        List<VehicleInput> sorted = input.vehicles().stream().sorted(smallestFirst).toList();
+        if (order.isChilled()) {
+            return List.of(sorted);
+        }
+        List<VehicleInput> dry = sorted.stream().filter(vehicle -> !vehicle.isReefer()).toList();
+        List<VehicleInput> fridge = sorted.stream().filter(VehicleInput::isReefer).toList();
+        return List.of(dry, fridge);
     }
 }
