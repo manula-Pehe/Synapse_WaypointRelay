@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { enqueue } from '../../../lib/offline'
+import { driverApi } from '../api'
 import DriverLayout from '../DriverLayout'
 import { Button, Card, Label, TOUCH, Value } from '../components'
 import { t, type Language } from '../i18n'
@@ -24,27 +25,45 @@ export interface DeliverProps {
 export default function Deliver({ stop, language, onToggleTheme, onRecorded }: DeliverProps) {
   const { colors } = useDriverTheme()
   const [receivedBy, setReceivedBy] = useState('')
-  const [photo, setPhoto] = useState<string | null>(null)
+  const [photo, setPhoto] = useState<File | null>(null)
   const [signature, setSignature] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const { undoWindow, startUndo, cancelUndo } = useUndoWindow()
   const navigate = useNavigate()
 
   async function record() {
-    await enqueue('DELIVERY_RECORDED', {
-      stopId: stop.id,
-      orderId: stop.orderRef,
-      outcome: 'DELIVERED',
-      units: stop.cases,
-      ...(receivedBy ? { receivedBy } : {}),
-      ...(photo ? { photoFileId: photo } : {}),
-      ...(signature ? { signatureFileId: signature } : {}),
-      completedAt: new Date().toISOString(),
-    })
+    setSaving(true)
+    setError(null)
+    try {
+      // Proof goes up first, because the delivery names the file ids. Both uploads are
+      // idempotent on clientId, so a retry after a dropped connection does not double them up.
+      const photoFileId = photo ? (await driverApi.uploadProof(photo, 'photo', crypto.randomUUID())).id : null
+      const signatureFileId = signature
+        ? (await driverApi.uploadProof(dataUrlToFile(signature), 'signature', crypto.randomUUID())).id
+        : null
 
-    onRecorded()
-    setSaved(true)
-    startUndo()
+      await enqueue('DELIVERY_RECORDED', {
+        stopId: stop.id,
+        orderId: stop.orderId ?? stop.orderRef,
+        outcome: 'DELIVERED',
+        units: stop.cases,
+        ...(receivedBy ? { receivedBy } : {}),
+        ...(photoFileId ? { photoFileId } : {}),
+        ...(signatureFileId ? { signatureFileId } : {}),
+        completedAt: new Date().toISOString(),
+      })
+
+      onRecorded()
+      setSaved(true)
+      startUndo()
+    } catch {
+      // Nothing has been recorded yet, so the driver can simply try again.
+      setError(t(language, 'driver.delivery.retry'))
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function undo() {
@@ -94,11 +113,21 @@ export default function Deliver({ stop, language, onToggleTheme, onRecorded }: D
       onToggleTheme={onToggleTheme}
       onBack={() => navigate(`/driver/stop/${stop.id}`)}
       action={
-        <Button full onClick={record} disabled={receivedBy.trim().length === 0} testId="record-delivery">
+        <Button
+          full
+          onClick={() => void record()}
+          disabled={receivedBy.trim().length === 0 || saving}
+          testId="record-delivery"
+        >
           {t(language, 'driver.delivery.deliver')}
         </Button>
       }
     >
+      {error && (
+        <p style={{ color: colors.danger }} data-testid="deliver-error">
+          {error}
+        </p>
+      )}
       <Card>
         <Label>{stop.orderRef}</Label>
         <Value size="lg">
@@ -126,7 +155,7 @@ export default function Deliver({ stop, language, onToggleTheme, onRecorded }: D
           accept="image/*"
           capture="environment"
           className="mt-2 w-full text-sm"
-          onChange={(event) => setPhoto(event.target.files?.[0]?.name ?? null)}
+          onChange={(event) => setPhoto(event.target.files?.[0] ?? null)}
           data-testid="photo"
         />
       </Card>
@@ -230,4 +259,16 @@ function useUndoWindow(seconds = 10) {
       setLeft(0)
     },
   }
+}
+/**
+ * The signature pad hands back a data URL; the file endpoint wants bytes, so it is decoded here.
+ * PNG because that is what `canvas.toDataURL` produces.
+ */
+function dataUrlToFile(dataUrl: string): File {
+  const [header, base64] = dataUrl.split(',')
+  const mime = /:(.*?);/.exec(header)?.[1] ?? 'image/png'
+  const binary = atob(base64 ?? '')
+  const bytes = new Uint8Array(binary.length)
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index)
+  return new File([bytes], 'signature.png', { type: mime })
 }
