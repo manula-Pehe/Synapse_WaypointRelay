@@ -5,7 +5,7 @@ import { useDriverTheme } from './theme'
 import DriverThemeProvider from './ThemeProvider'
 import { useRun } from './useRun'
 import { useDriverReply } from './api'
-import type { Language } from './i18n'
+import { rememberLanguage, storedLanguage, type Language } from './i18n'
 import SignIn from './screens/SignIn'
 import Today from './screens/Today'
 import AcceptLoad from './screens/AcceptLoad'
@@ -50,7 +50,7 @@ type UpdateStop = (id: string, patch: Partial<DriverStop>) => void
 
 function DriverRoutes() {
   const { toggle } = useDriverTheme()
-  const [language, setLanguage] = useState<Language>('en')
+  const [language, setLanguage] = useState<Language>(storedLanguage)
   const { state } = useSyncStatus()
   const { run, trip, acceptLoad, refresh } = useRun()
   const latestReply = useDriverReply()
@@ -76,6 +76,14 @@ function DriverRoutes() {
     setLocalStops(null)
     void refresh()
   }
+
+  // F12 - the choice is remembered like the theme, and the document is told so that the Sinhala
+  // and Tamil faces and their taller line height apply. Without this a Tamil driver reads a
+  // fallback font clipped to the Latin line box.
+  useEffect(() => {
+    document.documentElement.lang = language
+    rememberLanguage(language)
+  }, [language])
 
   const shared = { language, onToggleTheme: toggle }
 

@@ -3,6 +3,32 @@
 
 export type Language = 'en' | 'si' | 'ta'
 
+const STORAGE_KEY = 'waypoint.driver.language'
+
+/**
+ * The language the driver last chose.
+ *
+ * F12 is only useful if it survives: a driver who reads the stop list in Sinhala should not find
+ * English again after the phone reloads the app at the start of a run. Stored the same way as the
+ * theme, and defaulting to English when nothing is stored.
+ */
+export function storedLanguage(): Language {
+  try {
+    const value = localStorage.getItem(STORAGE_KEY)
+    return value === 'si' || value === 'ta' ? value : 'en'
+  } catch {
+    return 'en'
+  }
+}
+
+export function rememberLanguage(language: Language) {
+  try {
+    localStorage.setItem(STORAGE_KEY, language)
+  } catch {
+    // Nothing to do — the switch still works for this session.
+  }
+}
+
 const STRINGS = {
   en: {
     'driver.app.title': 'Driver',
