@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './app/AuthProvider'
 import { rolePaths, useAuth, type Role } from './app/auth'
@@ -9,8 +9,6 @@ import DriverApp from './features/driver/DriverApp'
 import { ApiError } from './lib/api'
 import { useState } from 'react'
 import DispatcherLayout from './components/DispatcherLayout'
-import OrderQueue from './components/OrderQueue'
-import FleetStatus from './components/FleetStatus'
 import LiveBoardPage from './components/LiveBoardPage'
 import { StoreLayout } from './features/store/StoreLayout'
 import { StoreHome, StoreOrders, StoreOrderDetail } from './features/store/StoreOrders'
@@ -18,112 +16,75 @@ import { StoreReview } from './features/store/StoreReview'
 import { NewStoreOrder } from './features/store/NewStoreOrder'
 import { StoreDeliveries } from './features/store/StoreDeliveries'
 import { StoreArrival } from './features/store/StoreArrival'
-import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreIssues'
+import { StoreIssues, StoreIssueDetail } from './features/store/StoreIssues'
+import { NewIssuePage } from './features/store/NewIssuePage'
 import { StoreMoved } from './features/store/StoreMoved'
+import { StoreDeliveryProblem } from './features/store/StoreDeliveryProblem'
+import { StoreReceipt } from './features/store/StoreReceipt'
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
 import { DriverDecisions } from './features/dispatch/issues/DriverDecisions'
-import { StoreSettings } from './features/store/StoreSettings'
+import { StoreMore, StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
-import OutletsReference from './components/OutletsReference'
+import { DispatchOrders, DispatchFleet, DispatchOutlets } from './features/dispatch/core/DispatchDataPages'
+import { dispatchApi } from './features/dispatch/core/api'
+import NetworkMap from './features/dispatch/core/NetworkMap'
+import UIShowcase from './ui/UIShowcase'
 import RunReport from './components/RunReport'
 import CapacityOutlook from './components/CapacityOutlook'
-import IssuesInbox from './components/IssuesInbox'
-import IssueDetail from './components/IssueDetail'
+import { LoaderSignIn } from './features/loader/LoaderSignIn'
+import { LoaderHome } from './features/loader/LoaderHome'
 
 function DispatcherWorkspace() {
-  const { logout } = useAuth()
-  const [activeNav, setActiveNav] = useState('issues')
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>('ISS-0142')
+  const { user, logout } = useAuth()
+  const client = useQueryClient()
+  const [activeNav, setActiveNav] = useState('orders')
+  const [activeDepot, setActiveDepot] = useState(user?.depot ?? 'Peliyagoda')
+  const [clockInput, setClockInput] = useState('')
+  const settings = useQuery({ queryKey: ['dispatch-settings'], queryFn: dispatchApi.settings, refetchInterval: 30_000 })
+  const moveClock = useMutation({ mutationFn: dispatchApi.moveClock, onSuccess: () => client.invalidateQueries() })
+  const runDate = settings.data?.runDate
+  const depot = activeDepot === 'All depots' ? '' : activeDepot
+  const plan = useQuery({ queryKey: ['dispatch-plan-status', runDate, depot], queryFn: () => dispatchApi.latestPlan(runDate!, depot), enabled: !!runDate && !!depot })
+  const planStatus = !depot ? undefined : plan.data ? `Plan v${plan.data.version} · ${plan.data.status.toLowerCase()}` : plan.error instanceof ApiError && plan.error.status === 404 ? 'No plan' : plan.isPending ? 'Checking plan…' : 'Plan unavailable'
 
-  const pageMeta: Record<string, { title: string; subtitle: string; planStatus?: string }> = {
-    orders: {
-      title: 'Order queue · Thu 1 Oct run',
-      subtitle: 'Orders closed Wed 4:00 PM · 85 confirmed orders',
-      planStatus: 'Plan v1 · not started',
-    },
-    fleet: {
-      title: 'Fleet · Peliyagoda · Thu 1 Oct',
-      subtitle: 'Mark workshop vehicles before planning · weekly fuel shown per vehicle',
-      planStatus: 'Plan v1 · not started',
-    },
-    'live-board': {
-      title: 'Live board · Thu 1 Oct · 6:45 AM',
-      subtitle: 'Exceptions first · updates arrive as drivers sync',
-      planStatus: 'Plan v1 · published',
-    },
-    'driver-decisions': {
-      title: 'Driver decisions',
-      subtitle: 'Sync conflicts, failed deliveries and vehicle problems · one queue',
-      planStatus: 'From driver data',
-    },
-    issues: {
-      title: 'Issues',
-      subtitle: 'Thu 1 Oct · 7:50 AM · from stores, drivers and loaders',
-      planStatus: '4 open',
-    },
-    capacity: {
-      title: 'Capacity outlook · next 10 weeks',
-      subtitle: 'Demand forecast vs fleet · Peliyagoda · plan fridge trucks before peaks',
-      planStatus: 'Estimated · rule-based',
-    },
-    outlets: {
-      title: 'Outlets',
-      subtitle: '120 outlets · 2 depots',
-      planStatus: 'Plan v1 · not started',
-    },
-    reports: {
-      title: 'Run report · Thu 1 Oct',
-      subtitle: 'All depots · final at 2:00 PM',
-      planStatus: 'Plan v1 · published',
-    },
+  const metadata: Record<string, { title: string; subtitle: string }> = {
+    orders: { title: 'Order queue', subtitle: 'Orders and confirmation status for the selected run' },
+    fleet: { title: 'Fleet', subtitle: 'Mark unavailable vehicles before planning' },
+    plan: { title: 'Plan', subtitle: 'Planning screens are owned by Chethiya' },
+    'live-board': { title: 'Live board', subtitle: 'Recorded delivery progress and attention items' },
+    'driver-decisions': { title: 'Driver decisions', subtitle: 'Sync conflicts, failed deliveries and vehicle problems, from driver data' },
+    issues: { title: 'Issues', subtitle: 'Store issues and replies' },
+    'network-map': { title: 'Network map', subtitle: 'District trips from the selected plan' },
+    capacity: { title: 'Capacity outlook · sample preview', subtitle: 'Forecast backend is not available yet' },
+    outlets: { title: 'Outlets', subtitle: 'Delivery rules by outlet' },
+    reports: { title: 'Run report', subtitle: 'Recorded outcomes and exceptions for the selected run' },
   }
-
-  const currentMeta = pageMeta[activeNav] || {
-    title: 'Waypoint Relay',
-    subtitle: 'Dispatch & Fleet Operations',
-    planStatus: 'Plan v1 · not started',
-  }
-
-  const isIssueDetailActive = activeNav === 'issues' && selectedIssueId !== null
-
-  const content = activeNav === 'fleet' ? <FleetStatus />
-    : activeNav === 'live-board' ? <LiveBoardPage />
+  const meta = metadata[activeNav] ?? { title: 'Waypoint Relay', subtitle: 'Dispatch & fleet operations' }
+  const content = settings.error ? <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-800">Could not load run settings: {settings.error.message}</p>
+    : activeNav === 'fleet' ? (runDate && depot ? <DispatchFleet runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : activeNav === 'live-board' ? (runDate && depot ? <LiveBoardPage runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'driver-decisions' ? <DriverDecisions />
-    : activeNav === 'issues' ? (
-        selectedIssueId ? (
-          <IssueDetail
-            issueId={selectedIssueId}
-            onBack={() => setSelectedIssueId(null)}
-          />
-        ) : (
-          <IssuesInbox
-            onIssueSelect={(issue) => setSelectedIssueId(issue.id)}
-          />
-        )
-      )
+    : activeNav === 'issues' ? <DispatchIssues />
     : activeNav === 'capacity' ? <CapacityOutlook />
-    : activeNav === 'outlets' ? <OutletsReference />
-    : activeNav === 'reports' ? <RunReport />
-    : <OrderQueue />
+    : activeNav === 'outlets' ? <DispatchOutlets depot={depot} />
+    : activeNav === 'network-map' ? (runDate && depot ? <NetworkMap runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : activeNav === 'reports' ? (runDate && depot ? <RunReport runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : activeNav === 'orders' ? (runDate && depot ? <DispatchOrders runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : <p>This screen is being developed by its owner.</p>
 
-  return (
-    <DispatcherLayout
-      activeNav={activeNav}
-      onSignOut={logout}
-      onNavChange={(nav) => {
-        setActiveNav(nav)
-        if (nav !== 'issues') {
-          setSelectedIssueId(null)
-        }
-      }}
-      title={currentMeta.title}
-      subtitle={currentMeta.subtitle}
-      planStatus={currentMeta.planStatus}
-      hideTopBar={activeNav === 'capacity' || isIssueDetailActive}
-    >
-      {content}
-    </DispatcherLayout>
-  )
+  return <DispatcherLayout
+    activeNav={activeNav}
+    onSignOut={logout}
+    onNavChange={setActiveNav}
+    title={meta.title}
+    subtitle={`${meta.subtitle}${runDate ? ` · Run ${runDate}` : ''}`}
+    planStatus={planStatus}
+    activeDepot={activeDepot}
+    onDepotChange={setActiveDepot}
+    runDate={runDate ? `Run: ${runDate}` : 'Loading run date…'}
+    user={user ? { name: user.name, role: 'Dispatcher', depots: user.depot ?? 'All depots' } : undefined}
+    clockControl={<form className="flex items-center gap-2" onSubmit={event => { event.preventDefault(); if (clockInput) moveClock.mutate(`${clockInput}:00+05:30`) }}><label className="text-xs font-medium">Demo clock (Sri Lanka) <input className="ml-1 min-h-10 rounded border border-slate-300 px-2" type="datetime-local" value={clockInput} onChange={event => setClockInput(event.target.value)} /></label><button className="min-h-10 rounded bg-[#0e2a47] px-3 text-xs font-semibold text-white" disabled={!clockInput || moveClock.isPending}>Set</button>{moveClock.error && <span role="alert" className="text-xs text-red-700">{moveClock.error.message}</span>}</form>}
+  >{content}</DispatcherLayout>
 }
 
 const queryClient = new QueryClient({
@@ -146,6 +107,8 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/loader/sign-in" element={<LoaderSignIn />} />
+            <Route path="/ui" element={<UIShowcase />} />
             {(Object.entries(rolePaths) as [Role, string][]).map(([role, path]) => (
               <Route key={role} element={<RoleGuard role={role} />}>
                 <Route path={path} element={<RoleLayout />}>
@@ -159,17 +122,20 @@ export default function App() {
                       <Route path="deliveries" element={<StoreDeliveries />} />
                       <Route path="deliveries/:orderId" element={<StoreArrival />} />
                       <Route path="deliveries/:orderId/moved" element={<StoreMoved />} />
+                      <Route path="deliveries/:orderId/problem" element={<StoreDeliveryProblem />} />
+                      <Route path="deliveries/:orderId/receipt" element={<StoreReceipt />} />
                       <Route path="issues" element={<StoreIssues />} />
-                      <Route path="issues/new" element={<NewIssue />} />
+                      <Route path="issues/new" element={<NewIssuePage />} />
                       <Route path="issues/:id" element={<StoreIssueDetail />} />
                       <Route path="settings" element={<StoreSettings />} />
+                      <Route path="more" element={<StoreMore />} />
                       <Route path="history" element={<StoreHistory />} />
                     </Route>
-                  </> : role === 'DRIVER' ? (
+</> : role === 'DRIVER' ? (
                     // The driver app is a phone-width app in a cab, so it takes the whole route
                     // rather than an index page inside the desktop shell.
                     <Route path="*" element={<DriverApp />} />
-                  ) : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : <WorkspacePlaceholder />} />}
+                  ) : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : role === 'LOADER' ? <LoaderHome /> : <WorkspacePlaceholder />} />}
                   {role === 'DISPATCHER' && <Route path="issues" element={<DispatchIssues />} />}
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="*" element={<Navigate to={path} replace />} />

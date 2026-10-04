@@ -5,14 +5,11 @@ import { isSession, readLanguage, readSession, saveLanguage, saveSession } from 
 import { api, ApiError, configureApi } from '../lib/api'
 import { checkPinOffline, forgetPin, rememberPin } from '../lib/offline'
 
-// Explicit opt-in: production builds use the real endpoint by default.
-const mockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const [session, setSession] = useState<Session | null>(() => {
     const stored = readSession()
-    if (stored && !mockAuth && stored.token.startsWith('demo-')) return null
+    if (stored?.token.startsWith('demo-')) return null
     return stored
   })
   const [language, setCurrentLanguage] = useState<Language>(
@@ -45,9 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
   async function login(credentials: Credentials, remember = true) {
-    const result = mockAuth
-      ? await (await import('../mocks/auth')).mockLogin(credentials)
-      : await api<Session>('auth/login', {
+    const result = await api<Session>('auth/login', {
           method: 'POST',
           authenticated: false,
           body: JSON.stringify(credentials),

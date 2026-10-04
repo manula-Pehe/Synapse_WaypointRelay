@@ -11,7 +11,7 @@
 |---|---|
 | Base path | `/api` (nginx / Vite proxy forwards to the backend) |
 | Format | JSON, field names **camelCase** |
-| Auth | `Authorization: Bearer <token>` on every request except `POST /api/auth/login` and `GET /actuator/health` |
+| Auth | `Authorization: Bearer <token>` on every request except `POST /api/auth/login`, `GET /api/settings`, and `GET /actuator/health` |
 | Dates | `YYYY-MM-DD` (e.g. `2026-10-01`) |
 | Date-times | ISO-8601 with offset (e.g. `2026-10-01T05:30:00+05:30`); stored in UTC |
 | Wall-clock times | `HH:mm` (e.g. `05:00`) for outlet windows |
@@ -255,12 +255,12 @@ Ordered by id. `runDate` defaults to the current run date.
 
 ## 8. Loader
 
-- `GET /api/loader/trips?runDate=` → list of `{ tripId, vehicleId, tripNo, district, brand, stops, units, chilled, departAt, status }` (empty + `listsAvailableAt` before publish) — L1b, L1w
-- `GET /api/loader/trips/{id}` → `{ trip, vehicle, stops: [ { stopId, loadSeq, outletId, units, weightKg, volumeM3, accessNote, ticked } ], fridgeCheck }` — L2, L2d
+- `GET /api/loader/trips?runDate=` → `{ items: [{ tripId, vehicleId, tripNo, district, brand, stops, units, chilled, departAt, status, ticked, vehicleAvailable }], total, listsAvailableAt }` (empty items before publish) — L1b, L1w
+- `GET /api/loader/trips/{id}` → `{ trip, vehicleType, weightCapKg, volumeCapM3, loadedWeightKg, loadedVolumeM3, stops: [ { stopId, loadSeq, orderId, orderRef, outletId, outletName, units, weightKg, volumeM3, accessNote, storeNote, ticked, missingUnits } ], fridgeCheck }` — L2, L2d
 - `POST /api/loader/trips/{id}/fridge-check` `{ "running": true, "tempC": 3, "doorsOk": true }` → `{ passed }` — L2f
-- `POST /api/loader/stops/{stopId}/tick` — L2
+- `POST /api/loader/stops/{stopId}/tick` → updated trip detail — L2
 - `POST /api/loader/stops/{stopId}/shortfall` `{ "missingUnits": 2, "reason": "MISSING", "note": "" }` → `{ remainderOrderRef }` — L3
-- `POST /api/loader/trips/{id}/handover` `{ "driverStaffId": "DRV-0036" }` → `{ status: "LOADED", at }` — L5
+- `POST /api/loader/trips/{id}/handover` `{ "driverStaffId": "DRV-0036" }` → `{ status: "LOADED", at }` — L5. Departure is reported only after driver order updates.
 
 ---
 
@@ -298,8 +298,8 @@ Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, 
 
 ## 10. Dispatch operations
 
-- `GET /api/dispatch/live?runDate=&depot=` → `{ kpis: { onTimePct, completedStops, deferredToday, skippedTwoPlus, fridgeUsePct }, attention: [ { kind: "CONFLICT" | "FAILED" | "VEHICLE_PROBLEM" | "LATE_RISK" | "SHORTFALL", severity, title, body, link } ], trips: [ { vehicleId, tripNo, district, stopsDone, stopsTotal, status, lastSyncAt } ] }` — D6, D6m
-- `GET /api/dispatch/reports/run?runDate=&depot=` → run summary — D12
+- `GET /api/dispatch/live?runDate=&depot=` → `{ runDate, depot, generatedAt, onTimePercent, completedStops, onTimeStops, deferredToday, skippedTwoRuns, fridgeTruckUsePercent, needsAttention: [ { id, type, severity, title, details, orderId, action } ], trips: [ { id, vehicleId, tripNo, district, stopsDone, stopsTotal, status, lastUpdate, lastSync } ] }` — D6, D6m. The published plan, orders, and outcome events supply recorded progress. Metrics without a source are `null`; absent issue types are omitted. `lastUpdate` is an order update, while `lastSync` stays `null` until driver sync is recorded.
+- `GET /api/dispatch/reports/run?runDate=&depot=` → `{ runDate, depot, onTimePercent, onTimeStops, completedStops, deferred, failed, partial, lateByDistrict: [ { district, late, completed } ], exceptions: [ { type, detail, orderId } ] }` — D12. District lateness compares delivered or partial outcome times with the published stop window; failed outcomes are reported separately. Plan-derived fields are `null` or empty when no published plan exists; no result is invented for an unrecorded delivery.
 - `GET /api/dispatch/capacity?depot=&weeks=` → weekly estimate (rule-based) — D7 (if time)
 
 ---

@@ -156,7 +156,7 @@ class IssueController {
     }
 
     record NewIssue(String orderId,
-                    @NotBlank @Pattern(regexp = "DAMAGED|MISSING|WRONG_ITEM|LATE|OTHER") String type,
+                    @NotBlank @Pattern(regexp = "DAMAGED|MISSING|WRONG_ITEM|TEMPERATURE|LATE|OTHER") String type,
                     @Min(1) Integer units,
                     @NotBlank @Pattern(regexp = "REPLACE|CREDIT|NOTHING") String wants,
                     @NotBlank @Size(max = 2000) String note) {}
