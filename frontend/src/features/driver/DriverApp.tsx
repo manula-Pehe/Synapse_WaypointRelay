@@ -18,6 +18,7 @@ import SyncSummary from './screens/SyncSummary'
 import Menu from './screens/Menu'
 import VehicleProblem from './screens/VehicleProblem'
 import TripEnd from './screens/TripEnd'
+import HandBack from './screens/HandBack'
 import type { DriverStop } from './types'
 
 /**
@@ -159,6 +160,8 @@ function DriverRoutes() {
         }
       />
       <Route path="trip-end" element={<TripEnd {...shared} trip={view} />} />
+      {/* R8r — goods that stayed on the truck go back on the shelf at the depot. */}
+      <Route path="hand-back" element={<HandBack {...shared} trip={view} />} />
     </Routes>
   )
 }

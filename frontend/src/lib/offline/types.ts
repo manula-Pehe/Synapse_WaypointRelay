@@ -9,6 +9,7 @@ export const SYNC_TYPES = [
   'DELIVERY_UNDONE',
   'STORE_WAIT',
   'VEHICLE_PROBLEM',
+  'GOODS_RETURNED',
 ] as const
 
 export type SyncType = (typeof SYNC_TYPES)[number]

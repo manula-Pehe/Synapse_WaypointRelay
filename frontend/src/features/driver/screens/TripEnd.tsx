@@ -56,6 +56,11 @@ export default function TripEnd({ trip, language, onToggleTheme }: TripEndProps)
           </p>
         </Card>
       )}
+
+      {/* R8r — cases still on the truck go back on the shelf before the driver signs out. */}
+      <Button variant="secondary" full onClick={() => navigate('/driver/hand-back')} testId="to-hand-back">
+        {t(language, 'driver.tripEnd.handback')}
+      </Button>
     </DriverLayout>
   )
 }
