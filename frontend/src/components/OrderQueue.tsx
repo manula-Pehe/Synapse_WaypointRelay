@@ -117,7 +117,7 @@ function UnconfirmedBanner({ count, runDateLabel }: { count: number; runDateLabe
       <div>
         <h2 className="text-base font-bold">{count} {count === 1 ? 'store hasn\'t' : 'stores haven\'t'} confirmed their order for {runDateLabel}</h2>
         <p className="mt-1 text-xs sm:text-sm">
-          Unconfirmed chilled, Style and Tech orders are not planned once orders close — call them, or enter the order for them if they tell you by phone.
+          Unconfirmed chilled, Style and Tech orders are not planned once orders close - call them, or enter the order for them if they tell you by phone.
         </p>
       </div>
     </div>
@@ -272,7 +272,7 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
 
       <p className="text-xs text-muted">
         {view === 'not-confirmed'
-          ? 'Late adds are still allowed after the cut-off until the plan is published — they are tagged "Entered by dispatcher" and the store is asked to check them.'
+          ? 'Late adds are still allowed after the cut-off until the plan is published - they are tagged "Entered by dispatcher" and the store is asked to check them.'
           : `Showing ${visibleOrders.length} of ${orders.length} · sorted by order reference`}
       </p>
     </div>

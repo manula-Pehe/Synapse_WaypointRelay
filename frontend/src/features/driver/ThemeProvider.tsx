@@ -27,7 +27,7 @@ export default function DriverThemeProvider({ children }: { children: ReactNode 
       try {
         localStorage.setItem(STORAGE_KEY, next)
       } catch {
-        // Nothing to do — the switch still works for this session.
+        // Nothing to do - the switch still works for this session.
       }
       return next
     })

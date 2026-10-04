@@ -22,7 +22,7 @@ import com.synapse.waypoint.core.reference.dto.UpdateAvailabilityRequest;
 import com.synapse.waypoint.core.reference.dto.VehicleDto;
 import com.synapse.waypoint.core.reference.service.FleetService;
 
-/** Dispatcher fleet endpoints — docs/api.md §3 (D2, D2v). Dispatcher-only by path rule. */
+/** Dispatcher fleet endpoints - docs/api.md §3 (D2, D2v). Dispatcher-only by path rule. */
 @RestController
 @RequestMapping("/api/dispatch/fleet")
 class DispatchFleetController {

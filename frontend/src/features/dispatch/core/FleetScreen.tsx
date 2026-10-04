@@ -1,4 +1,4 @@
-// D2 · Fleet status — wires D2v (take off road) and Confirm fleet to the API
+// D2 · Fleet status - wires D2v (take off road) and Confirm fleet to the API
 import FleetStatus from '../../../components/FleetStatus'
 import { useConfirmFleet } from './useConfirmFleet'
 import { useFleet } from './useFleet'

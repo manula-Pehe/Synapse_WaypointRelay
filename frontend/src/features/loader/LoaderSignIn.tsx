@@ -20,7 +20,7 @@ export function LoaderSignIn() {
         hour: 'numeric',
         minute: '2-digit',
       })
-    : '—'
+    : '-'
   if (user) return <Navigate to={rolePaths[user.role]} replace />
 
   async function submit(event: FormEvent<HTMLFormElement>) {

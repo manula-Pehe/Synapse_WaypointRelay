@@ -1,5 +1,5 @@
 /**
- * X1m-off — signing in at a depot with no signal.
+ * X1m-off - signing in at a depot with no signal.
  *
  * The PIN is checked against a hash stored on the phone at the last successful online sign-in, so
  * the driver can start a run without a network. Nothing here bypasses the server: an offline
@@ -7,7 +7,7 @@
  * gets a signal and the server sees the same actions with the same clientIds.
  *
  * The stored value is salted and stretched with PBKDF2 rather than a bare digest. That does not make
- * a 4-digit PIN strong on its own — it only means the hash is not a rainbow-table lookup away — but
+ * a 4-digit PIN strong on its own - it only means the hash is not a rainbow-table lookup away - but
  * it is the honest ceiling for client-side verification, and the reason the session is marked
  * offline: the server has not confirmed this sign-in.
  */
@@ -71,7 +71,7 @@ function readJson(key: string): unknown {
 }
 
 /**
- * Called after a successful *online* sign-in. Nothing is stored if the phone cannot do the crypto —
+ * Called after a successful *online* sign-in. Nothing is stored if the phone cannot do the crypto -
  * the driver simply gets the online behaviour with no offline fallback.
  */
 export async function rememberPin(
@@ -91,7 +91,7 @@ export async function rememberPin(
   }
 }
 
-/** Forgets the stored PIN — on sign-out, and whenever the server rejects the credentials. */
+/** Forgets the stored PIN - on sign-out, and whenever the server rejects the credentials. */
 export function forgetPin(): void {
   try {
     localStorage.removeItem(STORAGE_KEY)

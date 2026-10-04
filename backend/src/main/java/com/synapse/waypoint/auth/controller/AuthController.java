@@ -15,7 +15,7 @@ import com.synapse.waypoint.auth.dto.UpdatePreferencesRequest;
 import com.synapse.waypoint.auth.dto.UserResponse;
 import com.synapse.waypoint.auth.service.AuthService;
 
-/** Sign-in and the signed-in user's profile — docs/api.md §1. */
+/** Sign-in and the signed-in user's profile - docs/api.md §1. */
 @RestController
 @RequestMapping("/api/auth")
 class AuthController {

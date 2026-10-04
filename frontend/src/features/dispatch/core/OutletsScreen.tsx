@@ -1,4 +1,4 @@
-// D13 · Outlets — delivery rules by outlet
+// D13 · Outlets - delivery rules by outlet
 import OutletsReference from '../../../components/OutletsReference'
 import { useOutlets } from './useOutlets'
 import { ErrorNote, LoadingNote } from './QueryNotes'

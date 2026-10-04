@@ -61,7 +61,7 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * The offline guarantee: an action that arrives twice is carried out once.
  *
- * <p>These run without a database - the repositories are mocked — so the rule behind the whole sync
+ * <p>These run without a database - the repositories are mocked - so the rule behind the whole sync
  * design can be checked on any machine. Persistence is exercised by the database-backed tests in CI.
  */
 class DefaultSyncServiceTests {
@@ -359,7 +359,7 @@ class DefaultSyncServiceTests {
         assertThat(saved.getValue().getUnitsOnBoard()).isNull();
     }
 
-    /** R8r — goods handed back at the depot are recorded against the trip and the driver. */
+    /** R8r - goods handed back at the depot are recorded against the trip and the driver. */
     @Test
     void goodsHandedBackAtTheDepotAreRecorded() {
         when(syncLog.existsById(anyString())).thenReturn(false);
@@ -380,7 +380,7 @@ class DefaultSyncServiceTests {
     }
 
     /**
-     * US-11.2 — responsibility for the handback is the signature, not just the reason.
+     * US-11.2 - responsibility for the handback is the signature, not just the reason.
      */
     @Test
     void aHandbackKeepsTheSignatureTakenAtTheDepot() {

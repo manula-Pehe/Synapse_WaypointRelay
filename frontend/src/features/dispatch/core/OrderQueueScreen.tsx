@@ -1,4 +1,4 @@
-// D1 · Order queue — wires D1u (unconfirmed), D1b (phone-in) and D10 (history) to the API
+// D1 · Order queue - wires D1u (unconfirmed), D1b (phone-in) and D10 (history) to the API
 import { useState } from 'react'
 import OrderQueue from '../../../components/OrderQueue'
 import AddOrderDrawer from '../../../components/AddOrderDrawer'

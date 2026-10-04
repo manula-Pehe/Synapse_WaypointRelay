@@ -30,6 +30,7 @@ import { FleetScreen } from './features/dispatch/core/FleetScreen'
 import { OutletsScreen } from './features/dispatch/core/OutletsScreen'
 import { dispatchApi } from './features/dispatch/core/api'
 import NetworkMap from './features/dispatch/core/NetworkMap'
+import { PlanPage } from './features/dispatch/plan/PlanPage'
 import UIShowcase from './ui/UIShowcase'
 import RunReport from './components/RunReport'
 import CapacityOutlook from './components/CapacityOutlook'
@@ -52,7 +53,7 @@ function DispatcherWorkspace() {
   const metadata: Record<string, { title: string; subtitle: string }> = {
     orders: { title: 'Order queue', subtitle: 'Orders and confirmation status for the selected run' },
     fleet: { title: 'Fleet', subtitle: 'Mark unavailable vehicles before planning' },
-    plan: { title: 'Plan', subtitle: 'Planning screens are owned by Chethiya' },
+    plan: { title: `Plan · ${runDate ?? 'run'} · ${activeDepot}`, subtitle: plan.data ? `Plan v${plan.data.version} · ${plan.data.status.toLowerCase()}` : 'Readiness and planning' },
     'live-board': { title: 'Live board', subtitle: 'Recorded delivery progress and attention items' },
     'driver-decisions': { title: 'Driver decisions', subtitle: 'Sync conflicts, failed deliveries and vehicle problems, from driver data' },
     issues: { title: 'Issues', subtitle: 'Store issues and replies' },
@@ -64,6 +65,7 @@ function DispatcherWorkspace() {
   const meta = metadata[activeNav] ?? { title: 'Waypoint Relay', subtitle: 'Dispatch & fleet operations' }
   const content = settings.error ? <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-800">Could not load run settings: {settings.error.message}</p>
     : activeNav === 'fleet' ? (runDate && depot ? <FleetScreen runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : activeNav === 'plan' ? (runDate && depot ? <PlanPage key={`${runDate}:${depot}`} runDate={runDate} depot={depot} onNavigate={setActiveNav} /> : <p>Select a depot and wait for the run date to view planning.</p>)
     : activeNav === 'live-board' ? (runDate && depot ? <LiveBoardPage runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'driver-decisions' ? <DriverDecisions />
     : activeNav === 'issues' ? <DispatchIssues />

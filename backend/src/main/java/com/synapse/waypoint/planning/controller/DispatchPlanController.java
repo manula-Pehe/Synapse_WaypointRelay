@@ -23,7 +23,7 @@ import com.synapse.waypoint.planning.dto.PlanDto;
 import com.synapse.waypoint.planning.dto.PlanReadinessDto;
 import com.synapse.waypoint.planning.service.PlanService;
 
-/** Dispatcher plan endpoints — docs/api.md §6 (Dp0–Dp3, D3, D4, D3p). Dispatcher-only by path rule. */
+/** Dispatcher plan endpoints - docs/api.md §6 (Dp0–Dp3, D3, D4, D3p). Dispatcher-only by path rule. */
 @RestController
 @RequestMapping("/api/dispatch/plans")
 class DispatchPlanController {

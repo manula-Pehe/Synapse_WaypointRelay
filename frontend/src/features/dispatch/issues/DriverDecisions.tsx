@@ -8,11 +8,11 @@ import {
 } from '../../driver/api'
 
 /**
- * The dispatcher's decisions on driver data — D8 (sync conflicts), D6f (failed deliveries) and the
+ * The dispatcher's decisions on driver data - D8 (sync conflicts), D6f (failed deliveries) and the
  * vehicle problems from F10.
  *
- * They are on one screen on purpose. Each is the same shape of question — a driver has already
- * moved, and dispatch has to say what happens next — so putting them together means a dispatcher
+ * They are on one screen on purpose. Each is the same shape of question - a driver has already
+ * moved, and dispatch has to say what happens next - so putting them together means a dispatcher
  * works one queue rather than three.
  */
 
@@ -58,7 +58,7 @@ export function DriverDecisions() {
     <div className="space-y-8">
       <Section
         title="Sync conflicts"
-        hint="A driver's offline delivery clashed with a board change. The delivery stands — decide what the board should say."
+        hint="A driver's offline delivery clashed with a board change. The delivery stands - decide what the board should say."
         count={conflicts.data?.total}
         loading={conflicts.isPending}
         error={conflicts.error}
@@ -189,7 +189,7 @@ function FailedCard({
       </div>
       <p className="mt-2 text-sm">
         {delivery.units} cases not delivered
-        {delivery.reason ? ` — ${delivery.reason.replaceAll('_', ' ').toLowerCase()}` : ''}.
+        {delivery.reason ? ` - ${delivery.reason.replaceAll('_', ' ').toLowerCase()}` : ''}.
         {storeAnswered ? ' The store has answered.' : ' The store has not answered yet.'}
       </p>
       {decided ? (

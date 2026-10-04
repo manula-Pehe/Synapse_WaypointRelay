@@ -44,7 +44,7 @@ export default function SignIn({ language, onToggleTheme, offline }: SignInProps
     const credentials = { identifier: staffId.trim(), secret: pin }
     try {
       // With no signal the PIN is checked against the hash stored at the last online sign-in. The
-      // session that comes back carries no authority — actions queue in the outbox until the
+      // session that comes back carries no authority - actions queue in the outbox until the
       // server has seen them.
       if (offline) await loginOffline(credentials)
       else await login(credentials)

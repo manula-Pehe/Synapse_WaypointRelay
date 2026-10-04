@@ -119,7 +119,7 @@ export const AddOrderDrawer: React.FC<AddOrderDrawerProps> = ({
             <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Checks</span>
             <p className={`flex items-center gap-2.5 text-xs ${ordersClosed ? 'text-status-risk' : 'text-status-delivered'}`}>
               <span aria-hidden="true">{ordersClosed ? '⚠' : '✓'}</span>
-              {ordersClosed ? 'After cut-off — late add, tagged "Entered by dispatcher"' : 'Before cut-off — normal order'}
+              {ordersClosed ? 'After cut-off - late add, tagged "Entered by dispatcher"' : 'Before cut-off - normal order'}
             </p>
             <p className="flex items-center gap-2.5 text-xs text-muted">
               <span aria-hidden="true">⚖</span>

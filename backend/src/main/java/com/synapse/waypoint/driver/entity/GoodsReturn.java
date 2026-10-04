@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 /**
  * Goods handed back at the depot at the end of a trip (returns, V20; screen R8r).
  *
- * <p>Written from the phone's outbox, so it carries the clientId that made it — a driver who records
+ * <p>Written from the phone's outbox, so it carries the clientId that made it - a driver who records
  * the handback twice after a dropped connection has still only handed the goods back once.
  *
  * <p>Stock coming back to the shelf, not an outcome on the order: the order keeps its own status and

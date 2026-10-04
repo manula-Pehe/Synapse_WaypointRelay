@@ -61,7 +61,7 @@ export function toOrderItems(orders: Order[], outlets: Outlet[], largest: Vehicl
         cases: order.units,
         kg: order.weightKg,
         volumeM3: order.volumeM3,
-        window: outlet ? formatWindow(outlet) : '—',
+        window: outlet ? formatWindow(outlet) : 'Not listed',
         flags: {
           chilled: order.temp === 'CHILLED',
           vanOnly: outlet?.parkingConstraint === VAN_ONLY_CONSTRAINT,
