@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { enqueue } from '../../../lib/offline'
+import { driverApi } from '../api'
 import DriverLayout from '../DriverLayout'
 import { Button, Card, Label, TOUCH, Value } from '../components'
 import { t, type Language } from '../i18n'
 import { outletLabel } from '../outlet'
+import { dataUrlToFile } from '../dataUrl'
+import { SignaturePad } from '../signature'
 import { useDriverTheme } from '../theme'
 import type { DriverTrip } from '../types'
 
@@ -25,6 +28,10 @@ type Reason = (typeof REASONS)[number]
  * back and why. It is queued like everything else in the driver app, so a driver who hands the load
  * back in a yard with no signal records it on the phone and it sends when there is one.
  *
+ * The signature is who took responsibility (US-11.2), so it is asked for. It is optional: the
+ * signature is a file, and files need a signal - the same limit proof has everywhere else. A
+ * handback without one is still recorded rather than lost.
+ *
  * The order keeps its own status: a handback is not a delivery, so the shortfall stays outstanding
  * and the store still gets the cases on a later run.
  */
@@ -39,22 +46,42 @@ export default function HandBack({ trip, language, onToggleTheme }: HandBackProp
 
   const [stopId, setStopId] = useState<string | null>(null)
   const [reason, setReason] = useState<Reason | null>(null)
+  const [signature, setSignature] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(false)
 
   const stop = trip.stops.find((candidate) => candidate.id === stopId)
   const [units, setUnits] = useState(0)
 
   async function record() {
     if (!stop || !reason) return
-    await enqueue('GOODS_RETURNED', {
-      tripId: trip.id,
-      orderId: stop.orderId ?? stop.orderRef,
-      units,
-      reason,
-    })
-    setStopId(null)
-    setReason(null)
-    setUnits(0)
-    navigate('/driver/trip-end')
+    setSaving(true)
+    setError(false)
+    try {
+      // The handback names the signature file, so the signature goes up first. The upload is
+      // idempotent on clientId, so a retry does not store two of the same mark.
+      const signatureFileId = signature
+        ? (await driverApi.uploadProof(dataUrlToFile(signature), 'signature', crypto.randomUUID())).id
+        : null
+
+      await enqueue('GOODS_RETURNED', {
+        tripId: trip.id,
+        orderId: stop.orderId ?? stop.orderRef,
+        units,
+        reason,
+        ...(signatureFileId ? { signatureFileId } : {}),
+      })
+      setStopId(null)
+      setReason(null)
+      setSignature(null)
+      setUnits(0)
+      navigate('/driver/trip-end')
+    } catch {
+      // Nothing is recorded yet, so the driver can simply try again.
+      setError(true)
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (!stop) {
@@ -106,7 +133,7 @@ export default function HandBack({ trip, language, onToggleTheme }: HandBackProp
         <Button
           full
           onClick={record}
-          disabled={reason === null || units < 1}
+          disabled={reason === null || units < 1 || saving}
           testId="record-handback"
         >
           {t(language, 'driver.handback.record')}
@@ -150,6 +177,23 @@ export default function HandBack({ trip, language, onToggleTheme }: HandBackProp
           </Pick>
         ))}
       </Card>
+
+      {/* US-11.2 — the signature is the point of a handback, so it is asked for. */}
+      <Card>
+        <Label>{t(language, 'driver.handback.signature')}</Label>
+        <SignaturePad onSigned={setSignature} />
+        <p className="mt-2 text-sm" style={{ color: colors.ink2 }}>
+          {t(language, 'driver.handback.signatureHint')}
+        </p>
+      </Card>
+
+      {error && (
+        <Card style={{ borderColor: colors.warn }}>
+          <p style={{ color: colors.warn }} data-testid="handback-retry">
+            {t(language, 'driver.delivery.retry')}
+          </p>
+        </Card>
+      )}
     </DriverLayout>
   )
 }

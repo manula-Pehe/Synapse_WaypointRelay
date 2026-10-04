@@ -70,6 +70,8 @@ const STRINGS = {
     'driver.handback.why': 'Why is it coming back?',
     'driver.handback.hint': 'These cases go back on the shelf and the store still gets them on a later run.',
     'driver.handback.nothing': 'Nothing is still on the truck.',
+    'driver.handback.signature': 'Signed for',
+    'driver.handback.signatureHint': 'Sign at the depot counter. The handback is recorded either way.',
     'driver.problem.title': 'Report a problem',
     'driver.problem.canDrive': 'I can keep driving',
     'driver.problem.cannot': 'I cannot drive',
