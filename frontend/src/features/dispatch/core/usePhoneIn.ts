@@ -7,7 +7,11 @@ export interface PhoneInDraft { outletId: string; note: string; lines: PhoneInLi
 
 /** Thrown when some lines were created before one failed, so the form can keep only the rest. */
 export class PhoneInPartialError extends Error {
-  constructor(readonly createdLines: number, message: string) { super(message) }
+  readonly createdLines: number
+  constructor(createdLines: number, message: string) {
+    super(message)
+    this.createdLines = createdLines
+  }
 }
 
 export function usePhoneIn(runDate: string, depot: string) {
