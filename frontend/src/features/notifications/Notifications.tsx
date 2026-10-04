@@ -9,7 +9,7 @@ import { useMessages } from '../../i18n/messages'
 
 function useNotifications() {
   const { user } = useAuth()
-  return useQuery({ queryKey: ['notifications', user?.role, user?.id], queryFn: () => getNotifications(user!), enabled: !!user, refetchInterval: 30_000 })
+  return useQuery({ queryKey: ['notifications', user?.role, user?.id], queryFn: () => getNotifications(user!), enabled: !!user, refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
 }
 export function NotificationBell({ iconSrc }: { iconSrc?: string } = {}) {
   const { user, language } = useAuth()
@@ -88,9 +88,9 @@ export function NotificationsPage() {
         </h2>
         <ul className={isDispatch ? 'space-y-3' : 'space-y-2.5 max-lg:space-y-3'}>{group.items.map((item) => <li key={item.id}>
           <button onClick={() => open(item)} aria-label={`${item.title[language]}. ${item.read ? '' : text.unread + '. '}${labels.markHint}`} className={`flex w-full items-center gap-3 rounded-xl border p-3.5 text-left transition-colors hover:bg-brand-soft ${isDispatch && item.severity === 'critical' ? 'border-danger' : 'border-line'} ${!isDispatch && item.read ? 'bg-canvas max-lg:bg-surface' : 'bg-surface'} ${!isDispatch ? 'max-lg:items-start max-lg:p-4' : ''}`}>
-            {!isDispatch && <span className={`flex size-9 shrink-0 items-center justify-center rounded-full ${item.icon === 'check' ? 'bg-success-soft text-success' : item.icon === 'warning' ? 'bg-warning-soft text-warning' : 'bg-brand-soft text-brand'}`}><NoticeIcon name={item.icon} className="size-4.5" /></span>}
+            {!isDispatch && <span className={`flex size-9 shrink-0 items-center justify-center rounded-full ${item.severity === 'critical' ? 'bg-danger-soft text-danger' : item.icon === 'check' ? 'bg-success-soft text-success' : item.icon === 'warning' ? 'bg-warning-soft text-warning' : 'bg-brand-soft text-brand'}`}><NoticeIcon name={item.icon} className="size-4.5" /></span>}
             <span className="min-w-0 flex-1"><span className={`block font-bold leading-5 ${isDispatch ? 'text-sm' : 'text-sm max-lg:text-base'}`}>{item.title[language]}</span><span className="mt-1 block text-[13px] leading-5 text-muted">{item.message[language]}</span>{!isDispatch && <span className="mt-1 block text-sm text-muted lg:hidden">{item.day === 'yesterday' ? `${labels.yesterday} ` : ''}{item.time}</span>}</span>
-            {!isDispatch && item.needsAction && <span className="hidden min-h-12 items-center rounded-lg bg-brand px-4 text-xs font-semibold text-on-brand lg:flex">{labels.receipt}</span>}
+            {!isDispatch && item.needsAction && <span className="hidden min-h-12 items-center rounded-lg bg-brand px-4 text-xs font-semibold text-on-brand lg:flex">{labels.details}</span>}
             <span className={`shrink-0 text-xs text-muted ${!isDispatch ? 'max-lg:hidden' : ''}`}>{item.day === 'yesterday' && isDispatch ? labels.yesterday : item.time}</span>
             {isDispatch ? <NoticeIcon name="arrow" className="size-4 shrink-0 text-muted" /> : !item.read && <span className="size-2 shrink-0 rounded-full bg-brand max-lg:hidden" />}
           </button>

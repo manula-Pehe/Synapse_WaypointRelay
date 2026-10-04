@@ -24,8 +24,12 @@ import com.synapse.waypoint.common.error.DomainException;
 import com.synapse.waypoint.common.error.ErrorCode;
 import com.synapse.waypoint.common.error.NotFoundException;
 import com.synapse.waypoint.common.security.CurrentUser;
+import com.synapse.waypoint.common.security.Role;
 import com.synapse.waypoint.common.time.DemoClock;
 import com.synapse.waypoint.core.order.service.OrderService;
+import com.synapse.waypoint.notification.entity.NotificationSeverity;
+import com.synapse.waypoint.notification.recipient.NotificationScope;
+import com.synapse.waypoint.notification.service.NotificationService;
 
 @RestController
 @RequestMapping("/api")
@@ -34,9 +38,12 @@ class IssueController {
     private final CurrentUser user;
     private final DemoClock clock;
     private final OrderService orders;
+    private final NotificationService notifications;
 
-    IssueController(JdbcTemplate jdbc, CurrentUser user, DemoClock clock, OrderService orders) {
+    IssueController(JdbcTemplate jdbc, CurrentUser user, DemoClock clock, OrderService orders,
+                    NotificationService notifications) {
         this.jdbc = jdbc; this.user = user; this.clock = clock; this.orders = orders;
+        this.notifications = notifications;
     }
 
     private String outletId() {
@@ -53,6 +60,10 @@ class IssueController {
         jdbc.update("INSERT INTO issues(id,ref,outlet_id,order_id,type,units,wants,created_by,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
                 id, ref, outletId(), body.orderId(), body.type(), body.units(), body.wants(), user.id(), Timestamp.from(clock.now()));
         if (body.note() != null && !body.note().isBlank()) addMessage(id, body.note());
+        notifications.notifyRole(Role.STORE_MANAGER, NotificationScope.outlet(outletId()),
+                NotificationSeverity.INFO, "ISSUE_RECORDED", "Issue " + ref + " recorded",
+                "Your reported delivery issue has been recorded. Dispatch can now review it.",
+                "/store/issues/" + id);
         return get(id, true);
     }
 
@@ -86,15 +97,25 @@ class IssueController {
         if (issue.status().equals("RESOLVED")) throw new DomainException(ErrorCode.INVALID_STATUS, "Issue is resolved.");
         addMessage(id, body.text());
         jdbc.update("UPDATE issues SET status = 'ANSWERED', version = version + 1 WHERE id = ?", id);
+        notifications.notifyRole(Role.STORE_MANAGER, NotificationScope.outlet(issue.outletId()),
+                NotificationSeverity.WARNING, "ISSUE_REPLY", "Dispatch replied to " + issue.ref(),
+                "Dispatch has responded to your issue. Open the conversation to read the reply.",
+                "/store/issues/" + id);
         return get(id, false);
     }
 
     @PostMapping("/dispatch/issues/{id}/resolve")
     @Transactional
     Issue resolve(@PathVariable String id) {
-        get(id, false);
+        Issue issue = get(id, false);
+        if (issue.status().equals("RESOLVED"))
+            throw new DomainException(ErrorCode.INVALID_STATUS, "Issue is already resolved.");
         jdbc.update("UPDATE issues SET status = 'RESOLVED', resolved_by = ?, resolved_at = ?, version = version + 1 WHERE id = ?",
                 user.id(), Timestamp.from(clock.now()), id);
+        notifications.notifyRole(Role.STORE_MANAGER, NotificationScope.outlet(issue.outletId()),
+                NotificationSeverity.INFO, "ISSUE_RESOLVED", "Issue " + issue.ref() + " resolved",
+                "Dispatch marked your issue as resolved. Open the conversation for details.",
+                "/store/issues/" + id);
         return get(id, false);
     }
 

@@ -29,7 +29,7 @@ export function groupNotifications(items: Notification[]) {
 const allLanguages = (value: string): Record<Language, string> => ({ en: value, si: value, ta: value })
 function category(type: string): Notification['category'] {
   const key = type.toLowerCase()
-  return key.includes('issue') ? 'issues' : key.includes('delivery') || key.includes('arrival') || key.includes('driver') || key.includes('receipt') ? 'deliveries' : 'orders'
+  return key.includes('issue') ? 'issues' : key.includes('delivery') || key.includes('arrival') || key.includes('driver') || key.includes('receipt') || key === 'load_shortfall' || key === 'order_moved' ? 'deliveries' : 'orders'
 }
 function day(at: string): Notification['day'] {
   const today = storeLocalDate(new Date())
@@ -42,7 +42,7 @@ function mapNotification(item: ApiNotification): Notification {
   const kind = category(item.type)
   return { id: item.id, severity: severities.includes(severity) ? severity : 'info', title: allLanguages(item.title), message: allLanguages(item.body), read: !!item.readAt,
     category: kind, day: day(item.createdAt), time: new Date(item.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-    icon: kind === 'deliveries' ? 'truck' : severity === 'critical' || severity === 'warning' ? 'warning' : 'info',
+    icon: severity === 'critical' || severity === 'warning' ? 'warning' : kind === 'deliveries' ? 'truck' : 'info',
     needsAction: severity === 'critical' || severity === 'warning', href: item.link?.startsWith('/') && !item.link.startsWith('//') ? item.link : undefined }
 }
 export async function getNotifications(user: User): Promise<Notification[]> {

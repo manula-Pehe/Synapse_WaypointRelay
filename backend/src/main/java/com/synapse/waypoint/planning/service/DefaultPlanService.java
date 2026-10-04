@@ -119,20 +119,18 @@ class DefaultPlanService implements PlanService {
         depotScope.requireInScope(plan.getDepot());
         requireDraft(plan);
         List<Trip> planTrips = trips.findByPlanIdOrderByVehicleIdAscTripNoAsc(plan.getId());
-        List<OrderDto> planned = markPlanned(plan, planTrips);
+        List<Stop> planStops = planTrips.isEmpty() ? List.of() :
+                stops.findByTripIdInOrderByTripIdAscSeqAsc(planTrips.stream().map(Trip::getId).toList());
+        List<OrderDto> planned = markPlanned(plan, planStops);
         List<MovedOrder> moved = markMoved(plan);
         plan.publish(currentUser.id(), clock.now());
         plans.save(plan);
         Set<String> usedVehicles = planTrips.stream().map(Trip::getVehicleId).collect(Collectors.toSet());
-        notifier.notifyPublished(plan.getDepot(), plan.getRunDate(), planned, moved, usedVehicles);
+        notifier.notifyPublished(plan.getDepot(), plan.getRunDate(), planned, planStops, moved, usedVehicles);
         return views.plan(plan);
     }
 
-    private List<OrderDto> markPlanned(Plan plan, List<Trip> planTrips) {
-        if (planTrips.isEmpty()) {
-            return List.of();
-        }
-        List<Stop> planStops = stops.findByTripIdInOrderByTripIdAscSeqAsc(planTrips.stream().map(Trip::getId).toList());
+    private List<OrderDto> markPlanned(Plan plan, List<Stop> planStops) {
         return planStops.stream().map(stop -> orders.markPlanned(stop.getOrderId(), plan.getId())).toList();
     }
 

@@ -185,17 +185,19 @@ class PlanServiceTests {
 
         entityManager.flush();
         List<Map<String, Object>> sent = jdbc.queryForList(
-                "SELECT user_id, severity, type, title, link FROM notifications ORDER BY user_id");
+                "SELECT user_id, severity, type, title, body, link FROM notifications ORDER BY user_id");
         assertThat(sent).hasSize((int) before + 5);
         assertThat(sent).extracting(row -> row.get("user_id"))
                 .containsExactlyInAnyOrder(PlanScenario.storeUser(PlanScenario.STORE_1),
                         PlanScenario.storeUser(PlanScenario.STORE_2), PlanScenario.storeUser(PlanScenario.HEAVY_STORE),
                         PlanScenario.LOADER, PlanScenario.USED_DRIVER);
         assertThat(rowFor(sent, PlanScenario.storeUser(PlanScenario.STORE_1)))
-                .containsEntry("severity", "INFO").containsEntry("title", "Delivery window for Thu 10 Jan")
+                .containsEntry("severity", "INFO").containsEntry("title", "Delivery scheduled for Thu 10 Jan")
                 .containsEntry("link", "/store/deliveries");
+        assertThat((String) rowFor(sent, PlanScenario.storeUser(PlanScenario.STORE_1)).get("body"))
+                .contains("Expected arrival:").contains("–");
         assertThat(rowFor(sent, PlanScenario.storeUser(PlanScenario.HEAVY_STORE)))
-                .containsEntry("severity", "WARNING").containsEntry("title", "Order PL-3 moved to Fri 11 Jan")
+                .containsEntry("severity", "CRITICAL").containsEntry("title", "Order PL-3 deferred to Fri 11 Jan")
                 .containsEntry("link", "/store/orders/" + PlanScenario.orderId("PL-3"));
         assertThat(rowFor(sent, PlanScenario.LOADER)).containsEntry("title", "Loading lists ready")
                 .containsEntry("link", "/loader");
