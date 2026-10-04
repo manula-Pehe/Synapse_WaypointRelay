@@ -94,29 +94,42 @@ Anything else → `409 INVALID_STATUS`.
 ```
 ### `POST /api/settings/clock` (dispatcher) `{ "at": "2026-09-30T16:05:00+05:30" }` → same as GET
 
+Moving the clock forward runs every timed job that has become due (see `docs/deployment.md`, "Timed jobs") before the response returns, so e.g. a move past 4 PM has closed the orders by then. Moving it backwards re-runs nothing.
+
 ---
 
 ## 3. Reference data
 
+Any signed-in role can read outlets and vehicles. `depot` matches case-insensitively; leaving it out returns every depot.
+
 ### `GET /api/outlets?depot=&brand=` → list of
 ```json
-{ "id": "OUT001", "brand": "Fresh", "district": "Colombo", "depot": "Peliyagoda",
-  "dockType": "street", "parkingConstraint": "van_only",
-  "windowOpen": "05:00", "windowClose": "07:30", "mallWindowOpen": null, "mallWindowClose": null }
+{ "id": "OUT001", "name": "OUT001 · Colombo", "brand": "Fresh", "district": "Colombo", "depot": "Peliyagoda",
+  "dockType": "rear_dock", "parkingConstraint": "normal",
+  "windowOpen": "05:15", "windowClose": "07:45", "mallWindowOpen": null, "mallWindowClose": null }
 ```
-### `GET /api/outlets/{id}` → one outlet
+Ordered by id. `name` is "id · district" (same as on orders) until outlets have a name column. `brand` filters ignoring case.
+### `GET /api/outlets/{id}` → one outlet (404 `NOT_FOUND` if unknown)
 
 ### `GET /api/vehicles?depot=&runDate=` → list of
 ```json
-{ "id": "VEH036", "type": "van", "temp": "reefer", "weightCapKg": 1040, "volumeCapM3": 7.0,
-  "fuelType": "diesel", "kmPerL": 9.5, "weeklyFuelQuotaL": 300, "depot": "Peliyagoda",
+{ "id": "VEH036", "type": "van", "temp": "reefer", "weightCapKg": 1000, "volumeCapM3": 6.0,
+  "fuelType": "diesel", "kmPerL": 8.0, "weeklyFuelQuotaL": 400, "depot": "Peliyagoda",
   "availability": "AVAILABLE", "availabilityReason": null }
 ```
+Ordered by id. `runDate` defaults to the current run date.
+
+**Availability rule (one place, used by every endpoint and by `ReferenceService`):** a vehicle with **no** `vehicle_availability` row for the run date is `AVAILABLE`. A row can mark it `IN_WORKSHOP` or `OFF_ROAD` for that date only.
 
 ### Fleet (dispatcher) — D2, D2v
 - `GET /api/dispatch/fleet?runDate=&depot=` → `{ items: [vehicle…], confirmedAt, confirmedBy, counts: { available, inWorkshop, offRoad, reeferAvailable } }`
-- `PUT /api/dispatch/fleet/{vehicleId}` `{ "runDate": "2026-10-01", "status": "OFF_ROAD", "reason": "Brake issue" }` → vehicle
-- `POST /api/dispatch/fleet/confirm` `{ "runDate", "depot" }` → `{ confirmedAt, confirmedBy }`
+  - `items` are the depot's vehicles with availability; `counts` are per status, and `reeferAvailable` counts only **available** reefers; `confirmedAt` / `confirmedBy` are `null` until the fleet is confirmed.
+  - `runDate` defaults to the current run date. `depot` defaults to the dispatcher's own depot; a dispatcher with no depot must send it (400 `VALIDATION`). A depot name no outlet uses → 400 `VALIDATION`; another real depot than the dispatcher's own → 404.
+- `PUT /api/dispatch/fleet/{vehicleId}` `{ "runDate": "2026-10-01", "status": "OFF_ROAD", "reason": "Brake issue" }` → vehicle (with its new availability) — D2v
+  - `reason` is required (non-blank, max 200) unless `status` is `AVAILABLE`, otherwise 400 `VALIDATION`; for `AVAILABLE` the stored reason is cleared.
+  - Unknown vehicle → 404. A dispatcher who has a depot cannot change another depot's vehicle (404); a dispatcher with no depot covers all depots.
+  - `updatedBy` / `updatedAt` come from the signed-in user and the demo clock.
+- `POST /api/dispatch/fleet/confirm` `{ "runDate", "depot" }` → `{ confirmedAt, confirmedBy }` — writes the run's fleet confirmation. Confirming again is fine and updates the time. A depot name no outlet uses → 400 `VALIDATION` (as for close orders); another real depot than the dispatcher's own → 404.
 
 ---
 
@@ -126,7 +139,7 @@ Anything else → `409 INVALID_STATUS`.
 ```json
 {
   "id": "4f1c…", "ref": "S1-001", "outletId": "OUT001", "outletName": "OUT001 · Colombo",
-  "brand": "Fresh", "temp": "CHILLED", "units": 80, "weightKg": 448.6, "volumeM3": 2.445,
+  "brand": "Fresh", "temp": "CHILLED", "units": 70, "weightKg": 500.0, "volumeM3": 3.0,
   "runDate": "2026-10-01", "status": "PREPARED", "source": "SEED", "autoConfirm": false,
   "daysSinceLastServed": 2, "deferredYesterday": false, "parentOrderId": null,
   "storeChecked": true, "confirmedAt": null, "updatedAt": "…"
@@ -137,11 +150,13 @@ Anything else → `409 INVALID_STATUS`.
 - `GET /api/orders/{id}` → `{ order, history: [ { at, actor, type, fromStatus, toStatus, details } ] }` — D10, S3p
 - `runDate` defaults to the current run date; `depot` matches case-insensitively; results are ordered by `ref`. A store manager always gets their own outlet, whatever `outletId` they pass.
 - `history[].actor` is the user id (`null` when the system or a timed job made the change); `type` is the new status name, or `EDITED` for a quantity change.
-- `GET /api/orders/close-status?runDate=&depot=` (any role) → `{ closed: true, closedAt, closedBy }`
+- `GET /api/orders/close-status?runDate=&depot=` (any role) → `{ closed, closedAt, closedBy, cutOffAt }` — `runDate` defaults to the current run date, `depot` is required. `cutOffAt` is 4:00 PM Sri Lanka time on the day before `runDate`; `closedAt` and `closedBy` are `null` while open, and `closedBy` is also `null` when the 4 PM job closed the orders
+
+- After the orders of a run are closed, a **store manager's** confirm, edit and cancel of its orders (and a new store order) return 409 `ORDERS_CLOSED`. The dispatcher and timed jobs are not restricted.
 
 ### Dispatcher
-- `POST /api/dispatch/orders/close` `{ "runDate", "depot" }` → `{ closedAt, confirmed: 79, autoConfirmed: 3, notConfirmed: 3 }` — D1 button; 409 `ORDERS_CLOSED` if already closed
-- `POST /api/dispatch/orders/phone-in` `{ "outletId", "runDate", "temp", "units", "note" }` → `201` + order (`source=PHONE_IN`, `status=CONFIRMED`, `storeChecked=false`; weight and volume are estimated from the outlet's past orders) — D1b
+- `POST /api/dispatch/orders/close` `{ "runDate", "depot" }` → `{ closedAt, confirmed: 79, autoConfirmed: 3, notConfirmed: 3 }` — D1 button; 409 `ORDERS_CLOSED` if already closed; 400 `VALIDATION` for an unknown depot. Counts are for that run and depot: `confirmed` = orders already confirmed before closing, `autoConfirmed` = Fresh ambient orders confirmed by the cut-off (`autoConfirm=true`, history `details.auto`), `notConfirmed` = orders left `PREPARED` (chilled, Style, Tech) — planning uses only `CONFIRMED` orders. `depot` matches case-insensitively
+- `POST /api/dispatch/orders/phone-in` `{ "outletId", "runDate", "temp", "units", "note" }` → `201` + order (`source=PHONE_IN`, `status=CONFIRMED`, `storeChecked=false`; weight and volume are estimated from the outlet's past orders) — D1b. 409 `ORDERS_CLOSED` when the orders of that `runDate` and the outlet's depot are already closed; a later run date is still open
 - `GET /api/dispatch/orders/unconfirmed?runDate=&depot=` → `{ items: [ { outletId, outletName, phone, orders: [order…] } ], total }` — D1u. Lists `PREPARED` orders, ordered by outlet id; `phone` is `null` until outlets store one
 
 ---
@@ -154,8 +169,12 @@ Anything else → `409 INVALID_STATUS`.
   "body": "Store closed. 64 cases returning.", "link": "/dispatch/live/failed/123",
   "createdAt": "…", "readAt": null }
 ```
-- `GET /api/notifications?unread=true` → list (newest first) + `unreadCount`
-- `POST /api/notifications/{id}/read` · `POST /api/notifications/read-all`
+- `GET /api/notifications?unread=true` → `{ "items": [notification…], "total": n, "unreadCount": n }`, newest first. Without `unread` all of the user's notifications are listed. `total` counts the returned items; `unreadCount` always counts every unread notification of the user.
+- `POST /api/notifications/{id}/read` → the notification with `readAt` set. Reading it again keeps the first `readAt`.
+- `POST /api/notifications/read-all` → `{ "updated": n }` (how many were newly marked read).
+- Open to every signed-in role; a user only ever sees and changes their own notifications. Someone else's or an unknown id → 404 `NOT_FOUND`.
+- A notification is stored once per recipient, so read state is per user. `createdAt` is the demo clock time.
+- **Critical notifications can't be muted.** There is no muting yet, so nothing filters notifications out; when muting is added it must skip `CRITICAL`.
 
 ---
 
@@ -168,13 +187,13 @@ Anything else → `409 INVALID_STATUS`.
   "summary": { "served": 80, "deferred": 5, "unavoidable": 1, "chosen": 4, "violations": 0,
                "fridgeVehiclesUsed": 4, "fridgeVehiclesAvailable": 4 },
   "vehicles": [
-    { "vehicleId": "VEH036", "type": "van", "temp": "reefer", "weightCapKg": 1040, "volumeCapM3": 7.0,
-      "freshMinutesUsed": 127, "freshBudget": 270, "daytimeMinutesUsed": 0, "daytimeBudget": 480,
+    { "vehicleId": "VEH036", "type": "van", "temp": "reefer", "weightCapKg": 1000, "volumeCapM3": 6.0,
+      "freshMinutesUsed": 130, "freshBudget": 270, "daytimeMinutesUsed": 0, "daytimeBudget": 480,
       "trips": [
         { "id": "trp-1", "tripNo": 1, "brand": "Fresh", "district": "Colombo", "windowType": "FRESH",
-          "departAt": "…", "minutes": 64, "weightKg": 1032, "volumeM3": 5.7,
+          "departAt": "…", "minutes": 64, "weightKg": 950, "volumeM3": 5.5,
           "stops": [ { "id": "stp-1", "orderId": "…", "orderRef": "S1-005", "outletId": "OUT003",
-                       "seq": 1, "loadSeq": 2, "units": 42, "temp": "CHILLED",
+                       "seq": 1, "loadSeq": 2, "units": 36, "temp": "CHILLED",
                        "arriveFrom": "…", "arriveTo": "…", "lateRisk": 0.1 } ] } ] } ]
 }
 ```
@@ -208,7 +227,7 @@ Anything else → `409 INVALID_STATUS`.
 - `GET /api/store/orders?from=&to=` → list of orders (own outlet) — S6
 - `PUT /api/store/orders/{id}` `{ "units": 80 }` → order (PREPARED only; 409 `ORDERS_CLOSED` / `INVALID_STATUS`) — S2
 - `POST /api/store/orders/{id}/confirm` → order · `POST /api/store/orders/{id}/cancel` → order — S2, S2x
-- `POST /api/store/orders` `{ "runDate", "temp", "units", "note" }` → order (`source=STORE`) — S2n
+- `POST /api/store/orders` `{ "runDate", "temp", "units", "note" }` → order (`source=STORE`) — S2n; 409 `ORDERS_CLOSED` when that run is closed
 - `POST /api/store/orders/{id}/check` `{ "ok": true }` or `{ "ok": false, "message": "…" }` — S2e, S2e-msg
 - `GET /api/store/deliveries?runDate=` → list of
 ```json
@@ -285,12 +304,27 @@ Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, 
 |---|---|---|
 | `CurrentUser` | auth | `id()`, `role()`, `outletId()`, `depot()`, `vehicleId()` |
 | `DemoClock` | core | `now(): OffsetDateTime`, `today(): LocalDate`, `runDate(): LocalDate` |
-| `OrderService` | core | `get(id)`, `findByRun(runDate, depot, filters)`, `confirm(id)`, `editUnits(id, units)`, `cancel(id, reason)`, `createStoreOrder(…)`, `createPhoneInOrder(…)`, `markPlanned(id, planId)`, `markMoved(id, newDate, reason)`, `markLoaded(id)`, `markOnTheWay(id)`, `recordOutcome(id, outcome, units)`, `createRemainder(parentId, units, reason)`, `history(id)`, `isClosed(runDate, depot)` |
-| `ReferenceService` | core | `outlet(id)`, `outlets(depot)`, `vehicle(id)`, `availableVehicles(runDate, depot)`, `travel(district, depot)`, `serviceMinutes(brand, dockType)`, `fuelUsed(vehicleId, isoYear, isoWeek)` |
-| `NotificationService` | notification | `notifyUser(userId, …)`, `notifyRole(role, scope, severity, type, title, body, link)` |
+| `OrderService` | core | `get(id)`, `findByRun(runDate, depot, filters)`, `confirm(id)`, `editUnits(id, units)`, `cancel(id, reason)`, `createStoreOrder(…)`, `createPhoneInOrder(…)`, `markPlanned(id, planId)`, `markMoved(id, newDate, reason)`, `markLoaded(id)`, `markOnTheWay(id)`, `recordOutcome(id, outcome, units)`, `createRemainder(parentId, units, reason)`, `history(id)`, `isClosed(runDate, depot)`, `autoConfirm(id)` (cut-off only; no user) |
+| `ReferenceService` | core | `outlet(id)`, `outlets(depot)`, `vehicle(id)`, `availableVehicles(runDate, depot)`, `travel(district, depot)`, `serviceMinutes(brand, dockType)`, `fuelUsed(vehicleId, isoYear, isoWeek)` — read-only, returns DTO records. `outlet`, `vehicle`, `travel` and `serviceMinutes` throw `NotFoundException` when nothing matches; `fuelUsed` returns 0 when no row exists; `vehicle(id)` shows availability for the current run date; `availableVehicles` applies the availability rule in §3 (also `outlets(depot, brand)` and `vehicles(runDate, depot)`) |
+| `NotificationService` | notification | `notifyUser(userId, severity, type, title, body, link)`, `notifyRole(role, scope, severity, type, title, body, link)` — see below |
 | `FileService` | core | `store(bytes, contentType, kind, clientId): fileId`, `get(fileId)` — photos and signatures (driver proof, issue photos) |
 | `PlanQueryService` | planning | `tripsForVehicle(runDate, vehicleId)`, `tripsForDepot(runDate, depot)`, `stopForOrder(orderId)`, `deferralForOrder(orderId)`, `publishedPlan(runDate, depot)` |
 | `DeliveryQueryService` | driver | `deliveryForOrder(orderId)`, `driverStatus(vehicleId)`, `failedDeliveries(runDate)`, `openConflicts(runDate)`, `vehicleProblems(runDate)` |
 | `LoadingQueryService` | loader | `loadingStatus(runDate, depot)`, `shortfallForOrder(orderId)` |
+
+**`NotificationService` details** (package `com.synapse.waypoint.notification.service`; `NotificationScope` and `NotificationSeverity` are in the notification module)
+- `severity` is `CRITICAL`, `WARNING` or `INFO`; `type`, `title` and `body` are required (otherwise `VALIDATION`); `link` is optional.
+- `notifyUser` throws `NotFoundException` when the user does not exist or is inactive.
+- `notifyRole` writes one row per **active** user of the role inside the scope. Scope fields are `NotificationScope.outlet(id)`, `.depot(name)`, `.vehicle(id)` or `.none()`:
+
+  | Role | Narrowed by |
+  |---|---|
+  | `STORE_MANAGER` | `outletId` |
+  | `DRIVER` | `vehicleId` |
+  | `LOADER` | `depot` |
+  | `DISPATCHER` | `depot`; a dispatcher with no depot works across all depots and receives every depot's notifications |
+
+  A missing scope field means the whole role (fine for broadcasts such as "all dispatchers"). **Store and driver notifications should always pass `outletId` / `vehicleId`**, otherwise every store manager or driver is notified.
+- Writes join the caller's transaction (`REQUIRED`): if the caller's change rolls back, its notifications are not stored. Call the service from inside the same transaction as the change it reports.
 
 Until a service is merged, callers code against its interface and use a stub returning sample data.

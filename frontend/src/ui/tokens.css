@@ -1,0 +1,20 @@
+/* Temporary shell tokens; replace with the shared Figma UI kit when available. */
+@theme {
+  --color-success: #00856f;
+  --color-success-soft: #dff3ed;
+  --color-warning-soft: #fcf0da;
+  --color-overlay: #17212d70;
+  --color-inset: #ecf1f6;
+  --color-brand-light: #d3e2f7;
+  --color-canvas: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-ink: #17212d;
+  --color-muted: #526074;
+  --color-line: #d4dce6;
+  --color-brand: #1f4f87;
+  --color-brand-soft: #eaf0f7;
+  --color-on-brand: #ffffff;
+  --color-warning: #875b0b;
+  --color-danger: #a42e2e;
+  --color-danger-soft: #fff0ef;
+}

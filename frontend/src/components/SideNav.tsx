@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AccountMenu from './AccountMenu';
 
 export interface SideNavProps {
   activeItem?: string;
@@ -26,6 +27,7 @@ export const SideNav: React.FC<SideNavProps> = ({
   },
 }) => {
   const [internalActiveItem, setInternalActiveItem] = useState('orders');
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const activeItem = controlledActiveItem ?? internalActiveItem;
 
   const handleSelect = (id: string) => {
@@ -210,7 +212,7 @@ export const SideNav: React.FC<SideNavProps> = ({
   ];
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 flex-shrink-0 flex-col justify-between border-r border-slate-200/90 bg-white">
+    <aside className="sticky top-0 hidden md:flex h-screen w-64 flex-shrink-0 flex-col justify-between border-r border-slate-200/90 bg-white">
       <div>
         {/* Brand / Logo Header */}
         <div className="flex items-center gap-3 px-6 py-5">
@@ -264,14 +266,27 @@ export const SideNav: React.FC<SideNavProps> = ({
 
       {/* Dispatcher's Account Menu at Bottom (40px touch target) */}
       <div className="p-3">
-        <button
-          type="button"
-          className="flex min-h-[40px] w-full flex-col items-start rounded-xl bg-slate-100/80 p-3 text-left transition hover:bg-slate-200/70"
-        >
-          <span className="text-sm font-bold text-slate-900">{user.name}</span>
-          <span className="mt-0.5 text-xs text-slate-500">{user.role}</span>
-          <span className="text-xs text-slate-500">{user.depots}</span>
-        </button>
+        <div className="relative">
+          <AccountMenu
+            isOpen={isAccountMenuOpen}
+            onClose={() => setIsAccountMenuOpen(false)}
+            user={{
+              name: user.name,
+              email: 'ruwan.p@waypoint.lk',
+              role: user.role,
+              depots: user.depots,
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setIsAccountMenuOpen((prev) => !prev)}
+            className="flex min-h-[40px] w-full flex-col items-start rounded-xl bg-slate-100/80 p-3 text-left transition hover:bg-slate-200/70"
+          >
+            <span className="text-sm font-bold text-slate-900">{user.name}</span>
+            <span className="mt-0.5 text-xs text-slate-500">{user.role}</span>
+            <span className="text-xs text-slate-500">{user.depots}</span>
+          </button>
+        </div>
       </div>
     </aside>
   );

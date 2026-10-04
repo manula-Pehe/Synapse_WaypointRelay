@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { enqueue, startSyncRunner, useSyncStatus } from '../../lib/offline'
 import { mockTrip } from './mocks'
 import { useDriverTheme } from './theme'
@@ -25,6 +25,10 @@ import type { DriverTrip, DriverStop } from './types'
  * The run is held in memory for now and reads from the offline cache once `GET /api/driver/today`
  * lands; nothing else about the screens changes when it does. Every write goes through the outbox,
  * so a screen is usable with no signal.
+ *
+ * This is mounted by the main router under `/driver`, so it brings no router of its own and its
+ * routes are relative. Signing in is the app's job too - a driver reaches this through `/login` and
+ * the `DRIVER` guard - so `sign-in` just hands anyone who arrives unauthenticated back to it.
  */
 export default function DriverApp() {
   useEffect(() => {
@@ -32,15 +36,12 @@ export default function DriverApp() {
   }, [])
 
   return (
-    <BrowserRouter>
-      <DriverThemeProvider>
-        <Routes>
-          <Route path="/driver" element={<Navigate to="/driver/sign-in" replace />} />
-          <Route path="/driver/*" element={<DriverRoutes />} />
-          <Route path="*" element={<Navigate to="/driver/sign-in" replace />} />
-        </Routes>
-      </DriverThemeProvider>
-    </BrowserRouter>
+    <DriverThemeProvider>
+      <Routes>
+        <Route index element={<Navigate to="sign-in" replace />} />
+        <Route path="*" element={<DriverRoutes />} />
+      </Routes>
+    </DriverThemeProvider>
   )
 }
 

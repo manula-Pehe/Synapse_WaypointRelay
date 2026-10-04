@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -370,6 +371,6 @@ class DefaultSyncServiceTests {
         return new OrderDto(id, "S1-001", "OUT003", "OUT003 - Colombo", "Fresh",
                 TemperatureRequirement.CHILLED, units, BigDecimal.TEN, BigDecimal.ONE,
                 LocalDate.parse("2026-10-01"), OrderStatus.ON_THE_WAY, OrderSource.SEED, false, 1,
-                false, null, true, NOW, NOW);
+                false, null, true, NOW.atOffset(ZoneOffset.UTC), NOW.atOffset(ZoneOffset.UTC));
     }
 }

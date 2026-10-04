@@ -1,0 +1,17 @@
+import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import type { Order, OrderStatus } from './api'
+
+const statusStyle: Record<OrderStatus, string> = {
+  PREPARED: 'bg-warning-soft text-warning', CONFIRMED: 'bg-brand-soft text-brand', PLANNED: 'bg-brand-soft text-brand',
+  LOADED: 'bg-brand-soft text-brand', ON_THE_WAY: 'bg-brand-soft text-brand', DELIVERED: 'bg-success-soft text-success',
+  PARTIAL: 'bg-warning-soft text-warning', FAILED: 'bg-danger-soft text-danger', MOVED: 'bg-pink-100 text-pink-800', CANCELLED: 'bg-inset text-muted',
+}
+const statusIcon: Record<OrderStatus, string> = { PREPARED: '◷', CONFIRMED: '✓', PLANNED: '◷', LOADED: '✓', ON_THE_WAY: '➜', DELIVERED: '✓', PARTIAL: '!', FAILED: '!', MOVED: '↪', CANCELLED: '×' }
+export function Status({ status }: { status: OrderStatus }) { return <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${statusStyle[status]}`}><span aria-hidden="true">{statusIcon[status]}</span>{status.replaceAll('_', ' ').toLowerCase()}</span> }
+export function Card({ children, className = '' }: { children: ReactNode; className?: string }) { return <section className={`rounded-2xl border border-line bg-surface p-5 sm:p-6 ${className}`}>{children}</section> }
+export function Heading({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) { return <div className="mb-6 flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-2xl font-bold sm:text-3xl">{title}</h1>{subtitle && <p className="mt-1 text-muted">{subtitle}</p>}</div>{action}</div> }
+export function Button({ children, disabled, onClick, type = 'button', tone = 'primary' }: { children: ReactNode; disabled?: boolean; onClick?: () => void; type?: 'button' | 'submit'; tone?: 'primary' | 'secondary' | 'danger' }) { return <button type={type} onClick={onClick} disabled={disabled} className={`min-h-12 rounded-lg px-5 font-semibold disabled:opacity-50 ${tone === 'primary' ? 'bg-brand text-on-brand' : tone === 'danger' ? 'border border-danger text-danger' : 'border border-line bg-surface text-brand'}`}>{children}</button> }
+export function OrderCard({ order }: { order: Order }) { return <Link to={`/store/orders/${order.id}`} className="block rounded-xl border border-line bg-surface p-4 hover:border-brand"><div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-bold">{order.ref}</p><p className="text-sm text-muted">{order.runDate} · {order.units} cases · {order.temp.toLowerCase()}</p></div><Status status={order.status} /></div><span className="mt-3 block text-sm font-semibold text-brand">View order →</span></Link> }
+export function Feedback({ error, success }: { error?: unknown; success?: string }) { return <>{error && <p role="alert" className="mb-4 rounded-lg bg-danger-soft p-3 text-danger">{error instanceof Error ? error.message : 'Something went wrong. Please try again.'}</p>}{success && <p role="status" className="mb-4 rounded-lg bg-success-soft p-3 text-success">{success}</p>}</> }
+export function Loading({ error, retry }: { error?: unknown; retry?: () => void }) { return error ? <div role="alert" className="rounded-xl border border-danger bg-surface p-6"><p>{error instanceof Error ? error.message : 'Could not load this page.'}</p>{retry && <button onClick={retry} className="mt-3 min-h-12 font-semibold text-brand">Try again</button>}</div> : <p role="status" className="py-12 text-muted">Loading…</p> }
