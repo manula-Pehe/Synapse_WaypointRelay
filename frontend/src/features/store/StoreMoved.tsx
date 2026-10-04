@@ -1,0 +1,24 @@
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useParams } from 'react-router-dom'
+import { storeApi } from './api'
+import { Feedback, Loading, Status } from './StoreShared'
+import './store-moved.css'
+
+export function StoreMoved() {
+  const { orderId = '' } = useParams()
+  const client = useQueryClient()
+  const [reducing, setReducing] = useState(false)
+  const [units, setUnits] = useState(1)
+  const [confirmed, setConfirmed] = useState('')
+  const order = useQuery({ queryKey: ['store', 'order', orderId], queryFn: () => storeApi.order(orderId) })
+  const deliveries = useQuery({ queryKey: ['store', 'deliveries', order.data?.order.runDate], queryFn: () => storeApi.deliveries(order.data!.order.runDate), enabled: !!order.data?.order.runDate, refetchInterval: 15_000 })
+  const choice = useMutation({ mutationFn: (value: 'KEEP' | 'REDUCE' | 'CANCEL' | 'SPLIT') => storeApi.deferralChoice(deferral!.id!, value, value === 'REDUCE' ? units : undefined), onSuccess: async (_, value) => { setConfirmed(value === 'KEEP' ? 'Order kept for the new date.' : value === 'REDUCE' ? 'New quantity sent to dispatch.' : value === 'SPLIT' ? 'Split request sent to dispatch.' : 'Cancellation sent to dispatch.'); setReducing(false); await client.invalidateQueries({ queryKey: ['store', 'deliveries'] }) } })
+  if (!order.data) return <Loading error={order.error} retry={() => void order.refetch()} />
+  if (!deliveries.data) return <Loading error={deliveries.error} retry={() => void deliveries.refetch()} />
+  const current = order.data.order
+  const delivery = deliveries.data.items.find(item => item.orderId === orderId)
+  const deferral = delivery?.deferral
+  const date = deferral?.newDate ? new Date(`${deferral.newDate}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : null
+  return <div className="store-moved-page"><Link className="moved-back" to="/store/deliveries">← Deliveries</Link><header className="moved-heading"><div><h1>Order {current.ref} · {current.temp === 'CHILLED' ? 'Chilled' : 'Dry goods'} · {current.units} cases</h1><p>Was planned for {current.runDate} · {current.outletName}</p></div><Status status={current.status} /></header><div className="moved-columns"><main>{deferral ? <><section className="moved-notice"><strong>♧ Your order moves to {date}</strong><h2>{date}{delivery?.arrival ? ` · ${new Date(delivery.arrival.from).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} – ${new Date(delivery.arrival.to).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''}</h2><p>{deferral.reason}</p></section><section className="moved-explanation"><h2>ⓘ Why this changed</h2><p>{deferral.reason}</p><p>Dispatch will update the arrival time when the revised plan is published.</p></section></> : <section className="moved-explanation"><h2>Moved order details are not available yet</h2><p>The order status is {current.status.toLowerCase()}. Check back when dispatch publishes the new date and reason.</p></section>}</main><aside className="moved-actions"><h2>What would you like to do?</h2>{deferral?.id ? <><p>You can choose what happens to this order.</p><button className="moved-primary" disabled={choice.isPending} onClick={() => choice.mutate('KEEP')}>✓ Keep it for {date}</button><button disabled={choice.isPending} onClick={() => setReducing(true)}>Reduce quantity</button>{deferral.splitOffered && <button disabled={choice.isPending} onClick={() => choice.mutate('SPLIT')}>Request a split</button>}<button disabled={choice.isPending} onClick={() => { if (window.confirm('Cancel this order?')) choice.mutate('CANCEL') }}>Cancel this order</button></> : <p>Choices will appear when dispatch publishes the move.</p>}<Feedback error={choice.error} success={confirmed} /></aside></div>{reducing && <div className="moved-overlay" role="presentation" onClick={() => setReducing(false)}><section className="moved-drawer" role="dialog" aria-modal="true" aria-label="Reduce quantity" onClick={event => event.stopPropagation()}><button className="moved-close" aria-label="Close" onClick={() => setReducing(false)}>×</button><h2>Reduce quantity</h2><p>A smaller order may fit an earlier vehicle. Dispatch will check and update you.</p><label>{current.temp === 'CHILLED' ? 'Chilled' : 'Dry'} cases<input type="number" min="1" max={current.units - 1} step="1" value={units} onChange={event => setUnits(Number(event.target.value))} /></label><p>Was {current.units} cases</p><div className="moved-drawer-actions"><button className="moved-primary" disabled={choice.isPending || !Number.isInteger(units) || units < 1 || units >= current.units} onClick={() => choice.mutate('REDUCE')}>Send new quantity</button><button onClick={() => setReducing(false)}>Cancel</button></div></section></div>}</div>
+}
