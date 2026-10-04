@@ -6,6 +6,8 @@ import DriverLayout from '../DriverLayout'
 import { Button, Card, Label, TOUCH, Value } from '../components'
 import { t, type Language } from '../i18n'
 import { outletLabel } from '../outlet'
+import { dataUrlToFile } from '../dataUrl'
+import { SignaturePad } from '../signature'
 import { useDriverTheme } from '../theme'
 import type { DriverStop } from '../types'
 
@@ -178,61 +180,6 @@ export default function Deliver({ stop, language, onToggleTheme, onRecorded }: D
   )
 }
 
-/**
- * R4s — a simple signature pad.
- * A pointer-events canvas rather than a signature library - the brief allows adding one, but a pad
- * this simple is a few lines and keeps the offline bundle small on a cheap phone.
- */
-function SignaturePad({ onSigned }: { onSigned: (dataUrl: string | null) => void }) {
-  const canvas = useRef<HTMLCanvasElement>(null)
-  const drawing = useRef(false)
-  const [hasInk, setHasInk] = useState(false)
-  const { colors } = useDriverTheme()
-
-  function start(event: React.PointerEvent<HTMLCanvasElement>) {
-    drawing.current = true
-    const context = canvas.current?.getContext('2d')
-    if (context) {
-      // Canvas ink is black unless it is set, which is invisible on the dark pad.
-      context.strokeStyle = colors.ink
-      context.lineWidth = 2
-      context.beginPath()
-      context.moveTo(event.nativeEvent.offsetX, event.nativeEvent.offsetY)
-    }
-  }
-
-  function move(event: React.PointerEvent<HTMLCanvasElement>) {
-    if (!drawing.current) return
-    const context = canvas.current?.getContext('2d')
-    if (!context) return
-    context.lineTo(event.nativeEvent.offsetX, event.nativeEvent.offsetY)
-    context.stroke()
-    setHasInk(true)
-  }
-
-  function end() {
-    if (!drawing.current) return
-    drawing.current = false
-    const element = canvas.current
-    if (element && hasInk) onSigned(element.toDataURL('image/png'))
-  }
-
-  return (
-    <canvas
-      ref={canvas}
-      width={320}
-      height={140}
-      data-testid="signature"
-      onPointerDown={start}
-      onPointerMove={move}
-      onPointerUp={end}
-      onPointerLeave={end}
-      className="mt-2 w-full touch-none rounded-xl border"
-      style={{ background: colors.surface2, borderColor: colors.border }}
-    />
-  )
-}
-
 /** R4b - the 10-second undo. A timer, not a confirm dialog, so the common case stays fast. */
 function useUndoWindow(seconds = 10) {
   const [left, setLeft] = useState(0)
@@ -260,16 +207,4 @@ function useUndoWindow(seconds = 10) {
       setLeft(0)
     },
   }
-}
-/**
- * The signature pad hands back a data URL; the file endpoint wants bytes, so it is decoded here.
- * PNG because that is what `canvas.toDataURL` produces.
- */
-function dataUrlToFile(dataUrl: string): File {
-  const [header, base64] = dataUrl.split(',')
-  const mime = /:(.*?);/.exec(header)?.[1] ?? 'image/png'
-  const binary = atob(base64 ?? '')
-  const bytes = new Uint8Array(binary.length)
-  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index)
-  return new File([bytes], 'signature.png', { type: mime })
 }
