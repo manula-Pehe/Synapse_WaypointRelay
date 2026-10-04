@@ -9,7 +9,9 @@ export class ApiError extends Error {
   }
 }
 
-const apiBase = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
+// Vite always defines import.meta.env in a build; under bare Node (the test runner) it is absent,
+// so the read is optional rather than assuming it is there.
+const apiBase = (import.meta.env?.VITE_API_URL ?? '').replace(/\/+$/, '')
 
 /** Built apps call VITE_API_URL; empty means same origin (Vite proxy or nginx). */
 function apiUrl(path: string): string {
