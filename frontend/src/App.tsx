@@ -30,6 +30,7 @@ import IssuesInbox from './components/IssuesInbox'
 import IssueDetail from './components/IssueDetail'
 
 function DispatcherWorkspace() {
+  const { logout } = useAuth()
   const [activeNav, setActiveNav] = useState('issues')
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>('ISS-0142')
 
@@ -101,6 +102,7 @@ function DispatcherWorkspace() {
   return (
     <DispatcherLayout
       activeNav={activeNav}
+      onSignOut={logout}
       onNavChange={(nav) => {
         setActiveNav(nav)
         if (nav !== 'issues') {
