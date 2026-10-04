@@ -29,3 +29,9 @@ The initial integration was committed and pushed as `da0fc8e`. The next commit a
 - **F9:** added a schematic district network map from the existing plan and order endpoints, showing trip counts and order-derived status without claiming GPS positions. A plan is required before it can show trips.
 
 No backend code was changed for this follow-up. Run `npm run build`, `npm run lint`, and `npm test` in `frontend/` to verify it.
+
+## Design guide alignment
+
+The supplied [design system guide](reference/design-guide-01.png) and [Components board](reference/design-guide-02.png) are stored unchanged as references. The UI tokens now use their shown light and dark base colours and seven status palettes. The shared kit uses 40, 48, 56 and 64 px action heights, icon + text + colour status badges, the named 45-icon set, and a sun/moon theme button. The `/ui` page displays button types and sizes, icon buttons, badge statuses and sizes, and the other shared controls.
+
+Noto Sans Sinhala and Noto Sans Tamil regular/bold font files are bundled under `frontend/public/fonts/` with their license. The guide names Yaldevi as the closest Figma match but says Noto Sans Sinhala is the build font. The supplied screenshots do not expose all 31 variable values or the details of every component outside the visible board; spacing, radii, and screen-level fidelity still need comparison with the full Figma variables and screens.

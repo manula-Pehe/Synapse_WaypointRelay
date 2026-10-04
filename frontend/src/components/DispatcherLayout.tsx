@@ -48,7 +48,7 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
   };
 
   return (
-    <div className="flex h-screen w-full bg-white overflow-hidden font-sans text-slate-800 antialiased">
+    <div className="flex h-screen w-full bg-surface overflow-hidden font-sans text-ink antialiased">
       {/* Left Sidebar Navigation */}
       <SideNav
         activeItem={activeNav}

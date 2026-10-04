@@ -34,20 +34,20 @@ export const TopBar: React.FC<TopBarProps> = ({
   const depots = ['Peliyagoda', 'Kandy', 'All depots'] as const;
 
   return (
-    <header className="sticky top-0 z-20 flex min-h-[72px] flex-wrap items-center justify-between gap-4 border-b border-slate-200/90 bg-white px-8 py-4">
+    <header className="sticky top-0 z-20 flex min-h-[72px] flex-wrap items-center justify-between gap-4 border-b border-line bg-surface px-8 py-4">
       {/* Title & Subtitle Area */}
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
           {title}
         </h1>
-        <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">{subtitle}</p>
+        <p className="mt-0.5 text-xs text-muted sm:text-sm">{subtitle}</p>
       </div>
 
       {/* Top Bar Controls & Badges */}
       <div className="flex flex-wrap items-center gap-2.5">
         {clockControl}
         {/* Depot Switch Buttons Segmented Group (40px touch targets) */}
-        <div className="flex min-h-[40px] items-center rounded-lg bg-slate-100 p-1">
+        <div className="flex min-h-[40px] items-center rounded-lg bg-surface-2 p-1">
           {depots.map((depot) => {
             const isSelected = activeDepot === depot;
             return (
@@ -57,8 +57,8 @@ export const TopBar: React.FC<TopBarProps> = ({
                 onClick={() => handleDepotSelect(depot)}
                 className={`min-h-[32px] rounded-md px-3 text-xs font-medium transition-all ${
                   isSelected
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-surface text-ink shadow-xs'
+                    : 'text-muted hover:text-ink'
                 }`}
               >
                 {depot}
@@ -68,9 +68,9 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
 
         {/* "Run: Thu 1 Oct" Date Pill */}
-        <div className="flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs">
+        <div className="flex min-h-[40px] items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-2 shadow-2xs">
           <svg
-            className="h-4 w-4 text-slate-500"
+            className="h-4 w-4 text-muted"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -88,7 +88,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             className={`flex min-h-[40px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs ${
               planStatus.includes('open')
                 ? 'border border-amber-200/90 bg-amber-50/80 font-semibold text-amber-800'
-                : 'border border-slate-200/80 bg-slate-100/70 font-medium text-slate-600'
+                : 'border border-line bg-surface-2 font-medium text-muted'
             }`}
           >
             {planStatus.includes('open') ? (
@@ -105,7 +105,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               </svg>
             ) : (
               <svg
-                className="h-3.5 w-3.5 text-slate-500"
+                className="h-3.5 w-3.5 text-muted"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -124,7 +124,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           type="button"
           aria-label="Notifications"
           onClick={onNotificationClick}
-          className="relative flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition hover:bg-slate-50 hover:text-slate-900"
+          className="relative flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-line bg-surface text-muted shadow-2xs transition hover:bg-surface-2 hover:text-ink"
         >
           <svg
             className="h-4 w-4"
@@ -137,7 +137,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
           {notificationCount !== undefined && notificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-white bg-red-600 text-[10px] font-bold text-white shadow-xs">
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-white bg-danger text-[10px] font-bold text-white shadow-xs">
               {notificationCount}
             </span>
           )}

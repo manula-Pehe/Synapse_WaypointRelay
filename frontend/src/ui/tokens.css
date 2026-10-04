@@ -1,32 +1,77 @@
-/* Existing project tokens. Designathon Figma values still need verification. */
+/* Design guide 01, page 06: Relay light and dark variables. */
 @theme {
-  --color-success: #00856f;
-  --color-success-soft: #dff3ed;
-  --color-warning-soft: #fcf0da;
-  --color-overlay: #17212d70;
-  --color-inset: #ecf1f6;
-  --color-brand-light: #d3e2f7;
   --color-canvas: #f5f7fa;
   --color-surface: #ffffff;
-  --color-ink: #17212d;
-  --color-muted: #526074;
-  --color-line: #d4dce6;
-  --color-brand: #1f4f87;
-  --color-brand-soft: #eaf0f7;
+  --color-surface-2: #eef1f5;
+  --color-line: #d5dae1;
+  --color-ink: #16202b;
+  --color-ink-2: #4a5563;
+  --color-brand: #1d4e89;
   --color-on-brand: #ffffff;
-  --color-warning: #875b0b;
-  --color-danger: #a42e2e;
-  --color-danger-soft: #fff0ef;
+  --color-brand-soft: #e6eef8;
+  --color-brand-light: #e6eef8;
+  --color-inset: #eef1f5;
+  --color-muted: #4a5563;
+  --color-overlay: #16202b70;
+
+  --color-status-way: #1d4e89;
+  --color-status-way-soft: #e6eef8;
+  --color-status-delivered: #00745a;
+  --color-status-delivered-soft: #dff3ec;
+  --color-status-risk: #945a00;
+  --color-status-risk-soft: #fcf0d9;
+  --color-status-failed: #b3261e;
+  --color-status-failed-soft: #fce8e6;
+  --color-status-deferred: #9c3a73;
+  --color-status-deferred-soft: #f8ebf1;
+  --color-status-chilled: #0a6a99;
+  --color-status-chilled-soft: #e2f2fb;
+  --color-status-offline: #5b6573;
+  --color-status-offline-soft: #edeff2;
+
+  /* Compatibility aliases for existing store and dispatcher screens. */
+  --color-success: #00745a;
+  --color-success-soft: #dff3ec;
+  --color-warning: #945a00;
+  --color-warning-soft: #fcf0d9;
+  --color-danger: #b3261e;
+  --color-danger-soft: #fce8e6;
 }
 
 :root[data-theme='dark'] {
-  --color-canvas: #17212d;
-  --color-surface: #17212d;
-  --color-ink: #ffffff;
-  --color-muted: #d4dce6;
-  --color-line: #526074;
-  --color-inset: #526074;
-  --color-brand: #d3e2f7;
-  --color-brand-soft: #526074;
-  --color-on-brand: #17212d;
+  --color-canvas: #101318;
+  --color-surface: #1a1e25;
+  --color-surface-2: #23272e;
+  --color-line: #2e333b;
+  --color-ink: #e6e9ee;
+  --color-ink-2: #a7b0bc;
+  --color-brand: #8db8f2;
+  --color-on-brand: #101318;
+  --color-brand-soft: color-mix(in srgb, #8db8f2 18%, #1a1e25);
+  --color-brand-light: color-mix(in srgb, #8db8f2 18%, #1a1e25);
+  --color-inset: #23272e;
+  --color-muted: #a7b0bc;
+  --color-overlay: #101318b3;
+
+  --color-status-way: #8db8f2;
+  --color-status-delivered: #4fd1a5;
+  --color-status-risk: #f2b84b;
+  --color-status-failed: #ff8a80;
+  --color-status-deferred: #e8a3cb;
+  --color-status-chilled: #7cc9f0;
+  --color-status-offline: #9aa3ae;
+  --color-status-way-soft: color-mix(in srgb, #8db8f2 16%, #1a1e25);
+  --color-status-delivered-soft: color-mix(in srgb, #4fd1a5 16%, #1a1e25);
+  --color-status-risk-soft: color-mix(in srgb, #f2b84b 16%, #1a1e25);
+  --color-status-failed-soft: color-mix(in srgb, #ff8a80 16%, #1a1e25);
+  --color-status-deferred-soft: color-mix(in srgb, #e8a3cb 16%, #1a1e25);
+  --color-status-chilled-soft: color-mix(in srgb, #7cc9f0 16%, #1a1e25);
+  --color-status-offline-soft: color-mix(in srgb, #9aa3ae 16%, #1a1e25);
+
+  --color-success: #4fd1a5;
+  --color-success-soft: var(--color-status-delivered-soft);
+  --color-warning: #f2b84b;
+  --color-warning-soft: var(--color-status-risk-soft);
+  --color-danger: #ff8a80;
+  --color-danger-soft: var(--color-status-failed-soft);
 }

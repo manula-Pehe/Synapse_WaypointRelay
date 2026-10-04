@@ -41,7 +41,7 @@ export const SideNav: React.FC<SideNavProps> = ({
       label: 'Orders',
       icon: (active) => (
         <svg
-          className={`h-5 w-5 ${active ? 'text-blue-600' : 'text-slate-500'}`}
+          className={`h-5 w-5 ${active ? 'text-brand' : 'text-muted'}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -63,7 +63,7 @@ export const SideNav: React.FC<SideNavProps> = ({
       label: 'Fleet',
       icon: (active) => (
         <svg
-          className={`h-5 w-5 ${active ? 'text-blue-600' : 'text-slate-500'}`}
+          className={`h-5 w-5 ${active ? 'text-brand' : 'text-muted'}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -83,7 +83,7 @@ export const SideNav: React.FC<SideNavProps> = ({
       label: 'Plan',
       icon: (active) => (
         <svg
-          className={`h-5 w-5 ${active ? 'text-blue-600' : 'text-slate-500'}`}
+          className={`h-5 w-5 ${active ? 'text-brand' : 'text-muted'}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -103,7 +103,7 @@ export const SideNav: React.FC<SideNavProps> = ({
       label: 'Live board',
       icon: (active) => (
         <svg
-          className={`h-5 w-5 ${active ? 'text-blue-600' : 'text-slate-500'}`}
+          className={`h-5 w-5 ${active ? 'text-brand' : 'text-muted'}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -120,7 +120,7 @@ export const SideNav: React.FC<SideNavProps> = ({
       label: 'Issues',
       icon: (active) => (
         <svg
-          className={`h-5 w-5 ${active ? 'text-blue-600' : 'text-slate-500'}`}
+          className={`h-5 w-5 ${active ? 'text-brand' : 'text-muted'}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -139,7 +139,7 @@ export const SideNav: React.FC<SideNavProps> = ({
       label: 'Network map',
       icon: (active) => (
         <svg
-          className={`h-5 w-5 ${active ? 'text-blue-600' : 'text-slate-500'}`}
+          className={`h-5 w-5 ${active ? 'text-brand' : 'text-muted'}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -158,7 +158,7 @@ export const SideNav: React.FC<SideNavProps> = ({
       label: 'Capacity',
       icon: (active) => (
         <svg
-          className={`h-5 w-5 ${active ? 'text-blue-600' : 'text-slate-500'}`}
+          className={`h-5 w-5 ${active ? 'text-brand' : 'text-muted'}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -177,7 +177,7 @@ export const SideNav: React.FC<SideNavProps> = ({
       label: 'Outlets',
       icon: (active) => (
         <svg
-          className={`h-5 w-5 ${active ? 'text-blue-600' : 'text-slate-500'}`}
+          className={`h-5 w-5 ${active ? 'text-brand' : 'text-muted'}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -195,7 +195,7 @@ export const SideNav: React.FC<SideNavProps> = ({
       label: 'Reports',
       icon: (active) => (
         <svg
-          className={`h-5 w-5 ${active ? 'text-blue-600' : 'text-slate-500'}`}
+          className={`h-5 w-5 ${active ? 'text-brand' : 'text-muted'}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -212,11 +212,11 @@ export const SideNav: React.FC<SideNavProps> = ({
   ];
 
   return (
-    <aside className="sticky top-0 hidden md:flex h-screen w-64 flex-shrink-0 flex-col justify-between border-r border-slate-200/90 bg-white">
+    <aside className="sticky top-0 hidden md:flex h-screen w-64 flex-shrink-0 flex-col justify-between border-r border-line bg-surface">
       <div>
         {/* Brand / Logo Header */}
         <div className="flex items-center gap-3 px-6 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0e2a47] text-white shadow-xs">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-white shadow-xs">
             <svg
               className="h-5 w-5"
               viewBox="0 0 24 24"
@@ -232,10 +232,10 @@ export const SideNav: React.FC<SideNavProps> = ({
             </svg>
           </div>
           <div className="leading-tight text-left">
-            <div className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">
+            <div className="text-[10px] font-bold tracking-widest text-muted uppercase">
               WAYPOINT
             </div>
-            <div className="text-xl font-bold tracking-tight text-slate-900">
+            <div className="text-xl font-bold tracking-tight text-ink">
               Relay
             </div>
           </div>
@@ -252,8 +252,8 @@ export const SideNav: React.FC<SideNavProps> = ({
                 onClick={() => handleSelect(item.id)}
                 className={`group flex min-h-[40px] w-full items-center gap-3 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-blue-50/80 font-semibold text-blue-600'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-brand-soft font-semibold text-brand'
+                    : 'text-muted hover:bg-surface-2 hover:text-ink'
                 }`}
               >
                 <span className="flex-shrink-0">{item.icon(isActive)}</span>
@@ -274,11 +274,11 @@ export const SideNav: React.FC<SideNavProps> = ({
           <button
             type="button"
             onClick={() => setIsAccountMenuOpen((prev) => !prev)}
-            className="flex min-h-[40px] w-full flex-col items-start rounded-xl bg-slate-100/80 p-3 text-left transition hover:bg-slate-200/70"
+            className="flex min-h-[40px] w-full flex-col items-start rounded-xl bg-surface-2 p-3 text-left transition hover:bg-brand-soft"
           >
-            <span className="text-sm font-bold text-slate-900">{user.name}</span>
-            <span className="mt-0.5 text-xs text-slate-500">{user.role}</span>
-            <span className="text-xs text-slate-500">{user.depots}</span>
+            <span className="text-sm font-bold text-ink">{user.name}</span>
+            <span className="mt-0.5 text-xs text-muted">{user.role}</span>
+            <span className="text-xs text-muted">{user.depots}</span>
           </button>
         </div>
       </div>

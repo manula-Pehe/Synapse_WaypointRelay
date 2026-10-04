@@ -4,7 +4,7 @@
 @layer base {
   body {
     @apply m-0 bg-canvas text-ink antialiased;
-    font-family: Inter, Yaldevi, 'Noto Sans Sinhala', 'Noto Sans Tamil', system-ui, sans-serif;
+    font-family: Inter, 'Noto Sans Sinhala', 'Noto Sans Tamil', system-ui, sans-serif;
   }
   button,
   a,
@@ -26,6 +26,51 @@
   font-weight: 400;
   font-display: swap;
   src: url('/fonts/Inter-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Sans Sinhala';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/NotoSansSinhala-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Noto Sans Sinhala';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/NotoSansSinhala-Bold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Noto Sans Tamil';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/NotoSansTamil-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Noto Sans Tamil';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/NotoSansTamil-Bold.ttf') format('truetype');
+}
+
+html[lang='si'] body,
+html[lang='ta'] body {
+  line-height: 1.6;
+}
+
+@layer components {
+  .type-display { font-size: 40px; line-height: 48px; font-weight: 700; }
+  .type-heading-lg { font-size: 28px; line-height: 36px; font-weight: 700; }
+  .type-heading { font-size: 22px; line-height: 30px; font-weight: 700; }
+  .type-title { font-size: 20px; line-height: 28px; font-weight: 600; }
+  .type-body { font-size: 16px; line-height: 24px; font-weight: 400; }
+  .type-body-sm { font-size: 15px; line-height: 22px; font-weight: 400; }
+  .type-caption { font-size: 13px; line-height: 19px; font-weight: 400; }
+  .type-overline { font-size: 11px; line-height: 16px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 }
 @font-face {
   font-family: Inter;

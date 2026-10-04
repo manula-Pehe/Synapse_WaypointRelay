@@ -1,8 +1,9 @@
 import { useEffect, useState, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react'
+import { Icon } from './icons'
 
 type Tone = 'primary' | 'secondary' | 'neutral' | 'outline' | 'tonal' | 'critical'
 type Size = 's' | 'm' | 'l' | 'xl'
-const sizes: Record<Size, string> = { s: 'min-h-8 px-3 text-xs', m: 'min-h-10 px-4 text-sm', l: 'min-h-12 px-5 text-base', xl: 'min-h-14 px-6 text-lg' }
+const sizes: Record<Size, string> = { s: 'min-h-10 px-3 text-xs', m: 'min-h-12 px-4 text-sm', l: 'min-h-14 px-5 text-base', xl: 'min-h-16 px-6 text-xl' }
 const tones: Record<Tone, string> = {
   primary: 'bg-brand text-on-brand',
   secondary: 'border border-brand bg-surface text-brand',
@@ -15,12 +16,21 @@ const tones: Record<Tone, string> = {
 export function Button({ tone = 'primary', size = 'm', className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { tone?: Tone; size?: Size }) {
   return <button {...props} className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-50 ${sizes[size]} ${tones[tone]} ${className}`} />
 }
-export function IconButton({ label, children, size = 'm', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; size?: Size }) {
-  return <Button {...props} aria-label={label} size={size} tone="outline" className="aspect-square !px-0">{children}</Button>
+export function IconButton({ label, children, size = 'm', tone = 'outline', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; size?: Size; tone?: 'neutral' | 'outline' | 'primary' }) {
+  return <Button {...props} aria-label={label} size={size} tone={tone} className="aspect-square !px-0">{children}</Button>
 }
-export function Badge({ children, tone = 'neutral', size = 'm', icon }: { children: ReactNode; tone?: 'success' | 'warning' | 'danger' | 'info' | 'neutral'; size?: 's' | 'm'; icon: ReactNode }) {
-  const colors = { success: 'bg-success-soft text-success', warning: 'bg-warning-soft text-warning', danger: 'bg-danger-soft text-danger', info: 'bg-brand-soft text-brand', neutral: 'bg-inset text-muted' }
-  return <span className={`inline-flex items-center gap-1.5 rounded-full font-semibold ${size === 's' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'} ${colors[tone]}`}><span aria-hidden="true">{icon}</span>{children}</span>
+type BadgeStatus = 'way' | 'delivered' | 'risk' | 'failed' | 'deferred' | 'chilled' | 'offline'
+const statusStyles: Record<BadgeStatus, string> = {
+  way: 'bg-status-way-soft text-status-way',
+  delivered: 'bg-status-delivered-soft text-status-delivered',
+  risk: 'bg-status-risk-soft text-status-risk',
+  failed: 'bg-status-failed-soft text-status-failed',
+  deferred: 'bg-status-deferred-soft text-status-deferred',
+  chilled: 'bg-status-chilled-soft text-status-chilled',
+  offline: 'bg-status-offline-soft text-status-offline',
+}
+export function Badge({ children, status, size = 'm', icon }: { children: ReactNode; status: BadgeStatus; size?: 's' | 'm' | 'l'; icon: ReactNode }) {
+  return <span className={`inline-flex items-center gap-1.5 rounded-full font-semibold ${size === 's' ? 'px-2 py-0.5 text-xs' : size === 'l' ? 'px-3 py-1.5 text-base' : 'px-3 py-1 text-sm'} ${statusStyles[status]}`}><span aria-hidden="true">{icon}</span>{children}</span>
 }
 export function Card({ children, className = '', ...props }: HTMLAttributes<HTMLElement> & { children: ReactNode }) { return <section {...props} className={`rounded-2xl border border-line bg-surface p-5 ${className}`}>{children}</section> }
 export function Input({ label, id, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: string; id: string }) { return <label htmlFor={id} className="block text-sm font-semibold text-ink">{label}<input {...props} id={id} className={`mt-1 block min-h-10 w-full rounded-lg border border-line bg-surface px-3 text-ink ${props.className ?? ''}`} /></label> }
@@ -37,4 +47,4 @@ export function AppBar({ title, action }: { title: string; action?: ReactNode })
 export function SideNav({ items, active, onChange }: { items: { id: string; label: string }[]; active: string; onChange: (id: string) => void }) { return <nav aria-label="Sections" className="space-y-1 bg-surface p-3">{items.map(item => <button key={item.id} className={`block min-h-10 w-full rounded-lg px-4 text-left text-sm ${active === item.id ? 'bg-brand-soft font-semibold text-brand' : 'text-muted hover:bg-inset'}`} onClick={() => onChange(item.id)}>{item.label}</button>)}</nav> }
 export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) { return <div className="rounded-2xl border border-dashed border-line bg-surface p-8 text-center"><h2 className="font-bold">{title}</h2><p className="mt-2 text-sm text-muted">{description}</p>{action && <div className="mt-4">{action}</div>}</div> }
 export function Spinner({ label = 'Loading' }: { label?: string }) { return <span role="status" className="inline-flex items-center gap-2 text-sm text-muted"><span aria-hidden="true" className="size-5 animate-spin rounded-full border-2 border-line border-t-brand" />{label}</span> }
-export function ThemeSwitch({ defaultDark = false }: { defaultDark?: boolean }) { const [dark, setDark] = useState(() => { const saved = localStorage.getItem('waypoint.theme'); return saved ? saved === 'dark' : defaultDark }); useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light' }, [dark]); return <Switch label="Dark theme" checked={dark} onChange={next => { setDark(next); localStorage.setItem('waypoint.theme', next ? 'dark' : 'light') }} /> }
+export function ThemeSwitch({ defaultDark = false }: { defaultDark?: boolean }) { const [dark, setDark] = useState(() => { const saved = localStorage.getItem('waypoint.theme'); return saved ? saved === 'dark' : defaultDark }); useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light' }, [dark]); return <IconButton label={dark ? 'Switch to light theme' : 'Switch to dark theme'} title={dark ? 'Light theme' : 'Dark theme'} tone="outline" size="s" onClick={() => { const next = !dark; setDark(next); localStorage.setItem('waypoint.theme', next ? 'dark' : 'light') }}><Icon name={dark ? 'sun' : 'moon'} /></IconButton> }
