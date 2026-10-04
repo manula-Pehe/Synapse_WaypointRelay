@@ -20,7 +20,7 @@ import { StoreArrival } from './features/store/StoreArrival'
 import { StoreIssues, StoreIssueDetail } from './features/store/StoreIssues'
 import { NewIssuePage } from './features/store/NewIssuePage'
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
-import { StoreSettings } from './features/store/StoreSettings'
+import { StoreMore, StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
 import OutletsReference from './components/OutletsReference'
 
@@ -110,6 +110,7 @@ export default function App() {
                       <Route path="issues/new" element={<NewIssuePage />} />
                       <Route path="issues/:id" element={<StoreIssueDetail />} />
                       <Route path="settings" element={<StoreSettings />} />
+                      <Route path="more" element={<StoreMore />} />
                       <Route path="history" element={<StoreHistory />} />
                     </Route>
                   </> : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : <WorkspacePlaceholder />} />}
