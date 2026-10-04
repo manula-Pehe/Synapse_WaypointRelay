@@ -63,7 +63,7 @@ export default function AcceptLoad({ trip, language, onToggleTheme, onAccepted }
         <Label>{t(language, 'driver.stops.cases')}</Label>
         <div className="mt-1 flex items-baseline gap-2">
           <Value size="lg">{onTheTruck}</Value>
-          <span style={{ color: colors.ink2 }}>on the truck</span>
+          <span style={{ color: colors.ink2 }}>{t(language, 'driver.today.onTruck')}</span>
         </div>
         {mismatch && (
           <p className="mt-2 text-sm" style={{ color: colors.danger }} role="alert">

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { storeApi, type Delivery } from './api'
 import { ProofImage } from './ProofImage'
 import { Button, Card, Feedback, Heading, Loading, Status } from './StoreShared'
@@ -27,6 +27,13 @@ function DeliveryCard({ delivery }: { delivery: Delivery }) {
   </Card>
 }
 export function StoreDeliveries() {
-  const query = useQuery({ queryKey: ['store', 'deliveries'], queryFn: () => storeApi.deliveries(), refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
-  return <><Heading title="Deliveries" subtitle="Today’s arrivals and receipts" />{!query.data ? <Loading error={query.error} retry={() => void query.refetch()} /> : <div className="space-y-4">{query.data.items.length ? query.data.items.map(d => <DeliveryCard key={d.orderId} delivery={d} />) : <Card>No delivery for today.</Card>}</div>}</>
+  const [params, setParams] = useSearchParams()
+  const home = useQuery({ queryKey: ['store', 'home'], queryFn: storeApi.home })
+  const todayDate = home.data && new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Colombo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(home.data.now))
+  const tomorrowDate = home.data?.runDate
+  const requestedDate = params.get('runDate')
+  const runDate = requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : todayDate
+  const dateLabel = !runDate || runDate === todayDate ? 'Today' : runDate === tomorrowDate ? 'Tomorrow' : new Date(`${runDate}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  const query = useQuery({ queryKey: ['store', 'deliveries', runDate], queryFn: () => storeApi.deliveries(runDate), enabled: !!runDate, refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
+  return <><Heading title="Deliveries" subtitle={`${dateLabel}’s arrivals and receipts`} /><div className="mb-4 flex gap-2"><button aria-pressed={runDate === todayDate} onClick={() => setParams({})} className={`min-h-12 rounded-lg px-4 ${runDate === todayDate ? 'bg-brand text-on-brand' : 'border border-line'}`}>Today</button><button aria-pressed={runDate === tomorrowDate} disabled={!tomorrowDate} onClick={() => tomorrowDate && setParams({ runDate: tomorrowDate })} className={`min-h-12 rounded-lg px-4 ${runDate === tomorrowDate ? 'bg-brand text-on-brand' : 'border border-line'}`}>Tomorrow</button></div>{!query.data ? <Loading error={home.error ?? query.error} retry={() => { void home.refetch(); void query.refetch() }} /> : <div className="space-y-4">{query.data.items.length ? query.data.items.map(d => <DeliveryCard key={d.orderId} delivery={d} />) : <Card>No delivery for {dateLabel.toLowerCase()}.</Card>}</div>}</>
 }

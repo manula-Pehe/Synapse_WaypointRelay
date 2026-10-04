@@ -193,7 +193,7 @@ class PlanServiceTests {
                         PlanScenario.LOADER, PlanScenario.USED_DRIVER);
         assertThat(rowFor(sent, PlanScenario.storeUser(PlanScenario.STORE_1)))
                 .containsEntry("severity", "INFO").containsEntry("title", "Delivery scheduled for Thu 10 Jan")
-                .containsEntry("link", "/store/deliveries");
+                .containsEntry("link", "/store/deliveries?runDate=" + RUN_DATE);
         assertThat((String) rowFor(sent, PlanScenario.storeUser(PlanScenario.STORE_1)).get("body"))
                 .contains("Expected arrival:").contains("–");
         assertThat(rowFor(sent, PlanScenario.storeUser(PlanScenario.HEAVY_STORE)))
