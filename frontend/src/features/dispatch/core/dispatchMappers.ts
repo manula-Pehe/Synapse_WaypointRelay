@@ -1,6 +1,7 @@
 import type { Fleet, Order, OrderEvent, Outlet, UnconfirmedOutlet, Vehicle } from './api'
 import type { FleetSummary, VehicleItem } from '../../../components/FleetStatus'
 import type { OffRoadReason } from '../../../components/offRoadReasons'
+import type { OutletItem } from '../../../components/OutletsReference'
 import type { OrderItem, UnconfirmedStore } from '../../../components/OrderQueue'
 import type { OutletOption } from '../../../components/AddOrderDrawer'
 import type { TimelineEvent, TimelineTone } from '../../../components/OrderHistoryDrawer'
@@ -141,4 +142,24 @@ export function offRoadChange(reason: OffRoadReason, details: string): { status:
     status: reason === 'Workshop' ? 'IN_WORKSHOP' : 'OFF_ROAD',
     reason: details ? `${reason}: ${details}` : reason,
   }
+}
+
+const humanise = (value: string) => sentenceCase(value.replaceAll('_', ' '))
+
+export function toOutletItems(outlets: Outlet[]): OutletItem[] {
+  return outlets.map(outlet => {
+    const dock = humanise(outlet.dockType)
+    const vanOnly = outlet.parkingConstraint === VAN_ONLY_CONSTRAINT
+    return {
+      id: outlet.id,
+      name: outlet.name,
+      district: outlet.district,
+      brand: outlet.brand,
+      line: `${outlet.brand} · ${dock.toLowerCase()}${vanOnly ? ' · van only' : ''}`,
+      dock,
+      access: vanOnly ? 'Van only' : 'Trucks and vans',
+      depot: outlet.depot,
+      deliveryWindow: formatWindow(outlet),
+    }
+  })
 }

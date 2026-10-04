@@ -25,9 +25,9 @@ import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
 import { DriverDecisions } from './features/dispatch/issues/DriverDecisions'
 import { StoreMore, StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
-import { DispatchOutlets } from './features/dispatch/core/DispatchDataPages'
 import { OrderQueueScreen } from './features/dispatch/core/OrderQueueScreen'
 import { FleetScreen } from './features/dispatch/core/FleetScreen'
+import { OutletsScreen } from './features/dispatch/core/OutletsScreen'
 import { dispatchApi } from './features/dispatch/core/api'
 import NetworkMap from './features/dispatch/core/NetworkMap'
 import UIShowcase from './ui/UIShowcase'
@@ -68,7 +68,7 @@ function DispatcherWorkspace() {
     : activeNav === 'driver-decisions' ? <DriverDecisions />
     : activeNav === 'issues' ? <DispatchIssues />
     : activeNav === 'capacity' ? <CapacityOutlook />
-    : activeNav === 'outlets' ? <DispatchOutlets depot={depot} />
+    : activeNav === 'outlets' ? <OutletsScreen depot={depot} />
     : activeNav === 'network-map' ? (runDate && depot ? <NetworkMap runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'reports' ? (runDate && depot ? <RunReport runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'orders' ? (runDate && depot ? <OrderQueueScreen runDate={runDate} depot={depot} onCreatePlan={() => setActiveNav('plan')} /> : <p>Select a depot and wait for the run date.</p>)
