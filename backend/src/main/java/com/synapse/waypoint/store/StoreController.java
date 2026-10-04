@@ -21,6 +21,7 @@ import com.synapse.waypoint.common.dto.ListResponse;
 import com.synapse.waypoint.common.error.DomainException;
 import com.synapse.waypoint.common.error.ErrorCode;
 import com.synapse.waypoint.common.security.CurrentUser;
+import com.synapse.waypoint.common.security.Role;
 import com.synapse.waypoint.common.time.DemoClock;
 import com.synapse.waypoint.core.order.dto.CreateOrderRequest;
 import com.synapse.waypoint.core.order.dto.CloseStatusDto;
@@ -31,6 +32,9 @@ import com.synapse.waypoint.core.order.entity.TemperatureRequirement;
 import com.synapse.waypoint.core.order.service.OrderService;
 import com.synapse.waypoint.core.reference.entity.Outlet;
 import com.synapse.waypoint.core.reference.repository.OutletRepository;
+import com.synapse.waypoint.notification.entity.NotificationSeverity;
+import com.synapse.waypoint.notification.recipient.NotificationScope;
+import com.synapse.waypoint.notification.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/store")
@@ -43,12 +47,14 @@ class StoreController {
     private final StoreOrderAccess access;
     private final EntityManager entityManager;
     private final StoreDeliveryService deliveries;
+    private final NotificationService notifications;
 
     StoreController(OrderService orders, CurrentUser user, DemoClock clock, OutletRepository outlets,
                     JdbcTemplate jdbc, StoreOrderAccess access, EntityManager entityManager,
-                    StoreDeliveryService deliveries) {
+                    StoreDeliveryService deliveries, NotificationService notifications) {
         this.orders = orders; this.user = user; this.clock = clock; this.outlets = outlets;
         this.jdbc = jdbc; this.access = access; this.entityManager = entityManager; this.deliveries = deliveries;
+        this.notifications = notifications;
     }
 
     private String outletId() {
@@ -157,6 +163,10 @@ class StoreController {
         String receiptId = UUID.randomUUID().toString();
         jdbc.update("INSERT INTO receipts(id,order_id,received_units,note,received_by,received_at) VALUES (?,?,?,?,?,?)",
                 receiptId, id, body.receivedUnits(), body.note(), user.id(), Timestamp.from(clock.now()));
+        notifications.notifyRole(Role.STORE_MANAGER, NotificationScope.outlet(order.outletId()),
+                NotificationSeverity.INFO, "RECEIPT_CONFIRMED", "Receipt confirmed for " + order.ref(),
+                "Your receipt of " + body.receivedUnits() + " cases for order " + order.ref() + " has been recorded.",
+                "/store/deliveries/" + id + "/receipt");
         return Map.of("id", receiptId, "orderId", id, "receivedUnits", body.receivedUnits(), "at", clock.now());
     }
 
