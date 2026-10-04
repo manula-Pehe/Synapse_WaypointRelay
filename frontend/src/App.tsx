@@ -17,7 +17,8 @@ import { StoreReview } from './features/store/StoreReview'
 import { NewStoreOrder } from './features/store/NewStoreOrder'
 import { StoreDeliveries } from './features/store/StoreDeliveries'
 import { StoreArrival } from './features/store/StoreArrival'
-import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreIssues'
+import { StoreIssues, StoreIssueDetail } from './features/store/StoreIssues'
+import { NewIssuePage } from './features/store/NewIssuePage'
 import { StoreMoved } from './features/store/StoreMoved'
 import { StoreDeliveryProblem } from './features/store/StoreDeliveryProblem'
 import { StoreReceipt } from './features/store/StoreReceipt'
@@ -156,7 +157,7 @@ export default function App() {
                       <Route path="deliveries/:orderId/problem" element={<StoreDeliveryProblem />} />
                       <Route path="deliveries/:orderId/receipt" element={<StoreReceipt />} />
                       <Route path="issues" element={<StoreIssues />} />
-                      <Route path="issues/new" element={<NewIssue />} />
+                      <Route path="issues/new" element={<NewIssuePage />} />
                       <Route path="issues/:id" element={<StoreIssueDetail />} />
                       <Route path="settings" element={<StoreSettings />} />
                       <Route path="history" element={<StoreHistory />} />

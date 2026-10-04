@@ -41,6 +41,7 @@ const realStoreApi = {
   issueMessage: (id: string, text: string) => api<Issue>(`store/issues/${id}/messages`, { method: 'POST', body: JSON.stringify({ text }) }),
   uploadPhoto: (id: string, file: File) => { const body = new FormData(); body.append('file', file); return api<{ id: string; url: string }>(`store/issues/${id}/photos`, { method: 'POST', body }) },
   issuePhoto: (id: string, photoId: string) => apiBlob(`store/issues/${id}/photos/${photoId}`),
+  dispatchIssuePhoto: (id: string, photoId: string) => apiBlob(`dispatch/issues/${id}/photos/${photoId}`),
   dispatchIssues: (status?: string) => api<List<Issue>>(`dispatch/issues${status ? `?status=${status}` : ''}`),
   dispatchReply: (id: string, text: string) => api<Issue>(`dispatch/issues/${id}/reply`, { method: 'POST', body: JSON.stringify({ text }) }),
   dispatchResolve: (id: string) => api<Issue>(`dispatch/issues/${id}/resolve`, { method: 'POST' }),
