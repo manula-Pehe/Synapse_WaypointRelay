@@ -25,8 +25,9 @@ import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
 import { DriverDecisions } from './features/dispatch/issues/DriverDecisions'
 import { StoreMore, StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
-import { DispatchFleet, DispatchOutlets } from './features/dispatch/core/DispatchDataPages'
+import { DispatchOutlets } from './features/dispatch/core/DispatchDataPages'
 import { OrderQueueScreen } from './features/dispatch/core/OrderQueueScreen'
+import { FleetScreen } from './features/dispatch/core/FleetScreen'
 import { dispatchApi } from './features/dispatch/core/api'
 import NetworkMap from './features/dispatch/core/NetworkMap'
 import UIShowcase from './ui/UIShowcase'
@@ -62,7 +63,7 @@ function DispatcherWorkspace() {
   }
   const meta = metadata[activeNav] ?? { title: 'Waypoint Relay', subtitle: 'Dispatch & fleet operations' }
   const content = settings.error ? <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-800">Could not load run settings: {settings.error.message}</p>
-    : activeNav === 'fleet' ? (runDate && depot ? <DispatchFleet runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : activeNav === 'fleet' ? (runDate && depot ? <FleetScreen runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'live-board' ? (runDate && depot ? <LiveBoardPage runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'driver-decisions' ? <DriverDecisions />
     : activeNav === 'issues' ? <DispatchIssues />

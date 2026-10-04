@@ -1,4 +1,6 @@
-import type { Order, OrderEvent, Outlet, UnconfirmedOutlet, Vehicle } from './api'
+import type { Fleet, Order, OrderEvent, Outlet, UnconfirmedOutlet, Vehicle } from './api'
+import type { FleetSummary, VehicleItem } from '../../../components/FleetStatus'
+import type { OffRoadReason } from '../../../components/offRoadReasons'
 import type { OrderItem, UnconfirmedStore } from '../../../components/OrderQueue'
 import type { OutletOption } from '../../../components/AddOrderDrawer'
 import type { TimelineEvent, TimelineTone } from '../../../components/OrderHistoryDrawer'
@@ -95,4 +97,48 @@ export function toTimelineEvents(history: OrderEvent[]): TimelineEvent[] {
     timestamp: `${formatDateTime(event.at)} · ${event.actor ?? 'System'}`,
     tone: timelineTone(event.type),
   }))
+}
+
+const REEFER = 'reefer'
+const VAN = 'van'
+
+const sentenceCase = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
+
+export function toVehicleItems(vehicles: Vehicle[]): VehicleItem[] {
+  return vehicles.map(vehicle => ({
+    id: vehicle.id,
+    type: `${sentenceCase(vehicle.type)} · ${vehicle.temp === REEFER ? 'fridge' : vehicle.temp}`,
+    capacityKg: vehicle.weightCapKg,
+    capacityM3: vehicle.volumeCapM3,
+    status: vehicle.availability === 'AVAILABLE' ? 'Available' : vehicle.availability === 'IN_WORKSHOP' ? 'Workshop' : 'Off road',
+    reason: vehicle.availabilityReason,
+    onRoad: vehicle.availability === 'AVAILABLE',
+    isFridge: vehicle.temp === REEFER,
+    weeklyFuelQuotaL: vehicle.weeklyFuelQuotaL,
+  }))
+}
+
+export function toFleetSummary(fleet: Fleet): FleetSummary {
+  const fridges = fleet.items.filter(vehicle => vehicle.temp === REEFER)
+  const vans = fleet.items.filter(vehicle => vehicle.type === VAN)
+  const isAvailable = (vehicle: Vehicle) => vehicle.availability === 'AVAILABLE'
+  return {
+    total: fleet.items.length,
+    available: fleet.counts.available,
+    workshop: fleet.counts.inWorkshop,
+    offRoad: fleet.counts.offRoad,
+    fridgeAvailable: fleet.counts.reeferAvailable,
+    fridgeTotal: fridges.length,
+    fridgeAvailableIds: fridges.filter(isAvailable).map(vehicle => vehicle.id),
+    vansAvailable: vans.filter(isAvailable).length,
+    vansTotal: vans.length,
+  }
+}
+
+/** Workshop is its own availability status; every other reason takes the vehicle off the road. */
+export function offRoadChange(reason: OffRoadReason, details: string): { status: Vehicle['availability']; reason: string } {
+  return {
+    status: reason === 'Workshop' ? 'IN_WORKSHOP' : 'OFF_ROAD',
+    reason: details ? `${reason}: ${details}` : reason,
+  }
 }
