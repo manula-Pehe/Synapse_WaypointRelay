@@ -82,7 +82,9 @@ public record SyncItem(
             @NotBlank String tripId,
             @NotBlank String orderId,
             @Positive int units,
-            @NotNull DeliveryReason reason) {
+            @NotNull DeliveryReason reason,
+            /** Who took responsibility for the handback; absent when the phone could not reach one. */
+            String signatureFileId) {
     }
 
     /** R2 — the driver arrived at a stop. */

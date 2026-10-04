@@ -260,6 +260,7 @@ class DefaultSyncService implements SyncService {
                 payload.orderId(),
                 payload.units(),
                 payload.reason(),
+                payload.signatureFileId(),
                 userId,
                 now,
                 item.clientId()));
