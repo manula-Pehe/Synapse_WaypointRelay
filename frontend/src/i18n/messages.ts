@@ -8,7 +8,7 @@ const en = {
   promiseLine1: 'Plan every delivery.',
   promiseLine2: 'Keep every promise.',
   intro:
-    'One place for store orders, the daily plan, the dock and the road — for Waypoint Fresh, Style and Tech, from Peliyagoda and Kandy.',
+    'One place for store orders, the daily plan, the dock and the road - for Waypoint Fresh, Style and Tech, from Peliyagoda and Kandy.',
   arrivalBenefit: 'Honest arrival windows for every store',
   movedBenefit: 'Every moved order comes with a reason',
   offlineBenefit: 'Drivers keep working with no signal',
@@ -19,7 +19,7 @@ const en = {
   tagline: 'Every delivery, connected.',
   welcome: 'Welcome back',
   subtitle:
-    'Use your Waypoint work account. What you see depends on your role — store, dispatch, dock or driver.',
+    'Use your Waypoint work account. What you see depends on your role - store, dispatch, dock or driver.',
   identifier: 'Work email or staff ID',
   secret: 'Password',
   signIn: 'Sign in',

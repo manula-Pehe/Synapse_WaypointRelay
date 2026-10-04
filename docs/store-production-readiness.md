@@ -19,11 +19,11 @@ These branches are stacked; each later branch includes the earlier store work:
 ## Backend work required before production release
 
 1. `GET /api/store/deliveries` currently returns `null` for arrival, deferral, delivery proof, and shortfall. F7 through F10 display real values only when those services publish them. The receipt screen does not permit confirmation without a delivery proof, but the receipt API itself currently checks only the order status. Connect planning, driver proof, shortfall, and driver offline data to this endpoint and enforce proof presence in the receipt API.
-2. The frontend calls `POST /api/store/deferrals/{id}/choice`, `/api/store/failed/{id}/choice`, and `/api/store/breakdown/{id}/choice` when the relevant record has an id. These endpoints are not present in the current backend. Implement them and validate outlet ownership and allowed transitions.
+2. The frontend calls `POST /api/store/deferrals/{id}/choice` and `/api/store/failed/{id}/choice`; both validate outlet ownership and allowed transitions. The store breakdown choice is not offered because breakdown re-planning is not built.
 3. The new notification inbox works, but order, delivery, and issue actions currently do not all publish notifications. Store alert preferences are persisted by `GET/PUT /api/store/notifications/settings` and applied in the frontend; critical notices remain visible. Backend notification title/body are English only; localized notification content needs a server contract.
 4. With demo seeding off, a new database needs operational provisioning of user accounts, outlets, and reference data. Supply a production import and credentials process before deployment. Do not turn on demo seeding to populate a production database.
 5. Other dispatcher views still contain illustrative metrics and data outside the store feature area. Audit and connect those views before calling the entire application production ready.
-6. The optional F13 style/technology variants in `shaanil.md` are not implemented.
+6. The optional F13 style/technology variants are not implemented.
 
 ## Verification limits
 

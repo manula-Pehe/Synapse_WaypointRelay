@@ -19,7 +19,7 @@ export function Button({ tone = 'primary', size = 'm', className = '', ...props 
 export function IconButton({ label, children, size = 'm', tone = 'outline', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; size?: Size; tone?: 'neutral' | 'outline' | 'primary' }) {
   return <Button {...props} aria-label={label} size={size} tone={tone} className="aspect-square !px-0">{children}</Button>
 }
-type BadgeStatus = 'way' | 'delivered' | 'risk' | 'failed' | 'deferred' | 'chilled' | 'offline'
+export type BadgeStatus = 'way' | 'delivered' | 'risk' | 'failed' | 'deferred' | 'chilled' | 'offline'
 const statusStyles: Record<BadgeStatus, string> = {
   way: 'bg-status-way-soft text-status-way',
   delivered: 'bg-status-delivered-soft text-status-delivered',

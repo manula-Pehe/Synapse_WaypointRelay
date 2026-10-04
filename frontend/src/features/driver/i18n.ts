@@ -1,0 +1,198 @@
+// Every piece of driver text goes through here. English, Sinhala and Tamil for the stop list;
+// keys everywhere so a screen never hard-codes a word.
+
+export type Language = 'en' | 'si' | 'ta'
+
+const STORAGE_KEY = 'waypoint.driver.language'
+
+/**
+ * The language the driver last chose.
+ *
+ * F12 is only useful if it survives: a driver who reads the stop list in Sinhala should not find
+ * English again after the phone reloads the app at the start of a run. Stored the same way as the
+ * theme, and defaulting to English when nothing is stored.
+ */
+export function storedLanguage(): Language {
+  try {
+    const value = localStorage.getItem(STORAGE_KEY)
+    return value === 'si' || value === 'ta' ? value : 'en'
+  } catch {
+    return 'en'
+  }
+}
+
+export function rememberLanguage(language: Language) {
+  try {
+    localStorage.setItem(STORAGE_KEY, language)
+  } catch {
+    // Nothing to do - the switch still works for this session.
+  }
+}
+
+const STRINGS = {
+  en: {
+    'driver.app.title': 'Driver',
+    'driver.signin.staffId': 'Staff ID',
+    'driver.signin.pin': 'PIN',
+    'driver.signin.continue': 'Continue',
+    'driver.signin.offline': 'No signal. Sign in with the PIN you used last time.',
+    'driver.today.title': 'Today',
+    'driver.noTrip.title': 'Today',
+    'driver.noTrip.waitingTitle': 'Nothing to drive yet',
+    'driver.noTrip.waiting': 'No trips yet — waiting for the plan to be published.',
+    'driver.noTrip.waitingHint': 'Dispatch publishes the run the night before. Your stops appear here as soon as it is out.',
+    'driver.noTrip.offlineTitle': 'No signal',
+    'driver.noTrip.offline': 'This phone has no saved run yet.',
+    'driver.noTrip.offlineHint': 'Connect to the signal and try again. Once a run is on this phone it stays here for the whole day.',
+    'driver.noTrip.loading': 'Checking for your run…',
+    'driver.noTrip.retry': 'Try again',
+    'driver.today.vehicle': 'Vehicle',
+    'driver.today.stops': 'stops',
+    'driver.today.accept': 'Check the load and accept',
+    'driver.today.eta': 'Back by',
+    'driver.stops.title': 'Stops',
+    'driver.stops.next': 'Next stop',
+    'driver.stops.done': 'Done',
+    'driver.stops.window': 'Window',
+    'driver.stops.arrive': 'I have arrived',
+    'driver.stops.cases': 'cases',
+    'driver.stops.minEarly': '{count} min early',
+    'driver.stops.around': 'around {time}',
+    'driver.stop.detail': 'Stop',
+    'driver.stop.access': 'Access',
+    'driver.stop.opensIn': 'Opens at {time} - you are {count} min early.',
+    'driver.stop.call': 'Call store',
+    'driver.delivery.deliver': 'Record delivery',
+    'driver.delivery.photo': 'Photo',
+    'driver.delivery.signature': 'Signature',
+    'driver.delivery.receivedBy': 'Received by',
+    'driver.delivery.undo': 'Undo',
+    'driver.delivery.undone': 'Undone',
+    'driver.delivery.saved': 'Saved on this phone',
+    'driver.delivery.retry': 'Could not save. Check the signal and try again.',
+    'driver.failed.title': 'What happened?',
+    'driver.failed.short': 'Some cases did not go',
+    'driver.failed.none': 'Nothing was delivered',
+    'driver.failed.reason.storeClosed': 'Store was closed',
+    'driver.failed.reason.noAccess': 'Could not get in',
+    'driver.failed.reason.refused': 'Store refused',
+    'driver.failed.reason.damaged': 'Cases damaged',
+    'driver.failed.units': 'Cases delivered',
+    'driver.wait.title': 'Store is closed',
+    'driver.wait.start': 'Start waiting',
+    'driver.wait.end': 'Done waiting',
+    'driver.wait.waiting': 'Waiting',
+    'driver.sync.synced': 'Synced',
+    'driver.sync.syncing': 'Syncing',
+    'driver.sync.offline': 'Offline',
+    'driver.sync.waiting': '{count} waiting',
+    'driver.sync.title': 'Your work is saved on this phone',
+    'driver.sync.backOnline': 'Back online',
+    'driver.sync.summary': 'What synced',
+    'driver.sync.nothing': 'Nothing is waiting to send.',
+    'driver.menu.title': 'Menu',
+    'driver.menu.theme': 'Light or dark',
+    'driver.menu.language': 'Language',
+    'driver.menu.depot': 'Call depot',
+    'driver.menu.problem': 'Report a problem',
+    'driver.menu.signout': 'Sign out',
+    'driver.tripEnd.title': 'Trip complete',
+    'driver.tripEnd.next': 'Back at the depot',
+    'driver.tripEnd.done': 'Deliveries recorded',
+    'driver.tripEnd.handback': 'Hand back goods',
+    'driver.handback.title': 'Hand back goods',
+    'driver.handback.record': 'Record the handback',
+    'driver.handback.why': 'Why is it coming back?',
+    'driver.handback.hint': 'These cases go back on the shelf and the store still gets them on a later run.',
+    'driver.handback.nothing': 'Nothing is still on the truck.',
+    'driver.handback.signature': 'Signed for',
+    'driver.handback.signatureHint': 'Sign at the depot counter. The handback is recorded either way.',
+    'driver.problem.title': 'Report a problem',
+    'driver.problem.canDrive': 'I can keep driving',
+    'driver.problem.cannot': 'I cannot drive',
+    'driver.problem.send': 'Send to dispatch',
+    'driver.problem.sent': 'Sent. Dispatch will reply here.',
+    'driver.problem.reply': 'Dispatch says',
+    'driver.problem.fridge': 'Fridge reading',
+    'driver.problem.onBoard': 'Cases still on the truck',
+    'driver.problem.nothingOnBoard': 'Nothing on board',
+  },
+  si: {
+    'driver.app.title': 'රියරුවා',
+    'driver.noTrip.title': 'අද',
+    'driver.noTrip.waitingTitle': 'තවම යන දෙයක් නැහැ',
+    'driver.noTrip.waiting': 'ගමන් තවම නැහැ — උපලේමණ ප්‍රසිට පිටතට නොමැත.',
+    'driver.noTrip.waitingHint': 'රැයට උපලේමණ යාම ප්‍රසිට ප්‍රකාශ කරයි. එය ප්‍රකාශ වූ විට ඔබගේ නවත්වීම් මෙහි පෙනෙයි.',
+    'driver.noTrip.offlineTitle': 'සංයුක්තයි',
+    'driver.noTrip.offline': 'මෙම දුරකථනයේ සුරැකුණු ගමනක් තවම නැහැ.',
+    'driver.noTrip.offlineHint': 'සංයුක්තය සම්බන්ධ කර නැවත උත්සාහ කරන්න. ගමනක් මෙම දුරකථනයට පැමිණුණු පසු එය දින පුරාම රැඳී පවතී.',
+    'driver.noTrip.loading': 'ඔබගේ ගමන සොයා ගන්නා ලද…',
+    'driver.noTrip.retry': 'නැවත උත්සාහ කරන්න',
+    'driver.stops.title': 'නවත්වීම්',
+    'driver.stops.next': 'ඊළඟ නවත්වීම',
+    'driver.stops.done': 'අවසන්',
+    'driver.stops.window': 'කාලය',
+    'driver.stops.arrive': 'මම පැමිණිලා',
+    'driver.stops.cases': 'කේස',
+    'driver.stops.minEarly': 'විනාඩි {count}ක කලින්',
+    'driver.stops.around': 'සුළඟෝචය {time}',
+    'driver.stop.opensIn': '{time} විට විවෘතයි - ඔබ විනාඩි {count}ක කලින් ය.',
+    'driver.delivery.deliver': 'බාර දීම සලකුණු කරන්න',
+    'driver.delivery.retry': 'සුරකින්න නොහැකි විය. සංඥාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.',
+    'driver.failed.title': 'කුමක් සිදු කළද?',
+    'driver.sync.synced': 'සම්පූර්ණයි',
+    'driver.sync.syncing': 'යැමුණි',
+    'driver.sync.offline': 'සංයුක්තයි',
+    'driver.sync.waiting': '{count} බලාපොරොත්තු',
+  },
+  ta: {
+    'driver.app.title': 'ஓட்டுநர்',
+    'driver.noTrip.title': 'இன்று',
+    'driver.noTrip.waitingTitle': 'இன்னும் ஓட்டுவது இல்லை',
+    'driver.noTrip.waiting': 'பயணங்கள் இல்லை — திட்டம் வெளியிடப்படும் வரை காத்திருக்கவும்.',
+    'driver.noTrip.waitingHint': 'முந்தைய இரவில் பிரிவு திட்டத்தை வெளியிடும். வெளியானதும் உங்கள் நிறுத்தங்கள் இங்கே தெரியும்.',
+    'driver.noTrip.offlineTitle': 'இணைப்பு இல்லை',
+    'driver.noTrip.offline': 'இந்தத் தொலைபேசியில் சேமித்த பயணம் இன்னும் இல்லை.',
+    'driver.noTrip.offlineHint': 'இணைப்பைச் செய்து மீண்டும் முயற்சிக்கவும். ஒரு பயணம் இந்தத் தொலைபேசியில் சேமித்ததும் அது நாள் முழுவதும் இருக்கும்.',
+    'driver.noTrip.loading': 'உங்கள் பயணம் தேடப்படுகிறது…',
+    'driver.noTrip.retry': 'மீண்டும் முயற்சிக்கவும்',
+    'driver.stops.title': 'நிறுத்தங்கள்',
+    'driver.stops.next': 'அடுத்த நிறுத்தம்',
+    'driver.stops.done': 'முடிந்தது',
+    'driver.stops.window': 'நேரம்',
+    'driver.stops.arrive': 'நான் வந்துவிட்டேன்',
+    'driver.stops.cases': 'பெட்டிகள்',
+    'driver.stops.minEarly': '{count} நிமிடங்கள் முன்பு',
+    'driver.stops.around': 'சுமார் {time}',
+    'driver.stop.opensIn': '{time} திறக்கும் - நீங்கள் {count} நிமிடங்கள் முன்பே இருக்கிறீர்கள்.',
+    'driver.delivery.deliver': 'விநியோகம் பதிவு செய்',
+    'driver.delivery.retry': 'சேமிக்க முடியவில்லை. சமிக்ஞையை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.',
+    'driver.failed.title': 'என்ன நடந்தது?',
+    'driver.sync.synced': 'முடிந்தது',
+    'driver.sync.syncing': 'அனுப்புகிறது',
+    'driver.sync.offline': 'இணைப்பு இல்லை',
+    'driver.sync.waiting': '{count} காத்திருக்கும்',
+  },
+} as const
+
+export type StringKey = keyof typeof STRINGS.en
+
+const LANGUAGE_NAMES: Record<Language, string> = {
+  en: 'English',
+  si: 'සිංහල',
+  ta: 'தமிழ்',
+}
+
+export function languageName(language: Language) {
+  return LANGUAGE_NAMES[language]
+}
+
+/** Falls back to English, then to the key itself, so a missing translation shows something usable. */
+export function t(language: Language, key: StringKey, values?: Record<string, string | number>) {
+  const table = STRINGS[language] as Partial<Record<StringKey, string>>
+  let text = table[key] ?? STRINGS.en[key] ?? key
+  for (const [name, value] of Object.entries(values ?? {})) {
+    text = text.replaceAll(`{${name}}`, String(value))
+  }
+  return text
+}

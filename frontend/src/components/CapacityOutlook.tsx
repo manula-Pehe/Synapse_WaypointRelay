@@ -1,3 +1,4 @@
+// D7 · Capacity outlook
 import React, { useState } from 'react';
 
 export interface CapacityOutlookProps {
@@ -58,6 +59,10 @@ export const CapacityOutlook: React.FC<CapacityOutlookProps> = ({
 
   return (
     <div className="space-y-6 font-sans">
+      <div role="status" className="flex items-center gap-3 rounded-xl border border-status-risk bg-status-risk-soft p-4 text-sm font-semibold text-status-risk">
+        <span aria-hidden="true">⚠</span>
+        Sample preview - not connected to live data
+      </div>
       {/* 1. Top Header Area */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         {/* Title & Subtitle */}
@@ -362,7 +367,7 @@ export const CapacityOutlook: React.FC<CapacityOutlookProps> = ({
 
           {/* Explanatory Footer Note */}
           <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-            Why fridge-truck days, not m³: historically fridge trucks leave only ~25% full — trips before 8 AM run out first, not space. Values illustrative; generated from the Task 2A forecast.
+            Why fridge-truck days, not m³: historically fridge trucks leave only ~25% full - trips before 8 AM run out first, not space. Values illustrative; generated from the Task 2A forecast.
           </p>
         </div>
 

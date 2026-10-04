@@ -9,7 +9,6 @@ import java.util.UUID;
 import jakarta.validation.Valid;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
@@ -21,6 +20,7 @@ import com.synapse.waypoint.common.dto.ListResponse;
 import com.synapse.waypoint.common.error.DomainException;
 import com.synapse.waypoint.common.error.ErrorCode;
 import com.synapse.waypoint.common.security.CurrentUser;
+import com.synapse.waypoint.common.security.Role;
 import com.synapse.waypoint.common.time.DemoClock;
 import com.synapse.waypoint.core.order.dto.CreateOrderRequest;
 import com.synapse.waypoint.core.order.dto.CloseStatusDto;
@@ -31,6 +31,10 @@ import com.synapse.waypoint.core.order.entity.TemperatureRequirement;
 import com.synapse.waypoint.core.order.service.OrderService;
 import com.synapse.waypoint.core.reference.entity.Outlet;
 import com.synapse.waypoint.core.reference.repository.OutletRepository;
+import com.synapse.waypoint.driver.entity.FailedDeliveryDecision;
+import com.synapse.waypoint.notification.entity.NotificationSeverity;
+import com.synapse.waypoint.notification.recipient.NotificationScope;
+import com.synapse.waypoint.notification.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/store")
@@ -42,11 +46,18 @@ class StoreController {
     private final JdbcTemplate jdbc;
     private final StoreOrderAccess access;
     private final EntityManager entityManager;
+    private final StoreDeliveryService deliveries;
+    private final NotificationService notifications;
+    private final StoreFailedChoiceService failedChoices;
 
     StoreController(OrderService orders, CurrentUser user, DemoClock clock, OutletRepository outlets,
-                    JdbcTemplate jdbc, StoreOrderAccess access, EntityManager entityManager) {
+                    JdbcTemplate jdbc, StoreOrderAccess access, EntityManager entityManager,
+                    StoreDeliveryService deliveries, NotificationService notifications,
+                    StoreFailedChoiceService failedChoices) {
         this.orders = orders; this.user = user; this.clock = clock; this.outlets = outlets;
-        this.jdbc = jdbc; this.access = access; this.entityManager = entityManager;
+        this.jdbc = jdbc; this.access = access; this.entityManager = entityManager; this.deliveries = deliveries;
+        this.notifications = notifications;
+        this.failedChoices = failedChoices;
     }
 
     private String outletId() {
@@ -78,13 +89,13 @@ class StoreController {
 
     @GetMapping("/deliveries")
     ListResponse<DeliveryView> deliveries(@RequestParam(required = false) LocalDate runDate) {
-        LocalDate date = runDate == null ? clock.today() : runDate;
-        return ListResponse.of(access.find(date, date).stream().map(order -> {
-            List<ReceiptView> receipts = jdbc.query("SELECT received_units,received_at FROM receipts WHERE order_id = ?",
-                    (rs, row) -> new ReceiptView(rs.getInt(1), rs.getTimestamp(2).toInstant()), order.id());
-            return new DeliveryView(order.id(), order.ref(), order.status(), null, null, null, null,
-                    receipts.isEmpty() ? null : receipts.get(0));
-        }).toList());
+        return ListResponse.of(deliveries.forRun(runDate));
+    }
+
+    @PostMapping("/failed/{deliveryId}/choice")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void failedChoice(@PathVariable String deliveryId, @Valid @RequestBody FailedChoice body) {
+        failedChoices.choose(deliveryId, body.choice());
     }
 
     @PutMapping("/orders/{id}")
@@ -131,19 +142,6 @@ class StoreController {
         return orders.get(id);
     }
 
-    @PostMapping("/orders/{id}/dispute")
-    @Transactional
-    Map<String, String> dispute(@PathVariable String id, @Valid @RequestBody Dispute body) {
-        OrderDto order = orders.get(id);
-        if (order.source() != com.synapse.waypoint.core.order.entity.OrderSource.PHONE_IN)
-            throw new DomainException(ErrorCode.INVALID_STATUS, "Only phone orders can be disputed here.");
-        if (body.message().isBlank()) throw new DomainException(ErrorCode.VALIDATION, "A message is required.");
-        String disputeId = UUID.randomUUID().toString();
-        jdbc.update("INSERT INTO order_disputes(id,order_id,outlet_id,message,created_by,created_at) VALUES (?,?,?,?,?,?)",
-                disputeId, order.id(), outletId(), body.message().strip(), user.id(), Timestamp.from(clock.now()));
-        return Map.of("id", disputeId, "status", "OPEN");
-    }
-
     @PostMapping("/orders/{id}/receipt")
     @Transactional
     Map<String, Object> receipt(@PathVariable String id, @Valid @RequestBody Receipt body) {
@@ -161,19 +159,20 @@ class StoreController {
         String receiptId = UUID.randomUUID().toString();
         jdbc.update("INSERT INTO receipts(id,order_id,received_units,note,received_by,received_at) VALUES (?,?,?,?,?,?)",
                 receiptId, id, body.receivedUnits(), body.note(), user.id(), Timestamp.from(clock.now()));
+        notifications.notifyRole(Role.STORE_MANAGER, NotificationScope.outlet(order.outletId()),
+                NotificationSeverity.INFO, "RECEIPT_CONFIRMED", "Receipt confirmed for " + order.ref(),
+                "Your receipt of " + body.receivedUnits() + " cases for order " + order.ref() + " has been recorded.",
+                "/store/deliveries/" + id + "/receipt");
         return Map.of("id", receiptId, "orderId", id, "receivedUnits", body.receivedUnits(), "at", clock.now());
     }
 
     record Home(String outlet, String brand, LocalDate runDate, java.time.Instant now, boolean ordersClosed, String cutOffAt,
                 List<OrderDto> tomorrow, List<OrderDto> today, int openIssues) {}
-    record DeliveryView(String orderId, String orderRef, OrderStatus status, Object arrival,
-                        Object deferral, Object delivery, Object shortfall, ReceiptView receipt) {}
-    record ReceiptView(int receivedUnits, java.time.Instant at) {}
     record Units(@Min(1) int units) {}
+    record FailedChoice(@NotNull FailedDeliveryDecision choice) {}
     record CancelReason(@Size(max = 100) String reason) {}
     record NewStoreOrder(@NotNull LocalDate runDate, @NotNull TemperatureRequirement temp, @Min(1) int units,
                          @Size(max = 500) String note) {}
     record PhoneCheck(boolean ok, @Size(max = 1000) String message) {}
-    record Dispute(@NotBlank @Size(max = 1000) String message) {}
     record Receipt(@Min(0) int receivedUnits, @Size(max = 1000) String note) {}
 }

@@ -2,6 +2,7 @@ package com.synapse.waypoint.common.config;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,6 +32,14 @@ class SecurityConfigTests {
         mvc.perform(get("/api/orders"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void demoClockReadIsPublicButMovingItStillRequiresDispatcherAuth() throws Exception {
+        mvc.perform(get("/api/settings")).andExpect(status().isOk());
+        mvc.perform(post("/api/settings/clock").contentType("application/json")
+                        .content("{\"at\":\"2026-10-01T04:00:00+05:30\"}"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

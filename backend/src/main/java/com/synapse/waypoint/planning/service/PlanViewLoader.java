@@ -18,10 +18,13 @@ import com.synapse.waypoint.planning.dto.DeferralDto;
 import com.synapse.waypoint.planning.dto.PlanDto;
 import com.synapse.waypoint.planning.dto.PlanTripDto;
 import com.synapse.waypoint.planning.dto.StopPlacementDto;
+import com.synapse.waypoint.planning.domain.StoreChoice;
 import com.synapse.waypoint.planning.entity.Deferral;
+import com.synapse.waypoint.planning.entity.DeferralChoice;
 import com.synapse.waypoint.planning.entity.Plan;
 import com.synapse.waypoint.planning.entity.Stop;
 import com.synapse.waypoint.planning.entity.Trip;
+import com.synapse.waypoint.planning.repository.DeferralChoiceRepository;
 import com.synapse.waypoint.planning.repository.DeferralRepository;
 import com.synapse.waypoint.planning.repository.StopRepository;
 import com.synapse.waypoint.planning.repository.TripRepository;
@@ -36,15 +39,17 @@ class PlanViewLoader {
     private final TripRepository trips;
     private final StopRepository stops;
     private final DeferralRepository deferrals;
+    private final DeferralChoiceRepository choices;
     private final OrderService orders;
     private final ReferenceService reference;
     private final PlanMapper mapper;
 
-    PlanViewLoader(TripRepository trips, StopRepository stops, DeferralRepository deferrals, OrderService orders,
-            ReferenceService reference, PlanMapper mapper) {
+    PlanViewLoader(TripRepository trips, StopRepository stops, DeferralRepository deferrals,
+            DeferralChoiceRepository choices, OrderService orders, ReferenceService reference, PlanMapper mapper) {
         this.trips = trips;
         this.stops = stops;
         this.deferrals = deferrals;
+        this.choices = choices;
         this.orders = orders;
         this.reference = reference;
         this.mapper = mapper;
@@ -74,8 +79,10 @@ class PlanViewLoader {
     @Transactional(readOnly = true)
     public List<DeferralDto> toDtos(List<Deferral> found) {
         Map<String, OrderDto> ordersById = ordersById(found.stream().map(Deferral::getOrderId).toList());
+        Map<String, StoreChoice> choices = choicesOf(found);
         return found.stream()
-                .map(deferral -> mapper.toDeferral(deferral, ordersById.get(deferral.getOrderId())))
+                .map(deferral -> mapper.toDeferral(deferral, ordersById.get(deferral.getOrderId()),
+                        choices.get(deferral.getId())))
                 .sorted(Comparator.comparing(DeferralDto::orderRef))
                 .toList();
     }
@@ -95,6 +102,15 @@ class PlanViewLoader {
 
     private Map<String, OrderDto> ordersOf(Map<String, List<Stop>> stopsByTrip) {
         return ordersById(stopsByTrip.values().stream().flatMap(List::stream).map(Stop::getOrderId).toList());
+    }
+
+    private Map<String, StoreChoice> choicesOf(List<Deferral> found) {
+        if (found.isEmpty()) {
+            return Map.of();
+        }
+        return choices.findByDeferralIdIn(found.stream().map(Deferral::getId).toList()).stream()
+                .collect(Collectors.toMap(DeferralChoice::getDeferralId, DeferralChoice::getChoice,
+                        (first, second) -> first));
     }
 
     private Map<String, OrderDto> ordersById(Collection<String> orderIds) {

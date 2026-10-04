@@ -31,6 +31,8 @@ export interface AuthValue {
   language: Language
   setLanguage: (language: Language) => void
   login: (credentials: Credentials, remember?: boolean) => Promise<void>
+  /** X1m-off - signs in with no network, against the PIN hash stored at the last online sign-in. */
+  loginOffline: (credentials: Credentials) => Promise<void>
   logout: () => void
 }
 export const AuthContext = createContext<AuthValue | null>(null)

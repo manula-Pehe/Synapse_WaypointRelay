@@ -126,6 +126,22 @@ class DefaultOrderService implements OrderService {
     }
 
     @Override
+    public OrderDto resizeMoved(String orderId, int units) {
+        Order order = load(orderId);
+        int previousUnits = order.getUnits();
+        order.resizeMoved(units, clock.now());
+        return saveWithEvent(order, EDITED, order.getStatus(), Map.of("fromUnits", previousUnits, "toUnits", units));
+    }
+
+    @Override
+    public OrderDto cancelMoved(String orderId, String reason) {
+        Order order = load(orderId);
+        OrderStatus from = order.getStatus();
+        order.cancelMoved(clock.now());
+        return saveWithEvent(order, from, optionalText("reason", reason));
+    }
+
+    @Override
     public OrderDto markPlanned(String orderId, String planId) {
         if (planId == null || planId.isBlank()) {
             throw new DomainException(ErrorCode.VALIDATION, "A plan id is required.",

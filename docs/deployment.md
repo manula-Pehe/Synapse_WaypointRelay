@@ -4,9 +4,8 @@
 
 | Environment | Frontend | API | Deployed from |
 |---|---|---|---|
-| Production | Vercel production deployment | `https://waypoint-api.duckdns.org` | `main` |
-| Development | Vercel `develop` branch deployment | `https://waypoint-api-dev.duckdns.org` | `develop` |
-| Pull requests | Vercel preview per PR | development API | — |
+| Production | `https://waypoint-relay.vercel.app` | `https://waypoint-api.duckdns.org` | `main` |
+| Development | run locally (see below) | `https://waypoint-api-dev.duckdns.org` | `develop` |
 
 ```
 Browser ──► Vercel (frontend/)            static React PWA
@@ -20,12 +19,19 @@ Both backends run on one Ubuntu 24.04 server as separate Docker Compose projects
 
 ## Frontend (Vercel)
 
-- Import the repository; **Root Directory** `frontend`; framework Vite (`frontend/vercel.json`).
-- **Production Branch:** `main`.
-- Environment variable `VITE_API_URL`:
-  - Production → `https://waypoint-api.duckdns.org`
-  - Preview → `https://waypoint-api-dev.duckdns.org`
-- Ignored Build Step: `git diff --quiet HEAD^ HEAD -- .` (skips builds when only the backend changed).
+The production frontend is `https://waypoint-relay.vercel.app`. The Vercel project is **not Git-connected**, so pull-request and `develop` branches are not built there. `.github/workflows/frontend-deploy.yml` ("Frontend deploy") runs after CI succeeds on a push to `main`, then runs `vercel pull`, `vercel build --prod` and `vercel deploy --prebuilt --prod` from `frontend/`.
+
+- Root Directory `frontend`; framework Vite (`frontend/vercel.json`).
+- Project environment variable `VITE_API_URL` (Production) → `https://waypoint-api.duckdns.org`.
+- Branches are tested locally with `npm run dev` and `VITE_API_TARGET=https://waypoint-api-dev.duckdns.org` (see "Local frontend against the development API").
+
+Repository secrets (environment `production`):
+
+| Secret | Value |
+|---|---|
+| `VERCEL_TOKEN` | Vercel access token |
+| `VERCEL_ORG_ID` | Vercel team / account ID |
+| `VERCEL_PROJECT_ID` | Vercel project ID |
 
 ## Backend server
 
@@ -45,7 +51,9 @@ Then on the server:
    |---|---|---|
    | `API_PORT` | `8081` | `8082` |
    | `DATA_PATH` | `/opt/waypoint/data` | `/opt/waypoint/data` |
-   | `CORS_ORIGINS` | `https://*.vercel.app,http://localhost:5173` | the Vercel production URL |
+   | `CORS_ORIGINS` | `https://*.vercel.app,http://localhost:5173` | `https://waypoint-relay.vercel.app` |
+   | `SEED_ENABLED` | `true` | `true` |
+   | `DEMO_MODE` | `true` | `true` |
 3. Install the proxy config: `sudo cp /opt/waypoint/prod/deploy/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy`
 4. First deploy: `/opt/waypoint/dev/deploy/deploy.sh dev` and `/opt/waypoint/prod/deploy/deploy.sh prod`
 

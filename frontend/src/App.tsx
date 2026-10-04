@@ -5,6 +5,7 @@ import { rolePaths, useAuth, type Role } from './app/auth'
 import { RoleGuard, RoleLayout, WorkspacePlaceholder } from './app/RoleLayout'
 import { LoginPage } from './features/auth/LoginPage'
 import { NotificationsPage } from './features/notifications/Notifications'
+import DriverApp from './features/driver/DriverApp'
 import { ApiError } from './lib/api'
 import { useState } from 'react'
 import DispatcherLayout from './components/DispatcherLayout'
@@ -21,14 +22,20 @@ import { StoreMoved } from './features/store/StoreMoved'
 import { StoreDeliveryProblem } from './features/store/StoreDeliveryProblem'
 import { StoreReceipt } from './features/store/StoreReceipt'
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
+import { DriverDecisions } from './features/dispatch/issues/DriverDecisions'
 import { StoreMore, StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
-import { DispatchOrders, DispatchFleet, DispatchOutlets } from './features/dispatch/core/DispatchDataPages'
+import { OrderQueueScreen } from './features/dispatch/core/OrderQueueScreen'
+import { FleetScreen } from './features/dispatch/core/FleetScreen'
+import { OutletsScreen } from './features/dispatch/core/OutletsScreen'
 import { dispatchApi } from './features/dispatch/core/api'
 import NetworkMap from './features/dispatch/core/NetworkMap'
+import { PlanPage } from './features/dispatch/plan/PlanPage'
 import UIShowcase from './ui/UIShowcase'
 import RunReport from './components/RunReport'
 import CapacityOutlook from './components/CapacityOutlook'
+import { LoaderSignIn } from './features/loader/LoaderSignIn'
+import { LoaderHome } from './features/loader/LoaderHome'
 
 function DispatcherWorkspace() {
   const { user, logout } = useAuth()
@@ -46,8 +53,9 @@ function DispatcherWorkspace() {
   const metadata: Record<string, { title: string; subtitle: string }> = {
     orders: { title: 'Order queue', subtitle: 'Orders and confirmation status for the selected run' },
     fleet: { title: 'Fleet', subtitle: 'Mark unavailable vehicles before planning' },
-    plan: { title: 'Plan', subtitle: 'Planning screens are owned by Chethiya' },
+    plan: { title: `Plan · ${runDate ?? 'run'} · ${activeDepot}`, subtitle: plan.data ? `Plan v${plan.data.version} · ${plan.data.status.toLowerCase()}` : 'Readiness and planning' },
     'live-board': { title: 'Live board', subtitle: 'Recorded delivery progress and attention items' },
+    'driver-decisions': { title: 'Driver decisions', subtitle: 'Sync conflicts, failed deliveries and vehicle problems, from driver data' },
     issues: { title: 'Issues', subtitle: 'Store issues and replies' },
     'network-map': { title: 'Network map', subtitle: 'District trips from the selected plan' },
     capacity: { title: 'Capacity outlook · sample preview', subtitle: 'Forecast backend is not available yet' },
@@ -56,15 +64,17 @@ function DispatcherWorkspace() {
   }
   const meta = metadata[activeNav] ?? { title: 'Waypoint Relay', subtitle: 'Dispatch & fleet operations' }
   const content = settings.error ? <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-800">Could not load run settings: {settings.error.message}</p>
-    : activeNav === 'fleet' ? (runDate && depot ? <DispatchFleet runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : activeNav === 'fleet' ? (runDate && depot ? <FleetScreen runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : activeNav === 'plan' ? (runDate && depot ? <PlanPage key={`${runDate}:${depot}`} runDate={runDate} depot={depot} onNavigate={setActiveNav} /> : <p>Select a depot and wait for the run date to view planning.</p>)
     : activeNav === 'live-board' ? (runDate && depot ? <LiveBoardPage runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : activeNav === 'driver-decisions' ? <DriverDecisions />
     : activeNav === 'issues' ? <DispatchIssues />
     : activeNav === 'capacity' ? <CapacityOutlook />
-    : activeNav === 'outlets' ? <DispatchOutlets depot={depot} />
+    : activeNav === 'outlets' ? <OutletsScreen depot={depot} />
     : activeNav === 'network-map' ? (runDate && depot ? <NetworkMap runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'reports' ? (runDate && depot ? <RunReport runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
-    : activeNav === 'orders' ? (runDate && depot ? <DispatchOrders runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
-    : <p>This screen is being developed by its owner.</p>
+    : activeNav === 'orders' ? (runDate && depot ? <OrderQueueScreen runDate={runDate} depot={depot} onCreatePlan={() => setActiveNav('plan')} /> : <p>Select a depot and wait for the run date.</p>)
+    : <p>This screen is not available yet.</p>
 
   return <DispatcherLayout
     activeNav={activeNav}
@@ -101,6 +111,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/loader/sign-in" element={<LoaderSignIn />} />
             <Route path="/ui" element={<UIShowcase />} />
             {(Object.entries(rolePaths) as [Role, string][]).map(([role, path]) => (
               <Route key={role} element={<RoleGuard role={role} />}>
@@ -124,7 +135,11 @@ export default function App() {
                       <Route path="more" element={<StoreMore />} />
                       <Route path="history" element={<StoreHistory />} />
                     </Route>
-                  </> : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : <WorkspacePlaceholder />} />}
+</> : role === 'DRIVER' ? (
+                    // The driver app is a phone-width app in a cab, so it takes the whole route
+                    // rather than an index page inside the desktop shell.
+                    <Route path="*" element={<DriverApp />} />
+                  ) : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : role === 'LOADER' ? <LoaderHome /> : <WorkspacePlaceholder />} />}
                   {role === 'DISPATCHER' && <Route path="issues" element={<DispatchIssues />} />}
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="*" element={<Navigate to={path} replace />} />

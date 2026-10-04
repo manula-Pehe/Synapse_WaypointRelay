@@ -1,6 +1,7 @@
 package com.synapse.waypoint.planning.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,5 +81,18 @@ class PlanningPersistenceTests {
         assertThat(deferrals.findByOrderId("T-ORD")).extracting(Deferral::getRule, Deferral::isNeedsDecision)
                 .containsExactly(tuple(RuleCode.FRIDGE_CAPACITY, true));
         assertThat(choices.findByDeferralId("T-DFR")).extracting(DeferralChoice::getUnits).containsExactly(5);
+    }
+
+    @Test
+    void shouldRefuseASecondChoiceForTheSameDeferral() {
+        plans.save(new Plan("T-PLAN", RUN_DATE, "Testdepot", 1, PlanStatus.DRAFT, Map.of("served", 0), null, null,
+                NOW, "T-USR"));
+        deferrals.save(new Deferral("T-DFR", "T-PLAN", "T-ORD", DeferralKind.CHOSEN, RuleCode.FRIDGE_CAPACITY,
+                "All fridge vehicles are full.", 3, 1, RUN_DATE.plusDays(1), false));
+        choices.saveAndFlush(new DeferralChoice("T-CHC", "T-DFR", StoreChoice.KEEP, null, "T-USR", NOW));
+
+        assertThatThrownBy(() -> choices.saveAndFlush(
+                new DeferralChoice("T-CHC2", "T-DFR", StoreChoice.CANCEL, null, "T-USR", NOW)))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

@@ -17,10 +17,10 @@ export default function LiveBoardPage({ runDate, depot }: { runDate: string; dep
     <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm text-muted">{depot} · {runDate} · updates every 15 seconds</p><p className="text-xs text-muted">Last response {new Date(board.data.generatedAt).toLocaleTimeString()}</p></div>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {[
-        ['On time so far', onTimePercent == null ? '—' : `${onTimePercent}%`, `${onTimeStops} of ${completedStops} completed stops with outcomes`],
-        ['Deferred today', deferredToday == null ? '—' : String(deferredToday), deferredToday == null ? 'No published plan' : 'Published plan'],
-        ['Skipped 2+ runs', skippedTwoRuns == null ? '—' : String(skippedTwoRuns), skippedTwoRuns == null ? 'Not recorded' : 'Recorded history'],
-        ['Fridge vehicle use', fridgeTruckUsePercent == null ? '—' : `${fridgeTruckUsePercent}%`, 'Published plan'],
+        ['On time so far', onTimePercent == null ? '-' : `${onTimePercent}%`, `${onTimeStops} of ${completedStops} completed stops with outcomes`],
+        ['Deferred today', deferredToday == null ? '-' : String(deferredToday), deferredToday == null ? 'No published plan' : 'Published plan'],
+        ['Skipped 2+ runs', skippedTwoRuns == null ? '-' : String(skippedTwoRuns), skippedTwoRuns == null ? 'Not recorded' : 'Recorded history'],
+        ['Fridge vehicle use', fridgeTruckUsePercent == null ? '-' : `${fridgeTruckUsePercent}%`, 'Published plan'],
       ].map(([label, value, note]) => <div key={label} className={card}><p className="text-xs font-bold uppercase tracking-wide text-muted">{label}</p><p className="mt-1 text-3xl font-bold text-brand">{value}</p><p className="mt-1 text-xs text-muted">{note}</p></div>)}
     </div>
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">

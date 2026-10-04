@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
 
 import com.synapse.waypoint.core.order.entity.OrderStatus;
 import com.synapse.waypoint.core.order.repository.OrderRepository;
@@ -38,6 +40,7 @@ class DispatchOrderApiTests {
     @Autowired JdbcTemplate jdbc;
     @Autowired PasswordEncoder encoder;
     @Autowired OrderRepository orders;
+    @Autowired EntityManager entityManager;
 
     @BeforeEach
     void createOutletsAndUsers() {
@@ -58,6 +61,13 @@ class DispatchOrderApiTests {
                 .andExpect(jsonPath("$.temp").value("CHILLED"))
                 .andExpect(jsonPath("$.units").value(12))
                 .andExpect(jsonPath("$.outletName").value("OUT991 · Testdistrict"));
+        entityManager.flush();
+        var notices = jdbc.queryForList("SELECT user_id, type, severity, link FROM notifications WHERE type = 'PHONE_ORDER_CHECK'");
+        assertThat(notices).singleElement().satisfies(notice -> {
+            assertThat(notice.get("user_id")).isEqualTo("usr-t-store");
+            assertThat(notice.get("severity")).isEqualTo("WARNING");
+            assertThat(notice.get("link").toString()).startsWith("/store/orders/");
+        });
     }
 
     @Test

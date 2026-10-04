@@ -13,7 +13,7 @@ import com.synapse.waypoint.common.time.DemoClock;
 import com.synapse.waypoint.core.reference.dto.VehicleDto;
 import com.synapse.waypoint.core.reference.service.ReferenceService;
 
-/** Vehicles with their availability on a run date — docs/api.md §3. Open to every signed-in role. */
+/** Vehicles with their availability on a run date - docs/api.md §3. Open to every signed-in role. */
 @RestController
 @RequestMapping("/api/vehicles")
 class VehicleController {

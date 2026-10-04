@@ -285,6 +285,8 @@ One active delivery per stop: unique index on `stop_id` where `undone_at IS NULL
 
 **order_disputes** — a store's answer when checking a phone-in order (S2e-msg): id, order_id → orders, outlet_id → outlets, message TEXT, status VARCHAR(20) (OPEN · RESOLVED), created_by → users, created_at, resolved_at NULL.
 
+**store_notification_settings** (V31) — a store user's alert choices: user_id → users (PK), deliveries, orders, issues BOOLEAN (default true). The earlier `store_notification_reads` table was dropped in `V32__drop_store_notification_reads.sql`; read state lives on `notifications`.
+
 ---
 
 ## Dispatch (V40–V49)
@@ -306,7 +308,7 @@ Add a table here only if a report needs stored snapshots.
 | loaded_at | TIMESTAMPTZ NULL | |
 | updated_at | TIMESTAMPTZ | |
 
-**fridge_checks** — id, trip_id → trips, running BOOLEAN, temp_c NUMERIC(4,1), doors_ok BOOLEAN, passed BOOLEAN (running AND 0–5 °C AND doors_ok), checked_by → users, checked_at.
+**fridge_checks** — id, trip_id → trips, running BOOLEAN, temp_c NUMERIC(4,1), doors_ok BOOLEAN, passed BOOLEAN (running AND 0–5 °C AND doors_ok), checked_by → users, checked_at. `V51__fridge_check_order.sql` adds `recorded_seq` to determine the latest check when demo-clock times tie.
 
 **load_ticks** — stop_id VARCHAR(40) PK → stops, ticked_by → users, ticked_at.
 
@@ -315,7 +317,7 @@ Add a table here only if a report needs stored snapshots.
 | Column | Type | Notes |
 |---|---|---|
 | id | VARCHAR(40) PK | |
-| stop_id / order_id | → stops / → orders | |
+| stop_id / order_id | → stops / → orders | `stop_id` is unique: one report per stop |
 | missing_units | INTEGER | > 0 |
 | reason | VARCHAR(20) | MISSING · DAMAGED · WRONG_ITEM |
 | note | TEXT NULL | |

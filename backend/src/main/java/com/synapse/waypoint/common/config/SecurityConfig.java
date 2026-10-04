@@ -20,7 +20,7 @@ import com.synapse.waypoint.common.security.TokenClaims;
 /**
  * HTTP security for the whole API: stateless bearer tokens, CORS, one role per area,
  * and the standard {@code { code, message, details }} body for 401 and 403.
- * Modules do not add rules here — new endpoints go under their area's path.
+ * Modules do not add rules here - new endpoints go under their area's path.
  */
 @Configuration
 public class SecurityConfig {
@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/settings").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/settings/clock").hasRole(Role.DISPATCHER.name())
                         .requestMatchers("/api/store/**").hasRole(Role.STORE_MANAGER.name())
                         .requestMatchers("/api/dispatch/**").hasRole(Role.DISPATCHER.name())
