@@ -30,7 +30,6 @@ class PlanPublishNotifier {
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH);
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
             .withZone(ZoneId.of("Asia/Colombo"));
-    private static final String STORE_DELIVERIES_LINK = "/store/deliveries";
     private static final String STORE_ORDER_LINK = "/store/orders/";
     private static final String LOADER_LINK = "/loader";
     private static final String DRIVER_LINK = "/driver";
@@ -69,7 +68,7 @@ class PlanPublishNotifier {
             notifications.notifyRole(Role.STORE_MANAGER, NotificationScope.outlet(outletId),
                     NotificationSeverity.INFO, "DELIVERY_WINDOW", "Delivery scheduled for " + DAY.format(runDate),
                     "Your delivery is scheduled for " + DAY.format(runDate) + ". " + label + arrival + ".",
-                    STORE_DELIVERIES_LINK);
+                    "/store/deliveries?runDate=" + runDate);
         });
     }
 

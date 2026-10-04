@@ -61,11 +61,15 @@ Modules communicate only through service interfaces. API: [`docs/api.md`](docs/a
 ```bash
 git clone https://github.com/manula-Pehe/Synapse_WaypointRelay.git
 cd Synapse_WaypointRelay
-cp .env.example .env          # set DB_PASSWORD and JWT_SECRET
-mkdir -p data                 # copy the dataset CSV files into ./data
+cp .env.example .env          # works as is; change DB_PASSWORD and JWT_SECRET for a shared server
+# unzip the competition data folder as shipped into ./data
+#   (./data/General Data, ./data/Test Data, ... — files are found by name anywhere under ./data)
 docker compose up -d --build
+docker compose logs -f backend   # wait for the seed to finish, then Ctrl+C
 ```
-Open http://localhost.
+Open http://localhost (or the `WEB_PORT` set in `.env`) and sign in with a demo account below.
+
+To start again from a fresh demo day: `docker compose down -v && docker compose up -d`.
 
 ### Dataset
 The competition dataset is confidential and is **never committed**. `./data` and all `*.csv` files are git-ignored.
@@ -110,7 +114,7 @@ All business time comes from the demo clock, not the computer's date. A dispatch
 | 2:00 PM, run day | Failed deliveries nobody answered are re-planned for the next day |
 | 11:59 PM, run day | Unconfirmed receipts close automatically |
 
-The walkthrough below does not need the clock to move: the dispatcher can close orders with a button.
+In the walkthrough below, orders are closed with a button; the clock is moved once, before loading (step 6), because loading lists open at 3:30 AM on the run day.
 
 ## Judge walkthrough
 
@@ -121,9 +125,9 @@ Use two browser windows (or a desktop window and a phone-sized window): the load
 3. **Dispatcher confirms the fleet.** Open **Fleet**, optionally take a vehicle off the road, and press **Confirm fleet**.
 4. **Dispatcher creates and publishes the plan.** Open **Plan** and press **Create plan**. Review the **Board** and the **Deferrals** tab, where each deferred order shows why it was moved. Press **Publish plan v1** and confirm. Stores, loaders and drivers are notified.
 5. **Store sees the result.** As Dilani, open **Deliveries** to see the arrival window, or the moved-order notice and the choices offered for a deferred order.
-6. **Loader loads the truck.** Open `/loader/sign-in` on a phone-sized screen and enter PIN `1234`. Pick the next trip with **Load now**, answer the fridge check and press **Start loading**, then tick each stop in the order shown. Use **⚠ Flag missing or damaged** to record a shortfall (a remainder order is created), then **Hand over to the driver** and **✓ Confirm handover**.
+6. **Loader loads the truck.** As Ruwan, set the **Demo clock** to **1 Oct 2026, 3:35 AM** and press **Set** (loading lists open at 3:30 AM). Then open `/loader/sign-in` on a phone-sized screen and enter PIN `1234`. Pick the next trip with **Load now**, answer the fridge check and press **Start loading**, then tick each stop in the order shown. Use **⚠ Flag missing or damaged** to record a shortfall (a remainder order is created), then **Hand over to the driver** and **✓ Confirm handover**.
 7. **Driver delivers.** Sign in at `/login` as `DRV-0036` with PIN `3636` on a phone-sized screen. Press **Check the load and accept**, then **I have arrived** at the first stop and **Record delivery** with a photo, a signature and the receiver's name. To try offline mode, switch the browser to offline: the status shows **Offline**, deliveries are saved on the phone, and they show **Synced** again when the connection returns. To try a failed delivery, record one with a reason such as **Store was closed**.
-8. **Dispatcher watches and decides.** On **Live board** the delivery appears within seconds. **Driver decisions** lists failed deliveries and any sync conflict that needs a decision.
+8. **Dispatcher watches and decides.** With the **Peliyagoda** depot selected, the delivery appears on **Live board** within about 15 seconds. **Driver decisions** lists failed deliveries and any sync conflict that needs a decision.
 9. **Store confirms receipt.** As Dilani, open the delivered order under **Deliveries** and confirm that what arrived matches. For a failed delivery, the store chooses **Deliver tomorrow**, **Try later today** or **Cancel this order**, and dispatch is notified.
 
 ## Planning engine

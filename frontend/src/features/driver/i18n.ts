@@ -1,33 +1,6 @@
-// Every piece of driver text goes through here. English, Sinhala and Tamil for the stop list;
-// keys everywhere so a screen never hard-codes a word.
+// Driver screens use the same keys in all three supported languages.
 
 export type Language = 'en' | 'si' | 'ta'
-
-const STORAGE_KEY = 'waypoint.driver.language'
-
-/**
- * The language the driver last chose.
- *
- * F12 is only useful if it survives: a driver who reads the stop list in Sinhala should not find
- * English again after the phone reloads the app at the start of a run. Stored the same way as the
- * theme, and defaulting to English when nothing is stored.
- */
-export function storedLanguage(): Language {
-  try {
-    const value = localStorage.getItem(STORAGE_KEY)
-    return value === 'si' || value === 'ta' ? value : 'en'
-  } catch {
-    return 'en'
-  }
-}
-
-export function rememberLanguage(language: Language) {
-  try {
-    localStorage.setItem(STORAGE_KEY, language)
-  } catch {
-    // Nothing to do - the switch still works for this session.
-  }
-}
 
 const STRINGS = {
   en: {
@@ -50,6 +23,7 @@ const STRINGS = {
     'driver.today.stops': 'stops',
     'driver.today.accept': 'Check the load and accept',
     'driver.today.eta': 'Back by',
+    'driver.today.onTruck': 'on the truck',
     'driver.stops.title': 'Stops',
     'driver.stops.next': 'Next stop',
     'driver.stops.done': 'Done',
@@ -62,6 +36,11 @@ const STRINGS = {
     'driver.stop.access': 'Access',
     'driver.stop.opensIn': 'Opens at {time} - you are {count} min early.',
     'driver.stop.call': 'Call store',
+    'driver.stop.chilled': 'Chilled',
+    'driver.stop.access.street': 'Street - park where you can',
+    'driver.stop.access.rearDock': 'Rear dock - ring the bell',
+    'driver.stop.access.mallBay': 'Mall bay - collect a pass at the desk',
+    'driver.back': 'Back',
     'driver.delivery.deliver': 'Record delivery',
     'driver.delivery.photo': 'Photo',
     'driver.delivery.signature': 'Signature',
@@ -118,35 +97,105 @@ const STRINGS = {
     'driver.problem.nothingOnBoard': 'Nothing on board',
   },
   si: {
-    'driver.app.title': 'රියරුවා',
+    'driver.app.title': 'රියදුරු',
+    'driver.signin.staffId': 'සේවක අංකය',
+    'driver.signin.pin': 'PIN අංකය',
+    'driver.signin.continue': 'ඉදිරියට',
+    'driver.signin.offline': 'සංඥා නැත. අවසන් වරට භාවිතා කළ PIN අංකයෙන් පිවිසෙන්න.',
+    'driver.today.title': 'අද',
     'driver.noTrip.title': 'අද',
-    'driver.noTrip.waitingTitle': 'තවම යන දෙයක් නැහැ',
-    'driver.noTrip.waiting': 'ගමන් තවම නැහැ — උපලේමණ ප්‍රසිට පිටතට නොමැත.',
-    'driver.noTrip.waitingHint': 'රැයට උපලේමණ යාම ප්‍රසිට ප්‍රකාශ කරයි. එය ප්‍රකාශ වූ විට ඔබගේ නවත්වීම් මෙහි පෙනෙයි.',
-    'driver.noTrip.offlineTitle': 'සංයුක්තයි',
-    'driver.noTrip.offline': 'මෙම දුරකථනයේ සුරැකුණු ගමනක් තවම නැහැ.',
-    'driver.noTrip.offlineHint': 'සංයුක්තය සම්බන්ධ කර නැවත උත්සාහ කරන්න. ගමනක් මෙම දුරකථනයට පැමිණුණු පසු එය දින පුරාම රැඳී පවතී.',
-    'driver.noTrip.loading': 'ඔබගේ ගමන සොයා ගන්නා ලද…',
+    'driver.noTrip.waitingTitle': 'තවම ගමනක් නැත',
+    'driver.noTrip.waiting': 'සැලැස්ම ප්‍රකාශ කරන තුරු ගමනක් නොමැත.',
+    'driver.noTrip.waitingHint': 'පෙර දින රාත්‍රියේ බෙදාහැරීම් කණ්ඩායම ගමන ප්‍රකාශ කරයි. එවිට ඔබගේ නැවතුම් මෙහි දිස්වේ.',
+    'driver.noTrip.offlineTitle': 'සංඥා නැත',
+    'driver.noTrip.offline': 'මෙම දුරකථනයේ තවම සුරැකි ගමනක් නොමැත.',
+    'driver.noTrip.offlineHint': 'ජාලයට සම්බන්ධ වී නැවත උත්සාහ කරන්න. ගමනක් සුරැකුණු පසු එය දවස පුරා මෙහි තිබේ.',
+    'driver.noTrip.loading': 'ඔබගේ ගමන පරීක්ෂා කරමින්…',
     'driver.noTrip.retry': 'නැවත උත්සාහ කරන්න',
-    'driver.stops.title': 'නවත්වීම්',
-    'driver.stops.next': 'ඊළඟ නවත්වීම',
+    'driver.today.vehicle': 'වාහනය',
+    'driver.today.stops': 'නැවතුම්',
+    'driver.today.accept': 'භාණ්ඩ පරීක්ෂා කර භාර ගන්න',
+    'driver.today.eta': 'ආපසු එන වේලාව',
+    'driver.today.onTruck': 'වාහනයේ ඇත',
+    'driver.stops.title': 'නැවතුම්',
+    'driver.stops.next': 'ඊළඟ නැවතුම',
     'driver.stops.done': 'අවසන්',
-    'driver.stops.window': 'කාලය',
-    'driver.stops.arrive': 'මම පැමිණිලා',
-    'driver.stops.cases': 'කේස',
-    'driver.stops.minEarly': 'විනාඩි {count}ක කලින්',
-    'driver.stops.around': 'සුළඟෝචය {time}',
-    'driver.stop.opensIn': '{time} විට විවෘතයි - ඔබ විනාඩි {count}ක කලින් ය.',
-    'driver.delivery.deliver': 'බාර දීම සලකුණු කරන්න',
-    'driver.delivery.retry': 'සුරකින්න නොහැකි විය. සංඥාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.',
-    'driver.failed.title': 'කුමක් සිදු කළද?',
-    'driver.sync.synced': 'සම්පූර්ණයි',
-    'driver.sync.syncing': 'යැමුණි',
-    'driver.sync.offline': 'සංයුක්තයි',
-    'driver.sync.waiting': '{count} බලාපොරොත්තු',
+    'driver.stops.window': 'වේලා පරාසය',
+    'driver.stops.arrive': 'මම පැමිණියෙමි',
+    'driver.stops.cases': 'පෙට්ටි',
+    'driver.stops.minEarly': 'විනාඩි {count}ක් කලින්',
+    'driver.stops.around': '{time} පමණ',
+    'driver.stop.detail': 'නැවතුම',
+    'driver.stop.access': 'ප්‍රවේශය',
+    'driver.stop.opensIn': '{time}ට විවෘත වේ. ඔබ විනාඩි {count}ක් කලින් පැමිණ ඇත.',
+    'driver.stop.call': 'වෙළඳසැල අමතන්න',
+    'driver.stop.chilled': 'ශීත කළ',
+    'driver.stop.access.street': 'වීදිය - හැකි තැනක නවත්වන්න',
+    'driver.stop.access.rearDock': 'පසුපස පැටවුම් ස්ථානය - සීනුව නාද කරන්න',
+    'driver.stop.access.mallBay': 'වෙළඳ සංකීර්ණයේ ස්ථානය - කවුන්ටරයෙන් අවසර පතක් ගන්න',
+    'driver.back': 'ආපසු',
+    'driver.delivery.deliver': 'බෙදාහැරීම සටහන් කරන්න',
+    'driver.delivery.photo': 'ඡායාරූපය',
+    'driver.delivery.signature': 'අත්සන',
+    'driver.delivery.receivedBy': 'භාරගත් අය',
+    'driver.delivery.undo': 'අහෝසි කරන්න',
+    'driver.delivery.undone': 'අහෝසි කරන ලදී',
+    'driver.delivery.saved': 'මෙම දුරකථනයේ සුරැකිණි',
+    'driver.delivery.retry': 'සුරැකීමට නොහැකි විය. සංඥාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.',
+    'driver.failed.title': 'කුමක් සිදු වුණාද?',
+    'driver.failed.short': 'පෙට්ටි කිහිපයක් භාර දීමට නොහැකි විය',
+    'driver.failed.none': 'කිසිවක් භාර දුන්නේ නැත',
+    'driver.failed.reason.storeClosed': 'වෙළඳසැල වසා තිබුණි',
+    'driver.failed.reason.noAccess': 'ඇතුළු වීමට නොහැකි විය',
+    'driver.failed.reason.refused': 'වෙළඳසැල භාර ගැනීම ප්‍රතික්ෂේප කළේය',
+    'driver.failed.reason.damaged': 'පෙට්ටි හානි වී ඇත',
+    'driver.failed.units': 'භාර දුන් පෙට්ටි',
+    'driver.wait.title': 'වෙළඳසැල වසා ඇත',
+    'driver.wait.start': 'බලා සිටීම අරඹන්න',
+    'driver.wait.end': 'බලා සිටීම අවසන් කරන්න',
+    'driver.wait.waiting': 'බලා සිටිමින්',
+    'driver.sync.synced': 'සමමුහුර්තයි',
+    'driver.sync.syncing': 'සමමුහුර්ත කරමින්',
+    'driver.sync.offline': 'නොබැඳි',
+    'driver.sync.waiting': '{count}ක් යැවීමට ඇත',
+    'driver.sync.title': 'ඔබගේ වැඩ මෙම දුරකථනයේ සුරැකිණි',
+    'driver.sync.backOnline': 'නැවත සම්බන්ධයි',
+    'driver.sync.summary': 'සමමුහුර්ත වූ දේ',
+    'driver.sync.nothing': 'යැවීමට කිසිවක් නැත.',
+    'driver.menu.title': 'මෙනුව',
+    'driver.menu.theme': 'ආලෝකමත් හෝ අඳුරු',
+    'driver.menu.language': 'භාෂාව',
+    'driver.menu.depot': 'ගබඩාව අමතන්න',
+    'driver.menu.problem': 'ගැටලුවක් වාර්තා කරන්න',
+    'driver.menu.signout': 'ඉවත් වන්න',
+    'driver.tripEnd.title': 'ගමන අවසන්',
+    'driver.tripEnd.next': 'ගබඩාවට ආපසු',
+    'driver.tripEnd.done': 'බෙදාහැරීම් සටහන් කර ඇත',
+    'driver.tripEnd.handback': 'භාණ්ඩ ආපසු භාර දෙන්න',
+    'driver.handback.title': 'භාණ්ඩ ආපසු භාර දෙන්න',
+    'driver.handback.record': 'ආපසු භාරදීම සටහන් කරන්න',
+    'driver.handback.why': 'ආපසු ගෙන එන්නේ ඇයි?',
+    'driver.handback.hint': 'මෙම පෙට්ටි නැවත ගබඩා කෙරේ. වෙළඳසැලට ඒවා පසුව ලැබේ.',
+    'driver.handback.nothing': 'ට්‍රක් රථයේ කිසිවක් ඉතිරි වී නැත.',
+    'driver.handback.signature': 'අත්සන් කළේ',
+    'driver.handback.signatureHint': 'ගබඩා කවුන්ටරයේ අත්සන් කරන්න. අත්සන නොමැති වුවත් ආපසු භාරදීම සටහන් වේ.',
+    'driver.problem.title': 'ගැටලුවක් වාර්තා කරන්න',
+    'driver.problem.canDrive': 'මට ධාවනය කළ හැක',
+    'driver.problem.cannot': 'මට ධාවනය කළ නොහැක',
+    'driver.problem.send': 'බෙදාහැරීම් කණ්ඩායමට යවන්න',
+    'driver.problem.sent': 'යවන ලදී. බෙදාහැරීම් කණ්ඩායම මෙහි පිළිතුරු දෙනු ඇත.',
+    'driver.problem.reply': 'බෙදාහැරීම් කණ්ඩායමේ පිළිතුර',
+    'driver.problem.fridge': 'ශීතකරණ කියවීම',
+    'driver.problem.onBoard': 'ට්‍රක් රථයේ ඉතිරි පෙට්ටි',
+    'driver.problem.nothingOnBoard': 'වාහනයේ කිසිවක් නැත',
   },
   ta: {
     'driver.app.title': 'ஓட்டுநர்',
+    'driver.signin.staffId': 'பணியாளர் எண்',
+    'driver.signin.pin': 'PIN',
+    'driver.signin.continue': 'தொடரவும்',
+    'driver.signin.offline': 'இணைப்பு இல்லை. கடைசியாகப் பயன்படுத்திய PIN மூலம் உள்நுழையவும்.',
+    'driver.today.title': 'இன்று',
     'driver.noTrip.title': 'இன்று',
     'driver.noTrip.waitingTitle': 'இன்னும் ஓட்டுவது இல்லை',
     'driver.noTrip.waiting': 'பயணங்கள் இல்லை — திட்டம் வெளியிடப்படும் வரை காத்திருக்கவும்.',
@@ -156,6 +205,11 @@ const STRINGS = {
     'driver.noTrip.offlineHint': 'இணைப்பைச் செய்து மீண்டும் முயற்சிக்கவும். ஒரு பயணம் இந்தத் தொலைபேசியில் சேமித்ததும் அது நாள் முழுவதும் இருக்கும்.',
     'driver.noTrip.loading': 'உங்கள் பயணம் தேடப்படுகிறது…',
     'driver.noTrip.retry': 'மீண்டும் முயற்சிக்கவும்',
+    'driver.today.vehicle': 'வாகனம்',
+    'driver.today.stops': 'நிறுத்தங்கள்',
+    'driver.today.accept': 'சரக்கைச் சரிபார்த்து ஏற்கவும்',
+    'driver.today.eta': 'திரும்பும் நேரம்',
+    'driver.today.onTruck': 'வாகனத்தில் உள்ளது',
     'driver.stops.title': 'நிறுத்தங்கள்',
     'driver.stops.next': 'அடுத்த நிறுத்தம்',
     'driver.stops.done': 'முடிந்தது',
@@ -164,18 +218,74 @@ const STRINGS = {
     'driver.stops.cases': 'பெட்டிகள்',
     'driver.stops.minEarly': '{count} நிமிடங்கள் முன்பு',
     'driver.stops.around': 'சுமார் {time}',
+    'driver.stop.detail': 'நிறுத்தம்',
+    'driver.stop.access': 'நுழைவு',
     'driver.stop.opensIn': '{time} திறக்கும் - நீங்கள் {count} நிமிடங்கள் முன்பே இருக்கிறீர்கள்.',
+    'driver.stop.call': 'கடையை அழைக்கவும்',
+    'driver.stop.chilled': 'குளிரூட்டப்பட்டது',
+    'driver.stop.access.street': 'தெரு - இயலும் இடத்தில் நிறுத்தவும்',
+    'driver.stop.access.rearDock': 'பின்புற ஏற்றுமுனை - மணியை அழுத்தவும்',
+    'driver.stop.access.mallBay': 'வணிக வளாக நிறுத்தம் - முகப்பில் அனுமதிச் சீட்டைப் பெறவும்',
+    'driver.back': 'பின்செல்',
     'driver.delivery.deliver': 'விநியோகம் பதிவு செய்',
+    'driver.delivery.photo': 'புகைப்படம்',
+    'driver.delivery.signature': 'கையொப்பம்',
+    'driver.delivery.receivedBy': 'பெற்றவர்',
+    'driver.delivery.undo': 'செயல்தவிர்',
+    'driver.delivery.undone': 'செயல்தவிர்க்கப்பட்டது',
+    'driver.delivery.saved': 'இந்தத் தொலைபேசியில் சேமிக்கப்பட்டது',
     'driver.delivery.retry': 'சேமிக்க முடியவில்லை. சமிக்ஞையை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.',
     'driver.failed.title': 'என்ன நடந்தது?',
+    'driver.failed.short': 'சில பெட்டிகளை வழங்க முடியவில்லை',
+    'driver.failed.none': 'எதுவும் வழங்கப்படவில்லை',
+    'driver.failed.reason.storeClosed': 'கடை மூடப்பட்டிருந்தது',
+    'driver.failed.reason.noAccess': 'உள்ளே செல்ல முடியவில்லை',
+    'driver.failed.reason.refused': 'கடை ஏற்க மறுத்தது',
+    'driver.failed.reason.damaged': 'பெட்டிகள் சேதமடைந்தன',
+    'driver.failed.units': 'வழங்கிய பெட்டிகள்',
+    'driver.wait.title': 'கடை மூடப்பட்டுள்ளது',
+    'driver.wait.start': 'காத்திருப்பைத் தொடங்கவும்',
+    'driver.wait.end': 'காத்திருப்பை முடிக்கவும்',
+    'driver.wait.waiting': 'காத்திருக்கிறது',
     'driver.sync.synced': 'முடிந்தது',
     'driver.sync.syncing': 'அனுப்புகிறது',
     'driver.sync.offline': 'இணைப்பு இல்லை',
     'driver.sync.waiting': '{count} காத்திருக்கும்',
+    'driver.sync.title': 'உங்கள் வேலை இந்தத் தொலைபேசியில் சேமிக்கப்பட்டது',
+    'driver.sync.backOnline': 'மீண்டும் இணைக்கப்பட்டது',
+    'driver.sync.summary': 'ஒத்திசைக்கப்பட்டவை',
+    'driver.sync.nothing': 'அனுப்ப எதுவும் காத்திருக்கவில்லை.',
+    'driver.menu.title': 'பட்டியல்',
+    'driver.menu.theme': 'ஒளி அல்லது இருள்',
+    'driver.menu.language': 'மொழி',
+    'driver.menu.depot': 'கிடங்கை அழைக்கவும்',
+    'driver.menu.problem': 'சிக்கலைப் புகாரளிக்கவும்',
+    'driver.menu.signout': 'வெளியேறு',
+    'driver.tripEnd.title': 'பயணம் முடிந்தது',
+    'driver.tripEnd.next': 'கிடங்கிற்குத் திரும்பவும்',
+    'driver.tripEnd.done': 'விநியோகங்கள் பதிவு செய்யப்பட்டன',
+    'driver.tripEnd.handback': 'பொருட்களைத் திருப்பி ஒப்படைக்கவும்',
+    'driver.handback.title': 'பொருட்களைத் திருப்பி ஒப்படைக்கவும்',
+    'driver.handback.record': 'திருப்பி ஒப்படைத்ததைப் பதிவு செய்',
+    'driver.handback.why': 'ஏன் திரும்ப வருகிறது?',
+    'driver.handback.hint': 'இந்தப் பெட்டிகள் மீண்டும் சேமிக்கப்படும். கடைக்கு பின்னர் வழங்கப்படும்.',
+    'driver.handback.nothing': 'வாகனத்தில் எதுவும் மீதமில்லை.',
+    'driver.handback.signature': 'கையொப்பமிட்டவர்',
+    'driver.handback.signatureHint': 'கிடங்கு முகப்பில் கையொப்பமிடவும். கையொப்பம் இல்லாவிட்டாலும் ஒப்படைப்பு பதிவு செய்யப்படும்.',
+    'driver.problem.title': 'சிக்கலைப் புகாரளிக்கவும்',
+    'driver.problem.canDrive': 'நான் தொடர்ந்து ஓட்ட முடியும்',
+    'driver.problem.cannot': 'என்னால் ஓட்ட முடியாது',
+    'driver.problem.send': 'அனுப்புகை குழுவுக்கு அனுப்பவும்',
+    'driver.problem.sent': 'அனுப்பப்பட்டது. அனுப்புகை குழு இங்கே பதிலளிக்கும்.',
+    'driver.problem.reply': 'அனுப்புகை குழுவின் பதில்',
+    'driver.problem.fridge': 'குளிர்பதன வெப்பநிலை',
+    'driver.problem.onBoard': 'வாகனத்தில் மீதமுள்ள பெட்டிகள்',
+    'driver.problem.nothingOnBoard': 'வாகனத்தில் எதுவும் இல்லை',
   },
 } as const
 
 export type StringKey = keyof typeof STRINGS.en
+const translations: Record<Language, Record<StringKey, string>> = STRINGS
 
 const LANGUAGE_NAMES: Record<Language, string> = {
   en: 'English',
@@ -187,10 +297,9 @@ export function languageName(language: Language) {
   return LANGUAGE_NAMES[language]
 }
 
-/** Falls back to English, then to the key itself, so a missing translation shows something usable. */
+/** All language tables must contain every driver key; the type check above catches omissions. */
 export function t(language: Language, key: StringKey, values?: Record<string, string | number>) {
-  const table = STRINGS[language] as Partial<Record<StringKey, string>>
-  let text = table[key] ?? STRINGS.en[key] ?? key
+  let text = translations[language][key]
   for (const [name, value] of Object.entries(values ?? {})) {
     text = text.replaceAll(`{${name}}`, String(value))
   }

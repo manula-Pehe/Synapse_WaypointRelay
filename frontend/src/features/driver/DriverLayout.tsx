@@ -40,7 +40,7 @@ export default function DriverLayout({
           {onBack && (
             <button
               type="button"
-              aria-label="Back"
+              aria-label={t(language, 'driver.back')}
               onClick={onBack}
               className={`flex ${TOUCH} w-16 shrink-0 items-center justify-center text-2xl`}
               style={{ color: colors.ink2 }}

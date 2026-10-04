@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
+import { useAuth } from '../../app/auth'
 import { enqueue, startSyncRunner, useSyncStatus } from '../../lib/offline'
 import { useDriverTheme } from './theme'
 import DriverThemeProvider from './ThemeProvider'
 import { useRun } from './useRun'
 import { useDriverReply } from './api'
-import { rememberLanguage, storedLanguage, type Language } from './i18n'
 import SignIn from './screens/SignIn'
 import Today from './screens/Today'
 import AcceptLoad from './screens/AcceptLoad'
@@ -51,7 +51,7 @@ type UpdateStop = (id: string, patch: Partial<DriverStop>) => void
 
 function DriverRoutes() {
   const { toggle } = useDriverTheme()
-  const [language, setLanguage] = useState<Language>(storedLanguage)
+  const { language, setLanguage } = useAuth()
   const { pathname } = useLocation()
   const { state } = useSyncStatus()
   const { run, trip, empty, acceptLoad, refresh } = useRun()
@@ -83,14 +83,6 @@ function DriverRoutes() {
     setLocalStops(null)
     void refresh()
   }
-
-  // F12 - the choice is remembered like the theme, and the document is told so that the Sinhala
-  // and Tamil faces and their taller line height apply. Without this a Tamil driver reads a
-  // fallback font clipped to the Latin line box.
-  useEffect(() => {
-    document.documentElement.lang = language
-    rememberLanguage(language)
-  }, [language])
 
   // Screens a driver reaches with no run at all: signing in (there is no trip before the plan is
   // out), the outbox, and the menu behind the header on every screen.
