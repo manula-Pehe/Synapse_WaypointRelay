@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import DriverLayout from '../DriverLayout'
 import { Badge, Button, Card, Label, Value } from '../components'
 import { t, type Language } from '../i18n'
+import { outletLabel } from '../outlet'
 import { useDriverTheme } from '../theme'
 import type { DriverRun, DriverTrip } from '../types'
 
@@ -61,7 +62,9 @@ export default function Today({ trip, run, language, onToggleTheme }: TodayProps
           <Label>{t(language, 'driver.stop.detail')} 1</Label>
           <div className="mt-2 flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <div className="truncate font-medium">{trip.stops[0]?.outlet.id}</div>
+              <div className="truncate font-medium">
+                {trip.stops[0] && outletLabel(trip.stops[0].outlet)}
+              </div>
               <div className="text-sm" style={{ color: colors.ink2 }}>
                 {trip.stops[0]?.predictedArrival}
               </div>

@@ -4,6 +4,7 @@ import { enqueue } from '../../../lib/offline'
 import DriverLayout from '../DriverLayout'
 import { Button, Card, Label, Value } from '../components'
 import { t, type Language } from '../i18n'
+import { outletLabel } from '../outlet'
 import type { DriverStop } from '../types'
 
 export interface StoreWaitProps {
@@ -64,7 +65,7 @@ export default function StoreWait({ stop, language, onToggleTheme, onRecorded }:
       }
     >
       <Card>
-        <Label>{stop.outlet.id}</Label>
+        <Label>{outletLabel(stop.outlet)}</Label>
         <Value size="lg">
           {stop.outlet.windowOpen}–{stop.outlet.windowClose}
         </Value>

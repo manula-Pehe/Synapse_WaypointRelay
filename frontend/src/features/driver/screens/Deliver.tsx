@@ -5,6 +5,7 @@ import { driverApi } from '../api'
 import DriverLayout from '../DriverLayout'
 import { Button, Card, Label, TOUCH, Value } from '../components'
 import { t, type Language } from '../i18n'
+import { outletLabel } from '../outlet'
 import { useDriverTheme } from '../theme'
 import type { DriverStop } from '../types'
 
@@ -85,7 +86,7 @@ export default function Deliver({ stop, language, onToggleTheme, onRecorded }: D
         }
       >
         <Card>
-          <Label>{stop.outlet.id}</Label>
+          <Label>{outletLabel(stop.outlet)}</Label>
           <Value size="lg">
             {stop.cases} {t(language, 'driver.stops.cases')}
           </Value>
@@ -108,7 +109,7 @@ export default function Deliver({ stop, language, onToggleTheme, onRecorded }: D
 
   return (
     <DriverLayout
-      title={`${stop.sequence}. ${stop.outlet.id}`}
+      title={`${stop.sequence}. ${outletLabel(stop.outlet)}`}
       language={language}
       onToggleTheme={onToggleTheme}
       onBack={() => navigate(`/driver/stop/${stop.id}`)}

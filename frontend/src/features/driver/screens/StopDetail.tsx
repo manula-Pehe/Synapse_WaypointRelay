@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import DriverLayout from '../DriverLayout'
 import { Badge, Button, Card, Label, Value } from '../components'
 import { t, type Language } from '../i18n'
+import { outletLabel } from '../outlet'
 import { useDriverTheme } from '../theme'
 import { ACCESS_NOTE, type DriverStop } from '../types'
 
@@ -25,7 +26,7 @@ export default function StopDetail({ stop, language, onToggleTheme, onArrived }:
 
   return (
     <DriverLayout
-      title={`${stop.sequence}. ${stop.outlet.id}`}
+      title={`${stop.sequence}. ${outletLabel(stop.outlet)}`}
       language={language}
       onToggleTheme={onToggleTheme}
       onBack={() => navigate('/driver/stops')}
@@ -58,7 +59,10 @@ export default function StopDetail({ stop, language, onToggleTheme, onArrived }:
         <Card className="space-y-2">
           <Label>{t(language, 'driver.wait.title')}</Label>
           <p className="text-lg">
-            Opens at {stop.outlet.windowOpen} — you are {stop.earlyByMinutes} min early.
+            {t(language, 'driver.stop.opensIn', {
+              time: stop.outlet.windowOpen,
+              count: stop.earlyByMinutes,
+            })}
           </p>
           <Button
             variant="secondary"

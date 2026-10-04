@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import DriverLayout from '../DriverLayout'
 import { Button, Card, Label, Value } from '../components'
 import { t, type Language } from '../i18n'
+import { outletLabel } from '../outlet'
 import { useDriverTheme } from '../theme'
 import type { DriverTrip } from '../types'
 
@@ -77,7 +78,7 @@ export default function AcceptLoad({ trip, language, onToggleTheme, onAccepted }
           {trip.stops.map((stop) => (
             <li key={stop.id} className="flex items-center justify-between gap-3">
               <span className="truncate">
-                {stop.sequence}. {stop.outlet.id}
+                {stop.sequence}. {outletLabel(stop.outlet)}
               </span>
               <span style={{ color: colors.ink2 }}>
                 {stop.cases} {t(language, 'driver.stops.cases')}

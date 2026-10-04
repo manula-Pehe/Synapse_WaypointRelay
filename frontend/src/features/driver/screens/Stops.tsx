@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import DriverLayout from '../DriverLayout'
 import { Badge, Button, Card } from '../components'
 import { t, type Language } from '../i18n'
+import { outletLabel } from '../outlet'
 import { useDriverTheme } from '../theme'
 import type { DriverTrip, DriverStop } from '../types'
 
@@ -29,7 +30,7 @@ export default function Stops({ trip, language, onToggleTheme }: StopsProps) {
       action={
         next && (
           <Button full onClick={() => navigate(`/driver/stop/${next.id}`)} testId="to-next-stop">
-            {next.outlet.id} · {next.cases} {t(language, 'driver.stops.cases')}
+            {outletLabel(next.outlet)} · {next.cases} {t(language, 'driver.stops.cases')}
           </Button>
         )
       }
@@ -84,13 +85,13 @@ function StopRow({ stop, language, onOpen }: { stop: DriverStop; language: Langu
 
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">
-          {stop.outlet.id} · {stop.outlet.district}
+          {outletLabel(stop.outlet)} · {stop.outlet.district}
         </span>
         <span className="block text-sm" style={{ color: colors.ink2 }}>
           {stop.cases} {t(language, 'driver.stops.cases')} ·{' '}
           {stop.earlyByMinutes > 0
-            ? `${stop.earlyByMinutes} min early`
-            : `${stop.predictedArrival}`}
+            ? t(language, 'driver.stops.minEarly', { count: stop.earlyByMinutes })
+            : t(language, 'driver.stops.around', { time: stop.predictedArrival })}
         </span>
       </span>
 
