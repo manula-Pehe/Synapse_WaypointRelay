@@ -52,6 +52,8 @@ export interface VehicleProblemPayload {
   note: string | null
   canDrive: boolean
   fridgeTempC: number | null
+  /** Cases stranded on the vehicle; null when the driver did not say. What D6b re-plans against. */
+  unitsOnBoard: number | null
   status: string
   reply: string | null
   reportedAt: string

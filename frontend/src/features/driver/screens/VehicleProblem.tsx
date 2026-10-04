@@ -18,14 +18,19 @@ export interface VehicleProblemProps {
 const KINDS = ['BREAKDOWN', 'FRIDGE_FAULT', 'ACCIDENT', 'TYRE', 'OTHER'] as const
 
 /**
- * a vehicle problem in a few taps, with the fridge reading and whether the driver can
- * still drive, because that is what dispatch needs to decide about the rest of the run.
+ * R9 - a vehicle problem in a few taps, with the fridge reading, how many cases are still on the
+ * truck, and whether the driver can drive on, because that is what dispatch needs to decide about
+ * the rest of the run.
+ *
+ * "Nothing on board" is a separate button from an empty box on purpose. Zero cases and nobody said
+ * are different answers, and the breakdown re-plan moves the stranded stock.
  */
 export default function VehicleProblem({ trip, language, onToggleTheme, reply }: VehicleProblemProps) {
   const [kind, setKind] = useState<(typeof KINDS)[number] | null>(null)
   const { colors } = useDriverTheme()
   const [canDrive, setCanDrive] = useState(true)
   const [fridge, setFridge] = useState('')
+  const [onBoard, setOnBoard] = useState('')
   const [note, setNote] = useState('')
   const [sent, setSent] = useState(false)
   const navigate = useNavigate()
@@ -36,6 +41,7 @@ export default function VehicleProblem({ trip, language, onToggleTheme, reply }:
       kind,
       canDrive,
       ...(fridge ? { fridgeTempC: Number(fridge) } : {}),
+      ...(onBoard ? { unitsOnBoard: Number(onBoard) } : {}),
       ...(note ? { note } : {}),
     })
     setSent(true)
@@ -137,6 +143,25 @@ export default function VehicleProblem({ trip, language, onToggleTheme, reply }:
           onChange={(event) => setFridge(event.target.value)}
           data-testid="fridge"
         />
+      </Card>
+
+      <Card>
+        <Label>{t(language, 'driver.problem.onBoard')}</Label>
+        <input
+          className={`mt-2 w-full ${TOUCH} rounded-xl border px-4 text-xl`}
+          style={{ background: colors.surface2, borderColor: colors.border, color: colors.ink }}
+          inputMode="numeric"
+          value={onBoard}
+          onChange={(event) => setOnBoard(event.target.value.replace(/[^0-9]/g, ''))}
+          data-testid="on-board"
+        />
+        <Button
+          variant="secondary"
+          onClick={() => setOnBoard('0')}
+          testId="nothing-on-board"
+        >
+          {t(language, 'driver.problem.nothingOnBoard')}
+        </Button>
       </Card>
 
       <Card>

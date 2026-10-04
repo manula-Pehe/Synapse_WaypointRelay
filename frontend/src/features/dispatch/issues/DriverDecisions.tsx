@@ -239,6 +239,8 @@ function ProblemCard({
         <strong className="text-sm">
           {problem.kind.replaceAll('_', ' ').toLowerCase()}
           {problem.fridgeTempC !== null && ` · ${problem.fridgeTempC}°C`}
+          {/* The stranded stock is what the re-plan moves, so it reads on the card (D6b). */}
+          {problem.unitsOnBoard !== null && ` · ${problem.unitsOnBoard} cases on board`}
         </strong>
         <span className="text-xs text-muted">{when(problem.reportedAt)}</span>
       </div>

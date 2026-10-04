@@ -77,6 +77,8 @@ const STRINGS = {
     'driver.problem.sent': 'Sent. Dispatch will reply here.',
     'driver.problem.reply': 'Dispatch says',
     'driver.problem.fridge': 'Fridge reading',
+    'driver.problem.onBoard': 'Cases still on the truck',
+    'driver.problem.nothingOnBoard': 'Nothing on board',
   },
   si: {
     'driver.app.title': 'රියරුවා',
