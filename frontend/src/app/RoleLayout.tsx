@@ -6,6 +6,7 @@ import { useMessages } from '../i18n/messages'
 
 export function RoleGuard({ role }: { role: Role }) {
   const { user } = useAuth()
+  if (role === 'LOADER' && !user) return <Navigate to="/loader/sign-in" replace />
   const redirect = roleRedirect(user, role)
   return redirect ? <Navigate to={redirect} replace /> : <Outlet />
 }
