@@ -74,7 +74,7 @@ function DispatcherWorkspace() {
     : activeNav === 'network-map' ? (runDate && depot ? <NetworkMap runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'reports' ? (runDate && depot ? <RunReport runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'orders' ? (runDate && depot ? <OrderQueueScreen runDate={runDate} depot={depot} onCreatePlan={() => setActiveNav('plan')} /> : <p>Select a depot and wait for the run date.</p>)
-    : <p>This screen is being developed by its owner.</p>
+    : <p>This screen is not available yet.</p>
 
   return <DispatcherLayout
     activeNav={activeNav}

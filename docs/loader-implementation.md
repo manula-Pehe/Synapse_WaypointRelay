@@ -1,6 +1,6 @@
 # Loader implementation log
 
-Branch: `codex/loader-vihanj`. Scope: F1–F6 of the VihanJ loader brief. The brief and exported PNGs are design references; behavior below reflects code in this branch.
+Scope: the loader app's sign-in, trips, fridge check, loading list, shortfall and handover. The exported design PNGs are references; behavior below reflects the code.
 
 ## F1 · Shared dock sign-in
 

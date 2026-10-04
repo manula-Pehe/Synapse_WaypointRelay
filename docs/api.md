@@ -281,7 +281,7 @@ Ordered by id. `runDate` defaults to the current run date.
 - `GET /api/driver/today` → `{ runDate, vehicleId, vehicleType, loadedCases, loadAccepted, trips: [ { id, tripNo, brand, district, departAt, stops: [ { id, seq, orderId, orderRef, outletId, outletName, district, dockType, windowOpen, windowClose, units, temp, earlyByMinutes, reassigned } ] } ] }` — R1, R2, R0. Stops come from `PlanQueryService.tripsForVehicle`, scoped to the signed-in driver's own vehicle
 - `POST /api/driver/trips/{id}/accept` → the same `TodayDto` — R0. Refuses a trip belonging to another vehicle, then flips its orders to on-the-way
 - `POST /api/driver/files` (multipart: `file`, `kind=PHOTO|SIGNATURE`, `clientId`) → `{ id }`. `clientId` makes a retry return the existing id rather than storing the file twice
-- `POST /api/driver/problems` `{ "tripId", "kind", "canDrive", "fridgeTempC", "unitsOnBoard", "note", "clientId" }` — R9. `clientId` makes a retried report idempotent. `unitsOnBoard` is how many cases are stranded on the vehicle, and is what Chethiya's breakdown re-plan (D6b) moves; it is absent when the driver did not say, which is not the same as zero
+- `POST /api/driver/problems` `{ "tripId", "kind", "canDrive", "fridgeTempC", "unitsOnBoard", "note", "clientId" }` — R9. `clientId` makes a retried report idempotent. `unitsOnBoard` is how many cases are stranded on the vehicle, and is what the breakdown re-plan (D6b) moves; it is absent when the driver did not say, which is not the same as zero
 - `GET /api/driver/problems` → `{ items, total }` — the driver's own problems, newest first
 - `GET /api/driver/summary` — R10
 

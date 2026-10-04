@@ -5,7 +5,7 @@ import com.synapse.waypoint.driver.dto.TodayDto;
 /**
  * What the driver's phone needs for the run it is on (docs/api.md §7, F3).
  *
- * The plan is read through Chethiya's {@code PlanQueryService} rather than from the planning tables,
+ * The plan is read through the planning module's {@code PlanQueryService} rather than from the planning tables,
  * so a driver never sees a draft or a superseded plan (R2c depends on this: the published plan is the
  * one the driver follows).
  */

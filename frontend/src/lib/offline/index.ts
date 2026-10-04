@@ -1,7 +1,7 @@
 /**
  * lib/offline - the driver's outbox, sync runner and offline cache.
  *
- * See README.md in this folder for the API the loader app (VihanJ) reuses.
+ * See README.md in this folder for the API the loader app reuses.
  */
 export type {
   JsonObject,

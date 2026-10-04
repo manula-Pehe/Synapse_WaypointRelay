@@ -5,7 +5,7 @@ import { checkPinOffline, forgetPin, rememberPin } from '../src/lib/offline/pin.
 /**
  * X1m-off - signing in at a depot with no signal.
  *
- * The rule under test is the one the brief states: the PIN is checked against a hash stored at the
+ * The rule under test is the documented one: the PIN is checked against a hash stored at the
  * last online sign-in, and only that driver's own PIN gets in.
  */
 
