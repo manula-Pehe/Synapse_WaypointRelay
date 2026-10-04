@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Map;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +14,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
+import com.synapse.waypoint.common.error.DomainException;
+import com.synapse.waypoint.common.error.ErrorCode;
 import com.synapse.waypoint.core.order.exception.InvalidStatusException;
 
 /**
@@ -147,6 +150,32 @@ public class Order {
         if (status != OrderStatus.PREPARED && status != OrderStatus.CONFIRMED) {
             throw InvalidStatusException.notEditable(status);
         }
+        rescale(newUnits, now);
+    }
+
+    /** Shrinks a deferred order to fewer units; weight and volume follow in proportion. */
+    public void resizeMoved(int newUnits, Instant now) {
+        requireMoved("resized");
+        if (newUnits < 1 || newUnits >= units) {
+            throw new DomainException(ErrorCode.VALIDATION, "A deferred order can only be reduced.",
+                    Map.of("units", "must be between 1 and " + (units - 1)));
+        }
+        rescale(newUnits, now);
+    }
+
+    /** Cancels a deferred order; only a MOVED order, whatever the cut-off. */
+    public void cancelMoved(Instant now) {
+        requireMoved("cancelled this way");
+        changeStatus(OrderStatus.CANCELLED, now);
+    }
+
+    private void requireMoved(String action) {
+        if (status != OrderStatus.MOVED) {
+            throw InvalidStatusException.notMoved(status, action);
+        }
+    }
+
+    private void rescale(int newUnits, Instant now) {
         if (units > 0) {
             weightKg = scaled(weightKg, newUnits, WEIGHT_SCALE);
             volumeM3 = scaled(volumeM3, newUnits, VOLUME_SCALE);

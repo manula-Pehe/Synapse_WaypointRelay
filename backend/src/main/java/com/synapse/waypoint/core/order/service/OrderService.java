@@ -41,6 +41,15 @@ public interface OrderService {
 
     OrderDto cancel(String orderId, String reason);
 
+    /**
+     * Shrinks a MOVED order to {@code units} (1 up to current - 1), scaling weight and volume. Not tied to the
+     * cut-off: a deferred order is by definition past it.
+     */
+    OrderDto resizeMoved(String orderId, int units);
+
+    /** Cancels a MOVED order without the cut-off check, for a store that declines a deferral. */
+    OrderDto cancelMoved(String orderId, String reason);
+
     OrderDto markPlanned(String orderId, String planId);
 
     OrderDto markMoved(String orderId, LocalDate newDate, String reason);

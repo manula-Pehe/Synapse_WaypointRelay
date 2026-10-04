@@ -22,4 +22,9 @@ public class InvalidStatusException extends DomainException {
         return new InvalidStatusException("Only a PREPARED order can be edited, this one is " + status + ".",
                 Map.of("status", status.name()));
     }
+
+    public static InvalidStatusException notMoved(OrderStatus status, String action) {
+        return new InvalidStatusException("Only a MOVED order can be " + action + ", this one is " + status + ".",
+                Map.of("status", status.name()));
+    }
 }
