@@ -122,15 +122,9 @@
 						<app.seed.enabled>false</app.seed.enabled>
 						<!-- Job tests switch it on with @TestPropertySource. -->
 						<app.jobs.enabled>false</app.jobs.enabled>
-						<!-- Each @SpringBootTest with its own properties builds its own context, and a
-						     cached context keeps its connection pool open for the rest of the run.
-						     At the default pool of 10 and 32 cached contexts that asks for 320
-						     connections, which is more than Postgres allows, so whichever context
-						     happened to start last failed with "remaining connection slots are
-						     reserved for roles with the SUPERUSER attribute". -->
-						<spring.datasource.hikari.maximum-pool-size>4</spring.datasource.hikari.maximum-pool-size>
+						<!-- Cached test contexts each retain a pool; keep their combined demand below PostgreSQL's CI limit. -->
+						<spring.datasource.hikari.maximum-pool-size>2</spring.datasource.hikari.maximum-pool-size>
 						<spring.datasource.hikari.minimum-idle>0</spring.datasource.hikari.minimum-idle>
-						<spring.test.context.cache.maxSize>16</spring.test.context.cache.maxSize>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
