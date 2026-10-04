@@ -18,112 +18,59 @@ import { StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
 import { DispatchOrders, DispatchFleet, DispatchOutlets } from './features/dispatch/core/DispatchDataPages'
 import { dispatchApi } from './features/dispatch/core/api'
+import NetworkMap from './features/dispatch/core/NetworkMap'
+import UIShowcase from './ui/UIShowcase'
 import RunReport from './components/RunReport'
 import CapacityOutlook from './components/CapacityOutlook'
-import IssuesInbox from './components/IssuesInbox'
-import IssueDetail from './components/IssueDetail'
 
 function DispatcherWorkspace() {
   const { user } = useAuth()
   const client = useQueryClient()
   const [activeNav, setActiveNav] = useState('orders')
   const [activeDepot, setActiveDepot] = useState(user?.depot ?? 'Peliyagoda')
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
   const [clockInput, setClockInput] = useState('')
   const settings = useQuery({ queryKey: ['dispatch-settings'], queryFn: dispatchApi.settings, refetchInterval: 30_000 })
   const moveClock = useMutation({ mutationFn: dispatchApi.moveClock, onSuccess: () => client.invalidateQueries() })
   const runDate = settings.data?.runDate
   const depot = activeDepot === 'All depots' ? '' : activeDepot
+  const plan = useQuery({ queryKey: ['dispatch-plan-status', runDate, depot], queryFn: () => dispatchApi.latestPlan(runDate!, depot), enabled: !!runDate && !!depot })
+  const planStatus = !depot ? undefined : plan.data ? `Plan v${plan.data.version} · ${plan.data.status.toLowerCase()}` : plan.error instanceof ApiError && plan.error.status === 404 ? 'No plan' : plan.isPending ? 'Checking plan…' : 'Plan unavailable'
 
-  const pageMeta: Record<string, { title: string; subtitle: string; planStatus?: string }> = {
-    orders: {
-      title: 'Order queue · Thu 1 Oct run',
-      subtitle: 'Orders closed Wed 4:00 PM · 85 confirmed orders',
-      planStatus: 'Plan v1 · not started',
-    },
-    fleet: {
-      title: 'Fleet · Peliyagoda · Thu 1 Oct',
-      subtitle: 'Mark workshop vehicles before planning · weekly fuel shown per vehicle',
-      planStatus: 'Plan v1 · not started',
-    },
-    'live-board': {
-      title: 'Live board · Thu 1 Oct · 6:45 AM',
-      subtitle: 'Exceptions first · updates arrive as drivers sync',
-      planStatus: 'Plan v1 · published',
-    },
-    issues: {
-      title: 'Issues',
-      subtitle: 'Thu 1 Oct · 7:50 AM · from stores, drivers and loaders',
-      planStatus: '4 open',
-    },
-    capacity: {
-      title: 'Capacity outlook · next 10 weeks',
-      subtitle: 'Demand forecast vs fleet · Peliyagoda · plan fridge trucks before peaks',
-      planStatus: 'Estimated · rule-based',
-    },
-    outlets: {
-      title: 'Outlets',
-      subtitle: '120 outlets · 2 depots',
-      planStatus: 'Plan v1 · not started',
-    },
-    reports: {
-      title: 'Run report · Thu 1 Oct',
-      subtitle: 'All depots · final at 2:00 PM',
-      planStatus: 'Plan v1 · published',
-    },
+  const metadata: Record<string, { title: string; subtitle: string }> = {
+    orders: { title: 'Order queue', subtitle: 'Orders and confirmation status for the selected run' },
+    fleet: { title: 'Fleet', subtitle: 'Mark unavailable vehicles before planning' },
+    plan: { title: 'Plan', subtitle: 'Planning screens are owned by Chethiya' },
+    'live-board': { title: 'Live board · sample preview', subtitle: 'Live board backend is not available yet' },
+    issues: { title: 'Issues', subtitle: 'Store issues and replies' },
+    'network-map': { title: 'Network map', subtitle: 'District trips from the selected plan' },
+    capacity: { title: 'Capacity outlook · sample preview', subtitle: 'Forecast backend is not available yet' },
+    outlets: { title: 'Outlets', subtitle: 'Delivery rules by outlet' },
+    reports: { title: 'Run report · sample preview', subtitle: 'Run report backend is not available yet' },
   }
-
-  const currentMeta = pageMeta[activeNav] || {
-    title: 'Waypoint Relay',
-    subtitle: 'Dispatch & Fleet Operations',
-    planStatus: 'Plan v1 · not started',
-  }
-
-  const isIssueDetailActive = activeNav === 'issues' && selectedIssueId !== null
-
+  const meta = metadata[activeNav] ?? { title: 'Waypoint Relay', subtitle: 'Dispatch & fleet operations' }
   const content = settings.error ? <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-800">Could not load run settings: {settings.error.message}</p>
     : activeNav === 'fleet' ? (runDate && depot ? <DispatchFleet runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'live-board' ? <LiveBoardPage />
-    : activeNav === 'issues' ? (
-        selectedIssueId ? (
-          <IssueDetail
-            issueId={selectedIssueId}
-            onBack={() => setSelectedIssueId(null)}
-          />
-        ) : (
-          <IssuesInbox
-            onIssueSelect={(issue) => setSelectedIssueId(issue.id)}
-          />
-        )
-      )
+    : activeNav === 'issues' ? <DispatchIssues />
     : activeNav === 'capacity' ? <CapacityOutlook />
     : activeNav === 'outlets' ? <DispatchOutlets depot={depot} />
+    : activeNav === 'network-map' ? (runDate && depot ? <NetworkMap runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'reports' ? <RunReport />
     : activeNav === 'orders' ? (runDate && depot ? <DispatchOrders runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
-    : <p>This screen is awaiting its backend integration.</p>
+    : <p>This screen is being developed by its owner.</p>
 
-  return (
-    <DispatcherLayout
-      activeNav={activeNav}
-      onNavChange={(nav) => {
-        setActiveNav(nav)
-        if (nav !== 'issues') {
-          setSelectedIssueId(null)
-        }
-      }}
-      title={['orders', 'fleet', 'outlets'].includes(activeNav) ? `${activeNav[0].toUpperCase()}${activeNav.slice(1)} · ${depot || 'All depots'}` : currentMeta.title}
-      subtitle={['orders', 'fleet', 'outlets'].includes(activeNav) ? (runDate ? `Run ${runDate} · demo clock ${settings.data?.now ?? ''}` : 'Loading run settings…') : currentMeta.subtitle}
-      planStatus={['orders', 'fleet', 'outlets'].includes(activeNav) ? undefined : currentMeta.planStatus}
-      activeDepot={activeDepot}
-      onDepotChange={setActiveDepot}
-      runDate={runDate ? `Run: ${runDate}` : 'Loading run date…'}
-      user={user ? { name: user.name, role: 'Dispatcher', depots: user.depot ?? 'All depots' } : undefined}
-      clockControl={<form className="flex items-center gap-2" onSubmit={event => { event.preventDefault(); if (clockInput) moveClock.mutate(`${clockInput}:00+05:30`) }}><label className="text-xs font-medium">Demo clock (Sri Lanka) <input className="ml-1 min-h-10 rounded border border-slate-300 px-2" type="datetime-local" value={clockInput} onChange={event => setClockInput(event.target.value)} /></label><button className="min-h-10 rounded bg-[#0e2a47] px-3 text-xs font-semibold text-white" disabled={!clockInput || moveClock.isPending}>Set</button>{moveClock.error && <span role="alert" className="text-xs text-red-700">{moveClock.error.message}</span>}</form>}
-      hideTopBar={activeNav === 'capacity' || isIssueDetailActive}
-    >
-      {content}
-    </DispatcherLayout>
-  )
+  return <DispatcherLayout
+    activeNav={activeNav}
+    onNavChange={setActiveNav}
+    title={meta.title}
+    subtitle={`${meta.subtitle}${runDate ? ` · Run ${runDate}` : ''}`}
+    planStatus={planStatus}
+    activeDepot={activeDepot}
+    onDepotChange={setActiveDepot}
+    runDate={runDate ? `Run: ${runDate}` : 'Loading run date…'}
+    user={user ? { name: user.name, role: 'Dispatcher', depots: user.depot ?? 'All depots' } : undefined}
+    clockControl={<form className="flex items-center gap-2" onSubmit={event => { event.preventDefault(); if (clockInput) moveClock.mutate(`${clockInput}:00+05:30`) }}><label className="text-xs font-medium">Demo clock (Sri Lanka) <input className="ml-1 min-h-10 rounded border border-slate-300 px-2" type="datetime-local" value={clockInput} onChange={event => setClockInput(event.target.value)} /></label><button className="min-h-10 rounded bg-[#0e2a47] px-3 text-xs font-semibold text-white" disabled={!clockInput || moveClock.isPending}>Set</button>{moveClock.error && <span role="alert" className="text-xs text-red-700">{moveClock.error.message}</span>}</form>}
+  >{content}</DispatcherLayout>
 }
 
 const queryClient = new QueryClient({
@@ -146,6 +93,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/ui" element={<UIShowcase />} />
             {(Object.entries(rolePaths) as [Role, string][]).map(([role, path]) => (
               <Route key={role} element={<RoleGuard role={role} />}>
                 <Route path={path} element={<RoleLayout />}>

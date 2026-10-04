@@ -20,6 +20,9 @@ export interface Vehicle {
 }
 export interface Fleet { items: Vehicle[]; confirmedAt: string | null; confirmedBy: string | null; counts: { available: number; inWorkshop: number; offRoad: number; reeferAvailable: number } }
 export interface Outlet { id: string; name: string; brand: string; district: string; depot: string; dockType: string; parkingConstraint: string; windowOpen: string; windowClose: string; mallWindowOpen: string | null; mallWindowClose: string | null }
+export interface Notice { id: string; severity: 'CRITICAL' | 'WARNING' | 'INFO'; type: string; title: string; body: string; link: string | null; createdAt: string; readAt: string | null }
+export interface NoticeList extends List<Notice> { unreadCount: number }
+export interface Plan { id: string; runDate: string; depot: string; version: number; status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED'; vehicles: { vehicleId: string; trips: { id: string; tripNo: number; brand: string; district: string; stops: { orderId: string; outletId: string }[] }[] }[] }
 
 const params = (values: Record<string, string>) => new URLSearchParams(values).toString()
 const json = (body: unknown) => JSON.stringify(body)
@@ -37,4 +40,8 @@ export const dispatchApi = {
   setAvailability: (id: string, runDate: string, status: Vehicle['availability'], reason: string | null) => api<Vehicle>(`dispatch/fleet/${encodeURIComponent(id)}`, { method: 'PUT', body: json({ runDate, status, reason }) }),
   confirmFleet: (runDate: string, depot: string) => api<{ confirmedAt: string; confirmedBy: string }>('dispatch/fleet/confirm', { method: 'POST', body: json({ runDate, depot }) }),
   outlets: (depot: string) => api<List<Outlet>>(`outlets?${params({ depot })}`),
+  notifications: () => api<NoticeList>('notifications'),
+  markNotificationRead: (id: string) => api<Notice>(`notifications/${encodeURIComponent(id)}/read`, { method: 'POST' }),
+  markAllNotificationsRead: () => api<{ updated: number }>('notifications/read-all', { method: 'POST' }),
+  latestPlan: (runDate: string, depot: string) => api<Plan>(`dispatch/plans?${params({ runDate, depot })}`),
 }

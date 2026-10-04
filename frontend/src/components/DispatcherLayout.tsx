@@ -3,6 +3,8 @@ import SideNav from './SideNav';
 import type { SideNavProps } from './SideNav';
 import TopBar from './TopBar';
 import NotificationsDrawer from './NotificationsDrawer';
+import { useQuery } from '@tanstack/react-query';
+import { dispatchApi } from '../features/dispatch/core/api';
 
 export interface DispatcherLayoutProps {
   children: React.ReactNode;
@@ -31,13 +33,14 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
   onDepotChange,
   runDate,
   planStatus,
-  notificationCount = 8,
+  notificationCount,
   user,
   onNotificationClick,
   hideTopBar = false,
   clockControl,
 }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notices = useQuery({ queryKey: ['dispatch-notifications'], queryFn: dispatchApi.notifications, refetchInterval: 30_000 });
 
   const handleNotificationClick = () => {
     setIsNotifOpen(true);
@@ -64,7 +67,7 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
             onDepotChange={onDepotChange}
             runDate={runDate}
             planStatus={planStatus}
-            notificationCount={notificationCount}
+            notificationCount={notificationCount ?? notices.data?.unreadCount ?? 0}
             onNotificationClick={handleNotificationClick}
             clockControl={clockControl}
           />

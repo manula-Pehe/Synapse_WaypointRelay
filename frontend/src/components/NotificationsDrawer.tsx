@@ -1,87 +1,25 @@
-import React from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { dispatchApi } from '../features/dispatch/core/api'
 
-export interface NotificationsDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
-  isOpen,
-  onClose,
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden font-sans">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
-        onClick={onClose}
-      />
-
-      <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
-        <div className="w-screen max-w-md border-l border-slate-200 bg-white p-6 shadow-2xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h2 className="text-lg font-bold text-slate-900">Notifications</h2>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-3.5">
-                <div className="flex items-center justify-between text-xs font-bold text-rose-700">
-                  <span>Capacity Alert</span>
-                  <span>10m ago</span>
-                </div>
-                <p className="mt-1 text-xs text-slate-700">
-                  Shortage of fridge trucks predicted for week 45.
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3.5">
-                <div className="flex items-center justify-between text-xs font-bold text-amber-800">
-                  <span>Issue Reported</span>
-                  <span>25m ago</span>
-                </div>
-                <p className="mt-1 text-xs text-slate-700">
-                  ISS-0142: 1 damaged yoghurt case reported by OUT001.
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span>Run Update</span>
-                  <span>1h ago</span>
-                </div>
-                <p className="mt-1 text-xs text-slate-600">
-                  All morning runs dispatched from Peliyagoda.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full rounded-xl bg-[#183a6b] py-2.5 text-xs font-bold text-white transition hover:bg-[#122e54]"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
+export default function NotificationsDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const navigate = useNavigate()
+  const client = useQueryClient()
+  const notices = useQuery({ queryKey: ['dispatch-notifications'], queryFn: dispatchApi.notifications, refetchInterval: 30_000, enabled: isOpen })
+  const refresh = () => client.invalidateQueries({ queryKey: ['dispatch-notifications'] })
+  const markRead = useMutation({ mutationFn: dispatchApi.markNotificationRead, onSuccess: refresh })
+  const markAll = useMutation({ mutationFn: dispatchApi.markAllNotificationsRead, onSuccess: refresh })
+  if (!isOpen) return null
+  return <div className="fixed inset-0 z-50 bg-slate-900/40" role="dialog" aria-label="Notifications">
+    <button className="absolute inset-0 cursor-default" aria-label="Close notifications" onClick={onClose} />
+    <div className="absolute inset-y-0 right-0 w-full max-w-md overflow-auto bg-white p-6 shadow-2xl">
+      <div className="flex items-center justify-between"><h2 className="text-lg font-bold">Notifications</h2><button className="min-h-10 min-w-10" onClick={onClose}>Close</button></div>
+      <div className="mt-3 flex items-center justify-between text-sm"><span>{notices.data?.unreadCount ?? 0} unread</span><button className="font-semibold text-blue-700 disabled:opacity-50" disabled={!notices.data?.unreadCount || markAll.isPending} onClick={() => markAll.mutate()}>Mark all read</button></div>
+      {notices.isPending && <p className="mt-5">Loading notifications…</p>}
+      {notices.error && <p role="alert" className="mt-5 text-red-700">{notices.error.message}</p>}
+      {(markRead.error || markAll.error) && <p role="alert" className="mt-3 text-red-700">{(markRead.error || markAll.error)?.message}</p>}
+      {notices.data?.items.length === 0 && <p className="mt-5 text-slate-600">No notifications.</p>}
+      <div className="mt-5 space-y-3">{notices.data?.items.map(notice => <div key={notice.id} className={`rounded-xl border p-4 ${notice.readAt ? 'border-slate-200' : 'border-blue-200 bg-blue-50/50'}`}><div className="flex items-center justify-between gap-2"><strong className="text-sm">{notice.title}</strong><span className="text-xs text-slate-500">{notice.severity}</span></div><p className="mt-1 text-sm text-slate-700">{notice.body}</p><p className="mt-1 text-xs text-slate-500">{notice.createdAt}</p><div className="mt-2 flex gap-4">{notice.link?.startsWith('/') && <button className="text-sm font-semibold text-blue-700" onClick={() => { if (!notice.readAt) markRead.mutate(notice.id); onClose(); navigate(notice.link!) }}>Open</button>}{!notice.readAt && <button className="text-sm text-slate-600 underline" disabled={markRead.isPending} onClick={() => markRead.mutate(notice.id)}>Mark read</button>}</div></div>)}</div>
     </div>
-  );
-};
-
-export default NotificationsDrawer;
+  </div>
+}

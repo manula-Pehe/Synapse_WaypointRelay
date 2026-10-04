@@ -270,12 +270,6 @@ export const SideNav: React.FC<SideNavProps> = ({
           <AccountMenu
             isOpen={isAccountMenuOpen}
             onClose={() => setIsAccountMenuOpen(false)}
-            user={{
-              name: user.name,
-              email: 'ruwan.p@waypoint.lk',
-              role: user.role,
-              depots: user.depots,
-            }}
           />
           <button
             type="button"

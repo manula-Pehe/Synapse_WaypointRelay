@@ -4,7 +4,7 @@
 @layer base {
   body {
     @apply m-0 bg-canvas text-ink antialiased;
-    font-family: Inter, system-ui, sans-serif;
+    font-family: Inter, Yaldevi, 'Noto Sans Sinhala', 'Noto Sans Tamil', system-ui, sans-serif;
   }
   button,
   a,

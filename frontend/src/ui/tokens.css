@@ -1,4 +1,4 @@
-/* Temporary shell tokens; replace with the shared Figma UI kit when available. */
+/* Existing project tokens. Designathon Figma values still need verification. */
 @theme {
   --color-success: #00856f;
   --color-success-soft: #dff3ed;
@@ -17,4 +17,16 @@
   --color-warning: #875b0b;
   --color-danger: #a42e2e;
   --color-danger-soft: #fff0ef;
+}
+
+:root[data-theme='dark'] {
+  --color-canvas: #17212d;
+  --color-surface: #17212d;
+  --color-ink: #ffffff;
+  --color-muted: #d4dce6;
+  --color-line: #526074;
+  --color-inset: #526074;
+  --color-brand: #d3e2f7;
+  --color-brand-soft: #526074;
+  --color-on-brand: #17212d;
 }
