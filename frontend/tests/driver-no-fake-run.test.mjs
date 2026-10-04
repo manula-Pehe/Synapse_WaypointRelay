@@ -14,7 +14,7 @@ import { t } from '../src/features/driver/i18n.ts'
  * and these are the tests that keep it that way.
  */
 
-const FEATURE = new URL('../src/features/driver/', import.meta.url).pathname.replace(/^\//, '')
+const FEATURE = new URL('../src/features/driver/', import.meta.url).pathname
 
 /** Every source file under the driver feature, mocks included if they ever come back. */
 function driverSources(dir = FEATURE) {

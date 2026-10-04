@@ -1,7 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { outletLabel } from '../src/features/driver/outlet.ts'
-import { t, rememberLanguage, storedLanguage } from '../src/features/driver/i18n.ts'
+import { t } from '../src/features/driver/i18n.ts'
+import { readLanguage, saveLanguage } from '../src/app/session.ts'
 import { SYNC_TYPES } from '../src/lib/offline/types.ts'
 
 /**
@@ -82,12 +83,12 @@ test('the language a driver chose is still there after the phone reloads', () =>
     setItem: (key, value) => void store.set(key, String(value)),
   }
   try {
-    assert.equal(storedLanguage(), 'en')
-    rememberLanguage('ta')
-    assert.equal(storedLanguage(), 'ta')
+    assert.equal(readLanguage(), 'en')
+    saveLanguage('ta')
+    assert.equal(readLanguage(), 'ta')
     // Anything that is not a language we ship falls back to English rather than rendering blank.
-    store.set('waypoint.driver.language', 'kl')
-    assert.equal(storedLanguage(), 'en')
+    store.set('waypoint.language', 'kl')
+    assert.equal(readLanguage(), 'en')
   } finally {
     delete globalThis.localStorage
   }

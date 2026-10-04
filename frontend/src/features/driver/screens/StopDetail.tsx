@@ -4,7 +4,7 @@ import { Badge, Button, Card, Label, Value } from '../components'
 import { t, type Language } from '../i18n'
 import { outletLabel } from '../outlet'
 import { useDriverTheme } from '../theme'
-import { ACCESS_NOTE, type DriverStop } from '../types'
+import { type DriverStop } from '../types'
 
 export interface StopDetailProps {
   stop: DriverStop
@@ -48,7 +48,7 @@ export default function StopDetail({ stop, language, onToggleTheme, onArrived }:
           {stop.outlet.windowOpen}–{stop.outlet.windowClose}
         </Value>
         <div className="mt-2 flex items-center gap-2">
-          {stop.chilled && <Badge tone="brand">Chilled</Badge>}
+          {stop.chilled && <Badge tone="brand">{t(language, 'driver.stop.chilled')}</Badge>}
           <Badge tone="neutral">
             {stop.cases} {t(language, 'driver.stops.cases')}
           </Badge>
@@ -77,7 +77,7 @@ export default function StopDetail({ stop, language, onToggleTheme, onArrived }:
 
       <Card>
         <Label>{t(language, 'driver.stop.access')}</Label>
-        <p className="mt-1">{ACCESS_NOTE[stop.outlet.dockType]}</p>
+        <p className="mt-1">{t(language, `driver.stop.access.${stop.outlet.dockType === 'rear_dock' ? 'rearDock' : stop.outlet.dockType === 'mall_bay' ? 'mallBay' : 'street'}`)}</p>
         {stop.outlet.note && (
           <p className="mt-1 text-sm" style={{ color: colors.ink2 }}>
             {stop.outlet.note}

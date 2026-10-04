@@ -13,7 +13,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return stored
   })
   const [language, setCurrentLanguage] = useState<Language>(
-    () => session?.user.language ?? readLanguage(),
+    () => session && (session.user.role === 'DISPATCHER' || session.user.role === 'LOADER') ? 'en' : session?.user.language ?? readLanguage(),
   )
   const logout = useCallback(() => {
     configureApi(null, () => {})
@@ -49,7 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
     if (!isSession(result))
       throw new ApiError(502, 'INVALID_SESSION', 'The server returned an invalid sign-in response.')
-    const next = { ...result, user: { ...result.user, language } }
+    const nextLanguage = result.user.role === 'DISPATCHER' || result.user.role === 'LOADER' ? 'en' : language
+    const next = { ...result, user: { ...result.user, language: nextLanguage } }
+    setCurrentLanguage(nextLanguage)
     queryClient.clear()
     configureApi(next.token, logout)
     saveSession(next, remember)
