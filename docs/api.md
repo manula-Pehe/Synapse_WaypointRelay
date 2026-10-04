@@ -105,16 +105,16 @@ Any signed-in role can read outlets and vehicles. `depot` matches case-insensiti
 ### `GET /api/outlets?depot=&brand=` → list of
 ```json
 { "id": "OUT001", "name": "OUT001 · Colombo", "brand": "Fresh", "district": "Colombo", "depot": "Peliyagoda",
-  "dockType": "street", "parkingConstraint": "van_only",
-  "windowOpen": "05:00", "windowClose": "07:30", "mallWindowOpen": null, "mallWindowClose": null }
+  "dockType": "rear_dock", "parkingConstraint": "normal",
+  "windowOpen": "05:15", "windowClose": "07:45", "mallWindowOpen": null, "mallWindowClose": null }
 ```
 Ordered by id. `name` is "id · district" (same as on orders) until outlets have a name column. `brand` filters ignoring case.
 ### `GET /api/outlets/{id}` → one outlet (404 `NOT_FOUND` if unknown)
 
 ### `GET /api/vehicles?depot=&runDate=` → list of
 ```json
-{ "id": "VEH036", "type": "van", "temp": "reefer", "weightCapKg": 1040, "volumeCapM3": 7.0,
-  "fuelType": "diesel", "kmPerL": 9.5, "weeklyFuelQuotaL": 300, "depot": "Peliyagoda",
+{ "id": "VEH036", "type": "van", "temp": "reefer", "weightCapKg": 1000, "volumeCapM3": 6.0,
+  "fuelType": "diesel", "kmPerL": 8.0, "weeklyFuelQuotaL": 400, "depot": "Peliyagoda",
   "availability": "AVAILABLE", "availabilityReason": null }
 ```
 Ordered by id. `runDate` defaults to the current run date.
@@ -139,7 +139,7 @@ Ordered by id. `runDate` defaults to the current run date.
 ```json
 {
   "id": "4f1c…", "ref": "S1-001", "outletId": "OUT001", "outletName": "OUT001 · Colombo",
-  "brand": "Fresh", "temp": "CHILLED", "units": 80, "weightKg": 448.6, "volumeM3": 2.445,
+  "brand": "Fresh", "temp": "CHILLED", "units": 70, "weightKg": 500.0, "volumeM3": 3.0,
   "runDate": "2026-10-01", "status": "PREPARED", "source": "SEED", "autoConfirm": false,
   "daysSinceLastServed": 2, "deferredYesterday": false, "parentOrderId": null,
   "storeChecked": true, "confirmedAt": null, "updatedAt": "…"
@@ -187,13 +187,13 @@ Ordered by id. `runDate` defaults to the current run date.
   "summary": { "served": 80, "deferred": 5, "unavoidable": 1, "chosen": 4, "violations": 0,
                "fridgeVehiclesUsed": 4, "fridgeVehiclesAvailable": 4 },
   "vehicles": [
-    { "vehicleId": "VEH036", "type": "van", "temp": "reefer", "weightCapKg": 1040, "volumeCapM3": 7.0,
-      "freshMinutesUsed": 127, "freshBudget": 270, "daytimeMinutesUsed": 0, "daytimeBudget": 480,
+    { "vehicleId": "VEH036", "type": "van", "temp": "reefer", "weightCapKg": 1000, "volumeCapM3": 6.0,
+      "freshMinutesUsed": 130, "freshBudget": 270, "daytimeMinutesUsed": 0, "daytimeBudget": 480,
       "trips": [
         { "id": "trp-1", "tripNo": 1, "brand": "Fresh", "district": "Colombo", "windowType": "FRESH",
-          "departAt": "…", "minutes": 64, "weightKg": 1032, "volumeM3": 5.7,
+          "departAt": "…", "minutes": 64, "weightKg": 950, "volumeM3": 5.5,
           "stops": [ { "id": "stp-1", "orderId": "…", "orderRef": "S1-005", "outletId": "OUT003",
-                       "seq": 1, "loadSeq": 2, "units": 42, "temp": "CHILLED",
+                       "seq": 1, "loadSeq": 2, "units": 36, "temp": "CHILLED",
                        "arriveFrom": "…", "arriveTo": "…", "lateRisk": 0.1 } ] } ] } ]
 }
 ```

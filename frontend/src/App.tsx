@@ -56,7 +56,7 @@ function DispatcherWorkspace() {
     },
     outlets: {
       title: 'Outlets',
-      subtitle: '120 outlets · Peliyagoda 75 · Kandy 45',
+      subtitle: '120 outlets · 2 depots',
       planStatus: 'Plan v1 · not started',
     },
     reports: {

@@ -35,80 +35,80 @@ const MOCK_ORDERS: OrderItem[] = [
     id: 'S1-001',
     outlet: 'OUT001 · Colombo',
     brand: 'Fresh',
-    cases: 80,
-    kg: 448.6,
-    volumeM3: 2.45,
-    window: '5:00–7:30',
+    cases: 70,
+    kg: 500.0,
+    volumeM3: 3.0,
+    window: '5:00–7:00',
     flags: { chilled: true, vanOnly: true },
   },
   {
     id: 'S1-003',
     outlet: 'OUT002 · Colombo',
     brand: 'Fresh',
-    cases: 38,
-    kg: 329.0,
-    volumeM3: 1.84,
-    window: '5:30–8:00',
+    cases: 30,
+    kg: 250.0,
+    volumeM3: 1.5,
+    window: '5:15–7:45',
     flags: { chilled: true, vanOnly: true },
   },
   {
     id: 'S1-005',
     outlet: 'OUT003 · Colombo',
     brand: 'Fresh',
-    cases: 42,
-    kg: 318.1,
-    volumeM3: 1.73,
-    window: '5:00–7:30',
+    cases: 50,
+    kg: 400.0,
+    volumeM3: 2.0,
+    window: '5:15–7:45',
     flags: { chilled: true, vanOnly: true },
   },
   {
     id: 'S1-014',
     outlet: 'OUT008 · Colombo',
     brand: 'Fresh',
-    cases: 102,
-    kg: 713.9,
-    volumeM3: 4.00,
-    window: '5:00–7:30',
+    cases: 100,
+    kg: 800.0,
+    volumeM3: 5.0,
+    window: '5:15–7:45',
     flags: { chilled: true },
   },
   {
     id: 'S1-058',
     outlet: 'OUT054 · Galle',
     brand: 'Fresh',
-    cases: 547,
-    kg: 2741.8,
-    volumeM3: 16.52,
-    window: '5:00–7:30',
+    cases: 500,
+    kg: 3000.0,
+    volumeM3: 18.0,
+    window: '5:15–7:45',
     flags: { chilled: true },
   },
   {
     id: 'S1-064',
     outlet: 'OUT060 · Matara',
     brand: 'Fresh',
-    cases: 186,
-    kg: 1277.8,
-    volumeM3: 6.78,
-    window: '3:00–8:00',
+    cases: 200,
+    kg: 1500.0,
+    volumeM3: 7.5,
+    window: '3:30–8:00',
     flags: { chilled: true },
   },
   {
     id: 'S1-078',
     outlet: 'OUT070 · Kurunegala',
     brand: 'Style',
-    cases: 42,
-    kg: 2561.6,
-    volumeM3: 40.66,
-    window: '9:00 AM – 5:00 PM',
+    cases: 40,
+    kg: 2500.0,
+    volumeM3: 40.0,
+    window: '10:00 AM – 5:00 PM',
     flags: { largerThanVehicle: true, waitedDays: 2 },
   },
   {
     id: 'S1-083',
     outlet: 'OUT074 · Puttalam',
     brand: 'Fresh',
-    cases: 205,
-    kg: 1588.8,
-    volumeM3: 8.66,
-    window: '5:30–8:00',
+    cases: 200,
+    kg: 1600.0,
+    volumeM3: 9.0,
+    window: '5:15–7:45',
     flags: { chilled: true, waitedDays: 5, skippedYesterday: true },
   },
 ];
@@ -165,7 +165,7 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
   const [activeFilter, setActiveFilter] = useState<'all' | 'not-confirmed'>('not-confirmed');
 
   // Sub-filter category when in 'all' view
-  const [allViewCategory, setAllViewCategory] = useState<string>('All 85');
+  const [allViewCategory, setAllViewCategory] = useState<string>('All 80');
 
   // Drawer open/close state for Add Order
   const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
@@ -246,10 +246,10 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
                 CONFIRMED ORDERS
               </span>
               <div className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900">
-                85
+                80
               </div>
             </div>
-            <p className="mt-3 text-xs text-slate-500">Fresh 75 · Style 5 · Tech 5</p>
+            <p className="mt-3 text-xs text-slate-500">Fresh 62 · Style 14 · Tech 4</p>
           </div>
 
           <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs">
@@ -295,20 +295,20 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
       {/* 2. Filter Chips Row */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          {/* 'All 85' Chip */}
+          {/* 'All 80' Chip */}
           <button
             type="button"
             onClick={() => {
               setActiveFilter('all');
-              setAllViewCategory('All 85');
+              setAllViewCategory('All 80');
             }}
             className={`min-h-[40px] rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
-              activeFilter === 'all' && allViewCategory === 'All 85'
+              activeFilter === 'all' && allViewCategory === 'All 80'
                 ? 'border border-blue-600 bg-blue-50/80 font-semibold text-blue-700 shadow-2xs'
                 : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
             }`}
           >
-            All 85
+            All 80
           </button>
 
           {/* 'Not confirmed 4' Chip */}
@@ -331,18 +331,18 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
                 type="button"
                 className="min-h-[40px] rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-50"
               >
-                Chilled 26
+                Chilled 22
               </button>
               <button
                 type="button"
                 className="min-h-[40px] rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-50"
               >
-                Van only 6
+                Van only 3
               </button>
             </>
           ) : (
             <>
-              {(['Fresh 75', 'Style 5', 'Tech 5', 'Chilled 26', 'Van only 6', 'Skipped before 10'] as const).map(
+              {(['Fresh 62', 'Style 14', 'Tech 4', 'Chilled 22', 'Van only 3', 'Skipped before 2'] as const).map(
                 (cat) => (
                   <button
                     key={cat}
@@ -571,7 +571,7 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
         </div>
       ) : (
         <div className="text-xs text-slate-500">
-          Showing 8 of 85 · sorted by priority (days waited, chilled, window)
+          Showing 8 of 80 · sorted by priority (days waited, chilled, window)
         </div>
       )}
 
