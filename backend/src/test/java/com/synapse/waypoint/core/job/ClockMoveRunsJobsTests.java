@@ -34,7 +34,11 @@ import com.synapse.waypoint.core.settings.service.AdjustableDemoClock;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource(properties = { "app.jobs.enabled=true", "app.jobs.tick-interval=1h" })
+@TestPropertySource(properties = {
+    "app.demo.enabled=true",
+    "app.jobs.enabled=true",
+    "app.jobs.tick-interval=1h"
+})
 class ClockMoveRunsJobsTests {
 
     private static final String PASSWORD = "Test-Password-1";
