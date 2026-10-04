@@ -9,7 +9,7 @@ import { storeWindowLabel } from './storeLive'
 import './store-settings.css'
 
 export function StoreSettings() {
-  const { user, token, language, setLanguage, logout } = useAuth()
+  const { user, language, setLanguage, logout } = useAuth()
   const client = useQueryClient()
   const alerts = useQuery({ queryKey: ['store', 'notification-settings'], queryFn: storeApi.notificationSettings })
   const outlet = useQuery({ queryKey: ['store', 'outlet', user?.outletId], queryFn: () => storeApi.outlet(user!.outletId!), enabled: !!user?.outletId })
@@ -17,7 +17,7 @@ export function StoreSettings() {
     client.setQueryData(['store', 'notification-settings'], next)
     await client.invalidateQueries({ queryKey: ['notifications', user?.role, user?.id] })
   } })
-  const mutation = useMutation({ mutationFn: (next: Language) => token?.startsWith('demo-') ? Promise.resolve() : api('auth/me', { method: 'PATCH', body: JSON.stringify({ language: next }) }), onSuccess: (_, next) => setLanguage(next) })
+  const mutation = useMutation({ mutationFn: (next: Language) => api('auth/me', { method: 'PATCH', body: JSON.stringify({ language: next }) }), onSuccess: (_, next) => setLanguage(next) })
   function toggle(category: AlertCategory) {
     if (!alerts.data) return
     alertsMutation.mutate({ ...alerts.data, [category]: !alerts.data[category] })

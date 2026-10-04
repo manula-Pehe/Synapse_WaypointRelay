@@ -2,16 +2,18 @@ import { api } from '../../lib/api'
 import type { IconName } from './Icons'
 import type { Language, User } from '../../app/auth'
 import { storeLocalDate } from '../store/storeLive'
+import { storeApi } from '../store/api'
 
 export const severities = ['critical', 'warning', 'info'] as const
 export type Severity = (typeof severities)[number]
+export type AlertCategory = 'deliveries' | 'orders' | 'issues'
 export interface Notification {
   id: string
   severity: Severity
   title: Record<Language, string>
   message: Record<Language, string>
   read: boolean
-  category: 'deliveries' | 'orders' | 'issues'
+  category: AlertCategory
   day: 'today' | 'yesterday' | 'earlier'
   time: string
   icon: IconName
@@ -43,10 +45,12 @@ function mapNotification(item: ApiNotification): Notification {
     icon: kind === 'deliveries' ? 'truck' : severity === 'critical' || severity === 'warning' ? 'warning' : 'info',
     needsAction: severity === 'critical' || severity === 'warning', href: item.link?.startsWith('/') && !item.link.startsWith('//') ? item.link : undefined }
 }
-export async function getNotifications(_user: User): Promise<Notification[]> {
-  void _user
-  const result = await api<ApiNotificationList>('notifications')
-  return result.items.map(mapNotification)
+export async function getNotifications(user: User): Promise<Notification[]> {
+  const [result, settings] = await Promise.all([
+    api<ApiNotificationList>('notifications'),
+    user.role === 'STORE_MANAGER' ? storeApi.notificationSettings() : Promise.resolve(null),
+  ])
+  return result.items.map(mapNotification).filter(item => !settings || item.severity === 'critical' || settings[item.category])
 }
 export async function markNotificationsRead(_user: User, ids: string[]) {
   await Promise.all(ids.map(id => api(`notifications/${encodeURIComponent(id)}/read`, { method: 'POST' })))

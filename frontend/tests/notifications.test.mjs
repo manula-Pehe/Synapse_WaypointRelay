@@ -17,6 +17,7 @@ test('notifications use the signed-in user API and persist read state on the ser
   globalThis.fetch = async (url, options) => {
     called.push([url, options.method ?? 'GET', options.headers.get('Authorization')])
     if (url === '/api/notifications') return new Response(JSON.stringify({ items: [{ id: 'notice-1', severity: 'WARNING', type: 'STORE_REMINDER', title: 'Confirm by 4 PM', body: 'One order is ready', link: '/store/orders', createdAt: new Date().toISOString(), readAt: null }], total: 1, unreadCount: 1 }), { status: 200 })
+    if (url === '/api/store/notifications/settings') return new Response(JSON.stringify({ deliveries: true, orders: true, issues: true }), { status: 200 })
     if (url === '/api/notifications/notice-1/read') return new Response(JSON.stringify({ id: 'notice-1' }), { status: 200 })
     throw new Error(`Unexpected request: ${url}`)
   }
@@ -26,5 +27,19 @@ test('notifications use the signed-in user API and persist read state on the ser
   assert.equal(result[0].category, 'orders')
   assert.equal(result[0].read, false)
   await markNotificationsRead(user, ['notice-1'])
-  assert.deepEqual(called, [['/api/notifications', 'GET', 'Bearer session-token'], ['/api/notifications/notice-1/read', 'POST', 'Bearer session-token']])
+  assert.deepEqual(called, [['/api/notifications', 'GET', 'Bearer session-token'], ['/api/store/notifications/settings', 'GET', 'Bearer session-token'], ['/api/notifications/notice-1/read', 'POST', 'Bearer session-token']])
+})
+
+test('store alert choices hide muted categories but retain critical notices', async () => {
+  configureApi('session-token', () => {})
+  globalThis.fetch = async (url) => {
+    if (url === '/api/store/notifications/settings') return new Response(JSON.stringify({ deliveries: true, orders: false, issues: true }), { status: 200 })
+    if (url === '/api/notifications') return new Response(JSON.stringify({ items: [
+      { id: 'muted', severity: 'INFO', type: 'STORE_ORDER', title: 'Order update', body: '', link: null, createdAt: new Date().toISOString(), readAt: null },
+      { id: 'critical', severity: 'CRITICAL', type: 'STORE_ORDER', title: 'Urgent order update', body: '', link: null, createdAt: new Date().toISOString(), readAt: null },
+    ], total: 2, unreadCount: 2 }), { status: 200 })
+    throw new Error(`Unexpected request: ${url}`)
+  }
+  const result = await getNotifications({ id: 'user-1', role: 'STORE_MANAGER' })
+  assert.deepEqual(result.map(item => item.id), ['critical'])
 })
