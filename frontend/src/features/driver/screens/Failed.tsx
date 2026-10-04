@@ -27,7 +27,7 @@ export default function Failed({ stop, language, onToggleTheme, onRecorded }: Fa
   const [nothingDelivered, setNothingDelivered] = useState(false)
   const { colors } = useDriverTheme()
   const [reason, setReason] = useState<(typeof REASONS)[number] | null>(null)
-  const [units, setUnits] = useState(nothingDelivered ? 0 : stop.cases)
+  const [units, setUnits] = useState(stop.cases)
   const navigate = useNavigate()
 
   const shortBy = stop.cases - units
