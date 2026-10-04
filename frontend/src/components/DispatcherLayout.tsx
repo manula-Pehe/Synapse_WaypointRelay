@@ -3,6 +3,8 @@ import SideNav from './SideNav';
 import type { SideNavProps } from './SideNav';
 import TopBar from './TopBar';
 import NotificationsDrawer from './NotificationsDrawer';
+import { useQuery } from '@tanstack/react-query';
+import { dispatchApi } from '../features/dispatch/core/api';
 
 export interface DispatcherLayoutProps {
   children: React.ReactNode;
@@ -19,6 +21,7 @@ export interface DispatcherLayoutProps {
   onSignOut?: () => void;
   onNotificationClick?: () => void;
   hideTopBar?: boolean;
+  clockControl?: React.ReactNode;
 }
 
 export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
@@ -31,13 +34,15 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
   onDepotChange,
   runDate,
   planStatus,
-  notificationCount = 8,
+  notificationCount,
   user,
   onSignOut,
   onNotificationClick,
   hideTopBar = false,
+  clockControl,
 }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notices = useQuery({ queryKey: ['dispatch-notifications'], queryFn: dispatchApi.notifications, refetchInterval: 30_000 });
 
   const handleNotificationClick = () => {
     setIsNotifOpen(true);
@@ -45,7 +50,7 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
   };
 
   return (
-    <div className="flex h-screen w-full bg-white overflow-hidden font-sans text-slate-800 antialiased">
+    <div className="flex h-screen w-full bg-surface overflow-hidden font-sans text-ink antialiased">
       {/* Left Sidebar Navigation */}
       <SideNav
         activeItem={activeNav}
@@ -65,8 +70,9 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
             onDepotChange={onDepotChange}
             runDate={runDate}
             planStatus={planStatus}
-            notificationCount={notificationCount}
+            notificationCount={notificationCount ?? notices.data?.unreadCount ?? 0}
             onNotificationClick={handleNotificationClick}
+            clockControl={clockControl}
           />
         )}
 

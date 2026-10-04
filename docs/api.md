@@ -295,8 +295,8 @@ Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, 
 
 ## 10. Dispatch operations
 
-- `GET /api/dispatch/live?runDate=&depot=` → `{ kpis: { onTimePct, completedStops, deferredToday, skippedTwoPlus, fridgeUsePct }, attention: [ { kind: "CONFLICT" | "FAILED" | "VEHICLE_PROBLEM" | "LATE_RISK" | "SHORTFALL", severity, title, body, link } ], trips: [ { vehicleId, tripNo, district, stopsDone, stopsTotal, status, lastSyncAt } ] }` — D6, D6m
-- `GET /api/dispatch/reports/run?runDate=&depot=` → run summary — D12
+- `GET /api/dispatch/live?runDate=&depot=` → `{ runDate, depot, generatedAt, onTimePercent, completedStops, onTimeStops, deferredToday, skippedTwoRuns, fridgeTruckUsePercent, needsAttention: [ { id, type, severity, title, details, orderId, action } ], trips: [ { id, vehicleId, tripNo, district, stopsDone, stopsTotal, status, lastUpdate, lastSync } ] }` — D6, D6m. The published plan, orders, and outcome events supply recorded progress. Metrics without a source are `null`; absent issue types are omitted. `lastUpdate` is an order update, while `lastSync` stays `null` until driver sync is recorded.
+- `GET /api/dispatch/reports/run?runDate=&depot=` → `{ runDate, depot, onTimePercent, onTimeStops, completedStops, deferred, failed, partial, lateByDistrict: [ { district, late, completed } ], exceptions: [ { type, detail, orderId } ] }` — D12. District lateness compares delivered or partial outcome times with the published stop window; failed outcomes are reported separately. Plan-derived fields are `null` or empty when no published plan exists; no result is invented for an unrecorded delivery.
 - `GET /api/dispatch/capacity?depot=&weeks=` → weekly estimate (rule-based) — D7 (if time)
 
 ---
