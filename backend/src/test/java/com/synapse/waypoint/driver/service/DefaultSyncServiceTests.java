@@ -326,6 +326,39 @@ class DefaultSyncServiceTests {
         assertThat(problem.isOpen()).isTrue();
     }
 
+    /**
+     * US-10.1 - the driver says how many cases are stranded, because that is the number the
+     * breakdown re-plan moves (D6b). A report without it still stands; the load is not always there.
+     */
+    @Test
+    void aProblemReportCarriesTheCasesStillOnBoard() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+
+        service.sync(DRIVER, new SyncRequest(List.of(new SyncItem("c-1",
+                SyncActionType.VEHICLE_PROBLEM, NOW,
+                Map.of("tripId", "trp-1", "kind", "BREAKDOWN", "canDrive", false,
+                        "unitsOnBoard", 64, "note", "clutch gone")))));
+
+        ArgumentCaptor<VehicleProblem> saved = ArgumentCaptor.forClass(VehicleProblem.class);
+        verify(vehicleProblems).save(saved.capture());
+        assertThat(saved.getValue().getUnitsOnBoard()).isEqualTo(64);
+        assertThat(saved.getValue().isCanDrive()).isFalse();
+    }
+
+    @Test
+    void aProblemWithNothingOnBoardSaysSoRatherThanGuessingZero() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+
+        service.sync(DRIVER, new SyncRequest(List.of(new SyncItem("c-1",
+                SyncActionType.VEHICLE_PROBLEM, NOW,
+                Map.of("kind", "TYRE", "canDrive", true, "note", "slow leak")))));
+
+        ArgumentCaptor<VehicleProblem> saved = ArgumentCaptor.forClass(VehicleProblem.class);
+        verify(vehicleProblems).save(saved.capture());
+        // Zero cases and "nobody said" are different answers to the re-plan.
+        assertThat(saved.getValue().getUnitsOnBoard()).isNull();
+    }
+
     /** R8r — goods handed back at the depot are recorded against the trip and the driver. */
     @Test
     void goodsHandedBackAtTheDepotAreRecorded() {

@@ -274,7 +274,7 @@ class DefaultDeliveryQueryServiceTests {
 
     private VehicleProblem problem(String id, Instant at) {
         return VehicleProblem.report(new VehicleProblem.ReportedProblem(id, VEHICLE, "trp-1",
-                VehicleProblemKind.TYRE, true, null, "slow leak", DRIVER, at, "c-" + id));
+                VehicleProblemKind.TYRE, true, null, null, "slow leak", DRIVER, at, "c-" + id));
     }
 
     private VehicleProblem resolvedProblem(String id, Instant at) {
