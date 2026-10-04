@@ -46,3 +46,11 @@ export {
 export { defaultSyncTransport, SyncTransportError, SYNC_URL, type SyncTransport } from './transport'
 
 export { useSyncPillLabel, useSyncStatus } from './useSyncStatus'
+
+export {
+  checkPinOffline,
+  forgetPin,
+  rememberPin,
+  type OfflineCheck,
+  type OfflineCredential,
+} from './pin'

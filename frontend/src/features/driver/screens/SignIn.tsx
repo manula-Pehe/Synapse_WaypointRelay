@@ -24,7 +24,7 @@ export interface SignInProps {
  * there is a network.
  */
 export default function SignIn({ language, onToggleTheme, offline }: SignInProps) {
-  const { user, login } = useAuth()
+  const { user, login, loginOffline } = useAuth()
   const [staffId, setStaffId] = useState(offline ? (user?.name ?? '') : '')
   const [pin, setPin] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -41,8 +41,13 @@ export default function SignIn({ language, onToggleTheme, offline }: SignInProps
     }
     setBusy(true)
     setError(null)
+    const credentials = { identifier: staffId.trim(), secret: pin }
     try {
-      await login({ identifier: staffId.trim(), secret: pin })
+      // With no signal the PIN is checked against the hash stored at the last online sign-in. The
+      // session that comes back carries no authority — actions queue in the outbox until the
+      // server has seen them.
+      if (offline) await loginOffline(credentials)
+      else await login(credentials)
       navigate('/driver/today', { replace: true })
     } catch (cause) {
       // 401 is a wrong PIN; anything else is the depot's network, which the offline banner covers.
