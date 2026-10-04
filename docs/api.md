@@ -287,7 +287,7 @@ Ordered by id. `runDate` defaults to the current run date.
 ```
 Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, `STORE_WAIT`, `VEHICLE_PROBLEM`, `GOODS_RETURNED` (+ loader: `LOAD_TICK`, `SHORTFALL`, `HANDOVER` if time).
 
-`GOODS_RETURNED` (R8r) carries `{ "tripId", "orderId", "units" (> 0), "reason": "STORE_CLOSED" | "NO_ACCESS" | "REFUSED" | "DAMAGED" }` and writes a `returns` row. It does not touch the order: stock coming back on the shelf is not a delivery, so the shortfall stays outstanding.
+`GOODS_RETURNED` (R8r) carries `{ "tripId", "orderId", "units" (> 0), "reason": "STORE_CLOSED" | "NO_ACCESS" | "REFUSED" | "DAMAGED", "signatureFileId" }` and writes a `returns` row. It does not touch the order: stock coming back on the shelf is not a delivery, so the shortfall stays outstanding. `signatureFileId` is the mark taken at the depot counter (US-11.2) and is absent when the phone could not capture one — a handback is recorded unsigned rather than lost.
 
 ### Dispatcher cards from driver data
 - `GET /api/dispatch/conflicts?runDate=` → `{ items, total }` · `POST /api/dispatch/conflicts/{id}/resolve` `{ "keepField": "KEEP_FIELD" | "OVERRIDE" }` — D8, D8m. Absent `keepField` means keep what the driver recorded
