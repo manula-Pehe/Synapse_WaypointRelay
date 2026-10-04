@@ -1,24 +1,49 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../app/auth'
 import { NotificationBell } from '../notifications/Notifications'
+import { storeApi } from './api'
+import { storeCutoffLabel, storeDateLabel, storeGreeting, storeTimeLabel, storeWindowLabel, useStoreLiveNow } from './storeLive'
+import './store-dashboard.css'
 
 const links = [
-  { to: '/store', label: 'Home', icon: '⌂', end: true },
-  { to: '/store/orders', label: 'Orders', icon: '▤' },
-  { to: '/store/deliveries', label: 'Deliveries', icon: '▣' },
-  { to: '/store/issues', label: 'Issues', icon: '!' },
-  { to: '/store/settings', label: 'More', icon: '☰' },
+  { to: '/store', label: 'Home', icon: 'home', end: true },
+  { to: '/store/orders', label: 'Orders', icon: 'orders' },
+  { to: '/store/deliveries', label: 'Deliveries', icon: 'truck' },
+  { to: '/store/issues', label: 'Issues', icon: 'warning' },
+  { to: '/store/settings', label: 'Settings', icon: 'user' },
 ]
+
+function StoreIcon({ name, size = 20 }: { name: string; size?: number }) {
+  return <img src={`/store-icons/${name}.svg`} alt="" width={size} height={size} aria-hidden="true" />
+}
+
 export function StoreLayout() {
   const { user, logout } = useAuth()
-  return <div className="min-h-svh bg-canvas text-ink lg:pl-60">
-    <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-line bg-surface p-5 lg:flex">
-      <NavLink to="/store" className="mb-8 text-xl font-bold text-brand">▣ Waypoint Relay</NavLink>
-      <nav aria-label="Store" className="space-y-1">{links.map(link => <NavLink key={link.to} to={link.to} end={link.end} className={({ isActive }) => `flex min-h-12 items-center gap-3 rounded-lg px-3 font-medium ${isActive ? 'bg-brand-soft text-brand' : 'text-muted hover:bg-canvas'}`}><span aria-hidden="true" className="w-6 text-center">{link.icon}</span>{link.label}</NavLink>)}</nav>
-      <div className="mt-auto rounded-xl bg-canvas p-4"><p className="font-semibold">{user?.name}</p><p className="text-sm text-muted">{user?.outletId}</p><button onClick={logout} className="mt-3 min-h-12 text-sm font-semibold text-brand">Sign out</button></div>
+  const { pathname } = useLocation()
+  const home = useQuery({ queryKey: ['store', 'home'], queryFn: storeApi.home, refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
+  const outlet = useQuery({ queryKey: ['store', 'outlet', user?.outletId], queryFn: () => storeApi.outlet(user!.outletId!), enabled: !!user?.outletId, staleTime: 60_000 })
+  const isOrders = pathname === '/store/orders'
+  const isHome = pathname === '/store'
+  const orderList = useQuery({ queryKey: ['store', 'orders'], queryFn: () => storeApi.orders(), enabled: isOrders, refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
+  const upcomingCount = orderList.data?.items.filter(order => !['DELIVERED', 'PARTIAL', 'FAILED', 'CANCELLED'].includes(order.status)).length ?? 0
+  const now = useStoreLiveNow(home.data?.now, home.dataUpdatedAt)
+  const dateLabel = now ? storeDateLabel(now) : ''
+  const timeLabel = now ? storeTimeLabel(now) : ''
+  const title = isOrders ? 'Orders' : isHome ? `${now ? storeGreeting(now) : 'Hello'}, ${user?.name?.split(' ')[0] ?? 'Store manager'}` : 'Store manager'
+  const subtitle = isOrders ? `Upcoming and past orders for ${user?.outletId ?? 'your outlet'}` : isHome ? `${dateLabel} · ${timeLabel}` : `${user?.outletId ?? ''} · ${dateLabel}`
+  const cutoff = home.data && now ? storeCutoffLabel(now, home.data.cutOffAt, home.data.ordersClosed) : 'Loading cut-off…'
+
+  return <div className="store-shell">
+    <aside className="store-sidebar">
+      <NavLink to="/store" className="store-brand"><span className="store-brand-mark"><StoreIcon name="brand-box" size={22} /></span><span><small>WAYPOINT</small><strong>Relay</strong></span></NavLink>
+      <nav aria-label="Store" className="store-side-links">{links.map(link => <NavLink key={link.to} to={link.to} end={link.end} className={({ isActive }) => `store-side-link${isActive ? ' active' : ''}`}>{({ isActive }) => <><StoreIcon name={link.icon === 'home' && !isActive ? 'home-inactive' : link.icon === 'orders' && isActive ? 'orders-active' : link.icon} />{link.label}</>}</NavLink>)}</nav>
+      <div className="store-outlet-card"><strong>{outlet.data?.name ?? user?.outletId}</strong>{outlet.data && <><span>Waypoint {outlet.data.brand} · {outlet.data.dockType.replaceAll('_', ' ')} · {outlet.data.parkingConstraint.replaceAll('_', ' ')}</span><span>Delivery window {storeWindowLabel(outlet.data.windowOpen, outlet.data.windowClose)}</span></>}<button onClick={logout}>Sign out</button></div>
     </aside>
-    <header className="sticky top-0 z-10 flex min-h-16 items-center justify-between border-b border-line bg-surface px-4 sm:px-8"><div><p className="font-bold text-brand lg:hidden">Waypoint Relay</p><p className="text-sm text-muted">{user?.outletId} · Store</p></div><NotificationBell /></header>
-    <main className="mx-auto max-w-5xl px-4 pb-28 pt-6 sm:px-8 lg:pb-12"><Outlet /></main>
-    <nav aria-label="Store" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">{links.map(link => <NavLink key={link.to} to={link.to} end={link.end} className={({ isActive }) => `flex min-h-18 flex-col items-center justify-center gap-1 text-xs ${isActive ? 'font-semibold text-brand' : 'text-muted'}`}><span aria-hidden="true" className="text-xl">{link.icon}</span>{link.label}</NavLink>)}</nav>
+    <header className="store-topbar">
+      <div className="store-topbar-inner"><div className="store-page-title"><h1>{title}</h1><p className="store-desktop-subtitle">{subtitle}</p><p className="store-mobile-subtitle">{user?.outletId} · {isOrders ? `${upcomingCount} upcoming` : dateLabel}</p></div><div className="store-topbar-actions"><span className="store-cutoff"><StoreIcon name="clock" size={18} />{cutoff}</span><NotificationBell iconSrc="/store-icons/bell.svg" /><span className="store-account"><span className="store-avatar" />{user?.name}</span></div></div>
+    </header>
+    <main className="store-main"><Outlet /></main>
+    <nav aria-label="Store" className="store-bottom-nav">{links.map(link => <NavLink key={link.to} to={link.to} end={link.end} className={({ isActive }) => `store-bottom-link${isActive ? ' active' : ''}`}>{({ isActive }) => <><StoreIcon name={link.label === 'Settings' ? 'mobile-more' : link.icon === 'home' && !isActive ? 'mobile-home-inactive' : link.icon === 'orders' && isActive ? 'mobile-orders-active' : `mobile-${link.icon}`} size={22} />{link.label === 'Settings' ? 'More' : link.label}</>}</NavLink>)}</nav>
   </div>
 }

@@ -6,7 +6,7 @@ import { Button, Card, Feedback, Heading, Loading, Status } from './StoreShared'
 
 function DeliveryCard({ delivery }: { delivery: Delivery }) {
   const client = useQueryClient()
-  const detail = useQuery({ queryKey: ['store', 'order', delivery.orderId], queryFn: () => storeApi.order(delivery.orderId) })
+  const detail = useQuery({ queryKey: ['store', 'order', delivery.orderId], queryFn: () => storeApi.order(delivery.orderId), refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
   const [units, setUnits] = useState<number | null>(null)
   const [note, setNote] = useState('')
   const [saved, setSaved] = useState(false)
@@ -35,6 +35,6 @@ function DeliveryCard({ delivery }: { delivery: Delivery }) {
   </Card>
 }
 export function StoreDeliveries() {
-  const query = useQuery({ queryKey: ['store', 'deliveries'], queryFn: () => storeApi.deliveries() })
+  const query = useQuery({ queryKey: ['store', 'deliveries'], queryFn: () => storeApi.deliveries(), refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
   return <><Heading title="Deliveries" subtitle="Today’s arrivals and receipts" />{!query.data ? <Loading error={query.error} retry={() => void query.refetch()} /> : <div className="space-y-4">{query.data.items.length ? query.data.items.map(d => <DeliveryCard key={d.orderId} delivery={d} />) : <Card>No delivery for today.</Card>}</div>}</>
 }

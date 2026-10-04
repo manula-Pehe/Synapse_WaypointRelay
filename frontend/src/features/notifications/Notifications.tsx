@@ -11,13 +11,13 @@ function useNotifications() {
   const { user } = useAuth()
   return useQuery({ queryKey: ['notifications', user?.role, user?.id], queryFn: () => getNotifications(user!), enabled: !!user, refetchInterval: 30_000 })
 }
-export function NotificationBell() {
+export function NotificationBell({ iconSrc }: { iconSrc?: string } = {}) {
   const { user, language } = useAuth()
   const { data } = useNotifications()
   if (!user) return null
   const unread = data?.filter((item) => !item.read).length ?? 0
   return <Link to={`${rolePaths[user.role]}/notifications`} aria-label={`${notificationMessages[language].title}, ${unread} ${notificationMessages[language].unread}`} className="relative flex min-h-12 min-w-12 items-center justify-center rounded-lg hover:bg-brand-soft">
-    <NoticeIcon name="bell" className="size-6" />
+    {iconSrc ? <img src={iconSrc} alt="" width="24" height="24" /> : <NoticeIcon name="bell" className="size-6" />}
     {unread > 0 && <span aria-hidden="true" className="absolute right-0 top-0 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">{unread > 99 ? '99+' : unread}</span>}
   </Link>
 }
@@ -31,11 +31,11 @@ function StoreNavigation() {
   return <>
     <aside className="fixed inset-y-0 left-0 hidden w-[220px] flex-col border-r border-line bg-surface px-3.5 py-5 lg:flex">
       <Link to="/store" className="mb-6 flex min-h-12 items-center gap-2.5"><span className="rounded-lg bg-brand p-2 text-on-brand"><NoticeIcon name="box" /></span><span><span className="block text-[10px] font-bold text-muted">WAYPOINT</span><span className="text-lg font-bold">Relay</span></span></Link>
-      <nav aria-label={text.demo} className="space-y-1">{links.map((link) => link.home ? <Link key={link.label} to="/store" className="flex min-h-12 items-center gap-3 px-3 text-sm"><NoticeIcon name={link.icon} />{link.label}</Link> : <button key={link.label} disabled title={text.coming} className="flex min-h-12 w-full items-center gap-3 px-3 text-left text-sm text-muted disabled:cursor-default"><NoticeIcon name={link.icon} />{link.label}</button>)}</nav>
-      <div className="mt-auto rounded-xl bg-inset p-3.5 text-xs text-muted"><p className="mb-2 font-semibold text-ink">{user?.outletId} · {user?.name}</p><p>{text.demo}</p><button onClick={logout} className="mt-2 min-h-12 text-brand">{auth.signOut}</button></div>
+      <nav aria-label="Store" className="space-y-1">{links.map((link) => <Link key={link.label} to={link.home ? '/store' : `/store/${link.icon === 'truck' ? 'deliveries' : link.icon === 'user' ? 'settings' : link.icon === 'warning' ? 'issues' : 'orders'}`} className="flex min-h-12 items-center gap-3 px-3 text-sm"><NoticeIcon name={link.icon} />{link.label}</Link>)}</nav>
+      <div className="mt-auto rounded-xl bg-inset p-3.5 text-xs text-muted"><p className="mb-2 font-semibold text-ink">{user?.outletId} · {user?.name}</p><button onClick={logout} className="mt-2 min-h-12 text-brand">{auth.signOut}</button></div>
     </aside>
-    <nav aria-label={text.demo} className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t border-line bg-surface px-2 pb-[env(safe-area-inset-bottom)] lg:hidden">
-      {links.slice(0, 4).map((link) => link.home ? <Link key={link.label} to="/store" className="flex min-h-20 flex-col items-center justify-center gap-1 text-xs text-muted"><NoticeIcon name={link.icon} />{link.label}</Link> : <button key={link.label} disabled title={text.coming} className="flex min-h-20 flex-col items-center justify-center gap-1 text-xs text-muted disabled:cursor-default"><NoticeIcon name={link.icon} />{link.label}</button>)}
+    <nav aria-label="Store" className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t border-line bg-surface px-2 pb-[env(safe-area-inset-bottom)] lg:hidden">
+      {links.slice(0, 4).map((link) => <Link key={link.label} to={link.home ? '/store' : `/store/${link.icon === 'truck' ? 'deliveries' : link.icon === 'warning' ? 'issues' : 'orders'}`} className="flex min-h-20 flex-col items-center justify-center gap-1 text-xs text-muted"><NoticeIcon name={link.icon} />{link.label}</Link>)}
       <Link to="/store/notifications" aria-current="page" className="flex min-h-20 flex-col items-center justify-center gap-1 text-xs font-semibold text-brand"><NoticeIcon name="more" />{text.more}</Link>
     </nav>
   </>
@@ -70,7 +70,7 @@ export function NotificationsPage() {
   const items = query.data ?? []
   const unread = items.filter((item) => !item.read)
   const filtered = items.filter((item) => filter === 'all' || (filter === 'action' ? item.needsAction : isDispatch ? item.severity === filter : item.category === filter))
-  const groups = isDispatch ? groupNotifications(filtered).map((group) => ({ key: group.severity, label: group.severity === 'critical' ? labels.critical : text[group.severity], items: group.items })) : ['today', 'yesterday'].map((day) => ({ key: day, label: day === 'today' ? labels.today : labels.yesterday, items: filtered.filter((item) => item.day === day) }))
+  const groups = isDispatch ? groupNotifications(filtered).map((group) => ({ key: group.severity, label: group.severity === 'critical' ? labels.critical : text[group.severity], items: group.items })) : (['today', 'yesterday', 'earlier'] as const).map((day) => ({ key: day, label: day === 'today' ? labels.today : day === 'yesterday' ? labels.yesterday : labels.earlier, items: filtered.filter((item) => item.day === day) }))
   const filters = isDispatch ? [['all', `${text.all} ${items.length}`], ...(['critical', 'warning', 'info'] as const).map((severity) => [severity, `${text[severity]} ${items.filter((item) => item.severity === severity).length}`])] : [['all', text.all], ['action', `${labels.needsAction} ${items.filter((item) => item.needsAction).length}`], ['deliveries', labels.deliveries], ['orders', labels.orders], ['issues', labels.issues]]
   function open(item: Notification) { setSelected(item); if (!item.read) mutation.mutate([item.id]) }
   const markAll = <button disabled={!unread.length || mutation.isPending} onClick={() => mutation.mutate(unread.map((item) => item.id))} className="min-h-12 shrink-0 text-xs font-semibold text-brand disabled:cursor-default disabled:opacity-50">{mutation.isPending ? text.saving : text.markAll}</button>
@@ -97,7 +97,7 @@ export function NotificationsPage() {
         </li>)}</ul>
       </section>)}
     </>}
-    <p className="mt-5 text-xs text-muted">{text.demo}</p>
+    {isDispatch && <p className="mt-5 text-xs text-muted">{text.demo}</p>}
   </>
   return <>
     {isDispatch ? <dialog ref={panel} onCancel={() => navigate(rolePaths[user.role])} onClick={(event) => { if (event.target === panel.current) navigate(rolePaths[user.role]) }} aria-labelledby="notifications-title" className="fixed inset-y-0 left-auto right-0 m-0 h-dvh max-h-none w-full max-w-[460px] border-0 bg-surface p-0 text-ink backdrop:bg-overlay">
@@ -111,7 +111,7 @@ export function NotificationsPage() {
       <main className="p-4 pb-28 lg:px-7 lg:py-10">{content}</main>
     </div>}
     <dialog ref={detail} onCancel={() => setSelected(null)} aria-labelledby="notification-detail-title" className="fixed inset-0 m-auto w-[calc(100%-32px)] max-w-lg rounded-2xl border border-line bg-surface p-6 text-ink backdrop:bg-overlay">
-      {selected && <><div className="flex items-start justify-between gap-4"><h2 id="notification-detail-title" className="text-lg font-bold">{selected.title[language]}</h2><button onClick={() => setSelected(null)} aria-label={labels.close} className="flex min-h-12 min-w-12 items-center justify-center"><NoticeIcon name="close" /></button></div><p className="mt-3 leading-6 text-muted">{selected.message[language]}</p><p className="mt-5 rounded-lg bg-inset p-4 text-sm leading-6 text-muted">{labels.unavailable}</p>{mutation.isError && <p role="alert" className="mt-3 text-danger">{text.saveError}</p>}<button onClick={() => setSelected(null)} className="mt-5 min-h-12 rounded-lg bg-brand px-5 text-on-brand">{labels.close}</button></>}
+      {selected && <><div className="flex items-start justify-between gap-4"><h2 id="notification-detail-title" className="text-lg font-bold">{selected.title[language]}</h2><button onClick={() => setSelected(null)} aria-label={labels.close} className="flex min-h-12 min-w-12 items-center justify-center"><NoticeIcon name="close" /></button></div><p className="mt-3 leading-6 text-muted">{selected.message[language]}</p>{selected.href ? <Link to={selected.href} onClick={() => setSelected(null)} className="mt-5 inline-flex min-h-12 items-center rounded-lg bg-brand px-5 text-on-brand">Open details</Link> : <p className="mt-5 rounded-lg bg-inset p-4 text-sm leading-6 text-muted">{labels.unavailable}</p>}{mutation.isError && <p role="alert" className="mt-3 text-danger">{text.saveError}</p>}<button onClick={() => setSelected(null)} className="mt-5 ml-3 min-h-12 rounded-lg px-5 text-brand">{labels.close}</button></>}
     </dialog>
   </>
 }

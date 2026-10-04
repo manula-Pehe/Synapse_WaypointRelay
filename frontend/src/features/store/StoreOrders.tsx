@@ -2,46 +2,68 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { storeApi, type Order } from './api'
-import { Button, Card, Feedback, Heading, Loading, OrderCard, Status } from './StoreShared'
+import { storeCutoffLabel, storeDateLabel, storeLocalDate, storeTimeLabel, storeWindowLabel, useStoreLiveNow } from './storeLive'
+import { Button, Card, Feedback, Heading, Loading, Status } from './StoreShared'
 
 export function StoreHome() {
-  const query = useQuery({ queryKey: ['store', 'home'], queryFn: storeApi.home, refetchInterval: 30_000 })
+  const query = useQuery({ queryKey: ['store', 'home'], queryFn: storeApi.home, refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
+  const now = useStoreLiveNow(query.data?.now, query.dataUpdatedAt)
+  const localDay = now ? storeLocalDate(now) : undefined
   const [offline, setOffline] = useState(!navigator.onLine)
   useEffect(() => { const update = () => setOffline(!navigator.onLine); window.addEventListener('online', update); window.addEventListener('offline', update); return () => { window.removeEventListener('online', update); window.removeEventListener('offline', update) } }, [])
+  const deliveryQuery = useQuery({ queryKey: ['store', 'deliveries', localDay], queryFn: () => storeApi.deliveries(localDay), enabled: !!localDay, refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
+  const outlet = useQuery({ queryKey: ['store', 'outlet', query.data?.outlet], queryFn: () => storeApi.outlet(query.data!.outlet), enabled: !!query.data?.outlet, staleTime: 60_000 })
   if (!query.data) return <Loading error={query.error} retry={() => void query.refetch()} />
   const home = query.data
-  const ms = new Date(home.cutOffAt).getTime() - new Date(home.now).getTime()
-  const until = ms <= 0 ? 'Cut-off passed' : `${Math.floor(ms / 3_600_000)}h ${Math.floor(ms % 3_600_000 / 60_000)}m until cut-off`
+  const prepared = home.tomorrow.filter(order => order.status === 'PREPARED' && !order.autoConfirm)
+  const confirmed = home.tomorrow.find(order => order.status === 'CONFIRMED')
+  const delivery = home.today.find(order => ['DELIVERED', 'PARTIAL'].includes(order.status)) ?? home.today[0]
+  const deliveryView = deliveryQuery.data?.items.find(item => item.orderId === delivery?.id)
+  const deliveryDetails = deliveryView?.delivery
+  const receipt = deliveryView?.receipt
   return <>
-    <Heading title="Store home" subtitle={`${home.outlet} · ${home.brand}`} action={<Link to="/store/orders/new" className="flex min-h-12 items-center rounded-lg bg-brand px-5 font-semibold text-on-brand">+ New order</Link>} />
-    {offline && <p role="status" className="mb-5 rounded-xl bg-warning-soft p-4 font-medium text-warning">◇ Offline. Reconnect before saving changes or confirming an order.</p>}
-    <div className="mb-6 grid gap-4 sm:grid-cols-3">
-      <Card><p className="text-sm text-muted">Next run</p><p className="mt-1 text-xl font-bold">{home.runDate}</p><p className="mt-2 text-sm text-muted">{home.tomorrow.length} order{home.tomorrow.length === 1 ? '' : 's'}</p></Card>
-      <Card><p className="text-sm text-muted">Order cut-off</p><p className="mt-1 text-xl font-bold">{home.ordersClosed ? '✓ Orders closed' : until}</p><p className="mt-2 text-sm text-muted">{new Date(home.cutOffAt).toLocaleString()}</p></Card>
-      <Card><p className="text-sm text-muted">Open issues</p><p className="mt-1 text-xl font-bold">{home.openIssues}</p><Link to="/store/issues" className="mt-2 inline-flex min-h-12 items-center font-semibold text-brand">View issues →</Link></Card>
+    {offline && <p role="status" className="store-offline-banner">◇ Offline · Changes are waiting for connection.</p>}
+    <div className="store-mobile-cutoff"><img src="/store-icons/clock.svg" alt="" width="18" height="18" />{now ? storeCutoffLabel(now, home.cutOffAt, home.ordersClosed) : 'Loading cut-off…'}</div>
+    <div className="store-home-grid">
+        <section className="store-focus-card">
+          <div className="store-section-title"><h2><span className="store-desktop-only">Tomorrow&apos;s orders · </span><span className="store-mobile-only">Tomorrow · </span>{formatStoreDate(home.runDate)}</h2>{prepared.length > 0 && <span className="store-pill store-pill-warning">⚠ {prepared.length} to confirm</span>}</div>
+          <div className="store-order-stack">{home.tomorrow.length ? home.tomorrow.map(order => <Link className="store-order-row" to={`/store/orders/${order.id}`} key={order.id}><img className="store-order-icon" src={`/store-icons/${order.temp === 'CHILLED' ? 'snow' : 'box'}.svg`} alt="" width="24" height="24" /><span className="store-order-copy"><strong>{order.temp === 'CHILLED' ? 'Chilled' : 'Dry goods'} · {order.units} cases</strong><small>{order.status === 'PREPARED' && order.autoConfirm ? `Auto-confirms at ${storeTimeLabel(new Date(home.cutOffAt))} if unchanged` : order.status === 'PREPARED' ? 'Needs your confirmation' : order.status === 'CONFIRMED' ? 'Your order is confirmed' : 'Open order details'}</small></span><StoreListStatus order={order} /></Link>) : <p className="store-empty">No order for this run yet.</p>}</div>
+          {prepared.length > 0 ? <Link to={`/store/orders/${prepared[0].id}`} className="store-primary-action">⊙ Review and confirm</Link> : <Link to="/store/orders" className="store-primary-action">View all orders</Link>}
+        </section>
+      <section className="store-delivery-card"><h2><span className="store-desktop-only">Today&apos;s delivery · </span><span className="store-mobile-only">Today · </span>{now ? storeDateLabel(now) : ''}</h2>{delivery ? <><div className="store-delivery-status"><img className="store-check-desktop" src="/store-icons/check-delivery.svg" alt="" width="28" height="28" /><img className="store-check-mobile" src="/store-icons/check.svg" alt="" width="16" height="16" /><span>{delivery.status === 'DELIVERED' ? 'Delivered' : delivery.status === 'PARTIAL' ? 'Partially delivered' : 'View delivery'}{(deliveryDetails?.at || receipt?.at) && <span className="store-delivery-time"> {new Date(deliveryDetails?.at ?? receipt!.at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>}<small>{receipt ? `${receipt.receivedUnits} of ${delivery.units} cases received` : deliveryDetails ? `${deliveryDetails.units} of ${delivery.units} cases${deliveryDetails.receivedBy ? ` · received by ${deliveryDetails.receivedBy}` : ''}` : `${delivery.units} cases · ${delivery.temp === 'CHILLED' ? 'Chilled' : 'Dry goods'}`}</small></span></div><Link to="/store/deliveries" className="store-outline-action"><span className="store-desktop-only">View delivery and receipt</span><span className="store-mobile-only">Delivery details</span></Link></> : <p className="store-empty">No delivery scheduled today.</p>}</section>
+      <section className="store-updates-card"><h2>Updates</h2>{confirmed && <div className="store-update-row"><span className="store-pill store-pill-success">⊙ Confirmed</span><span>Order confirmed · {confirmed.ref} · {confirmed.temp === 'CHILLED' ? 'chilled' : 'dry'} {confirmed.units} cases</span>{confirmed.confirmedAt && <small>{new Date(confirmed.confirmedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</small>}</div>}{deliveryView?.arrival && <div className="store-update-row"><span className="store-pill store-pill-info">◇ Info</span><span>Arrival window published</span><small>{new Date(deliveryView.arrival.from).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} – {new Date(deliveryView.arrival.to).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</small></div>}{outlet.data && <div className="store-update-row"><span className="store-pill store-pill-info">◇ Info</span><span>Store delivery window</span><small>{storeWindowLabel(outlet.data.windowOpen, outlet.data.windowClose)}</small></div>}{home.openIssues > 0 && <Link to="/store/issues" className="store-update-row text-brand">{home.openIssues} open issue{home.openIssues === 1 ? '' : 's'} · View issues →</Link>}</section>
     </div>
-    <Heading title="Tomorrow’s orders" action={<Link to="/store/orders" className="flex min-h-12 items-center font-semibold text-brand">All orders →</Link>} />
-    <div className="grid gap-3 sm:grid-cols-2">{home.tomorrow.length ? home.tomorrow.map(order => <OrderCard key={order.id} order={order} />) : <Card>No order for this run yet.</Card>}</div>
-    <Heading title="Today’s delivery" action={<Link to="/store/deliveries" className="flex min-h-12 items-center font-semibold text-brand">Delivery details →</Link>} />
-    <div className="grid gap-3 sm:grid-cols-2">{home.today.length ? home.today.map(order => <OrderCard key={order.id} order={order} />) : <Card>No delivery scheduled today.</Card>}</div>
   </>
 }
 
 export function StoreOrders() {
-  const query = useQuery({ queryKey: ['store', 'orders'], queryFn: () => storeApi.orders() })
-  const [filter, setFilter] = useState('all')
+  const query = useQuery({ queryKey: ['store', 'orders'], queryFn: () => storeApi.orders(), refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
+  const [filter, setFilter] = useState<'upcoming' | 'needs' | 'past'>('upcoming')
   if (!query.data) return <Loading error={query.error} retry={() => void query.refetch()} />
-  const orders = query.data.items.filter(o => filter === 'all' || o.status === filter)
-  return <><Heading title="Orders" subtitle="Upcoming and recent orders" action={<Link to="/store/orders/new" className="flex min-h-12 items-center rounded-lg bg-brand px-5 font-semibold text-on-brand">+ New order</Link>} />
-    <label className="mb-5 block text-sm font-semibold">Status <select value={filter} onChange={e => setFilter(e.target.value)} className="ml-3 min-h-12 rounded-lg border border-line bg-surface px-3"><option value="all">All</option>{['PREPARED','CONFIRMED','PLANNED','ON_THE_WAY','DELIVERED','PARTIAL','FAILED','MOVED','CANCELLED'].map(s => <option key={s}>{s}</option>)}</select></label>
-    <div className="grid gap-3 sm:grid-cols-2">{orders.length ? orders.map(o => <OrderCard key={o.id} order={o} />) : <Card>No orders match this filter.</Card>}</div>
+  const all = query.data.items
+  const upcoming = all.filter(order => !['DELIVERED','PARTIAL','FAILED','CANCELLED'].includes(order.status))
+  const needs = upcoming.filter(order => (order.status === 'PREPARED' && !order.autoConfirm) || (order.source === 'PHONE_IN' && !order.storeChecked))
+  const orders = filter === 'upcoming' ? upcoming : filter === 'needs' ? needs : all.filter(order => !upcoming.includes(order))
+  return <>
+    <div className="store-orders-toolbar"><div className="store-tabs" role="tablist" aria-label="Order filters"><button role="tab" aria-selected={filter === 'upcoming'} onClick={() => setFilter('upcoming')}>Upcoming <span className="store-desktop-only">{upcoming.length}</span></button><button role="tab" aria-selected={filter === 'needs'} onClick={() => setFilter('needs')}>⚠ Needs you {needs.length}</button><button role="tab" aria-selected={filter === 'past'} onClick={() => setFilter('past')}>Past</button></div><Link to="/store/orders/new" className="store-new-order">＋ New order</Link></div>
+    <div className="store-orders-table"><div className="store-orders-head"><span>Delivery</span><span>Line</span><span>Cases</span><span>Status</span><span>Source</span><span>Order</span></div>{orders.length ? orders.map(order => <Link className="store-orders-entry" to={`/store/orders/${order.id}`} key={order.id}><strong>{formatStoreDate(order.runDate)}<span className="store-mobile-line"> · Fresh {order.temp === 'CHILLED' ? 'chilled' : 'dry'}</span></strong><span>Fresh {order.temp === 'CHILLED' ? 'chilled' : 'dry'}</span><span>{order.units}</span><span><StoreListStatus order={order} /></span><span>{order.source === 'SEED' ? 'Prepared' : order.source.replaceAll('_',' ').toLowerCase()}</span><span>{order.ref}</span></Link>) : <p className="store-empty">No orders in this section.</p>}</div>
+    <p className="store-table-note">ⓘ Prepared orders come from your order history. Open an order to review it before cut-off.</p>
   </>
+}
+
+function formatStoreDate(value: string) { return new Date(`${value.slice(0,10)}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace('Sept', 'Sep') }
+
+function StoreListStatus({ order }: { order: Order }) {
+  if (order.status === 'PREPARED' && !order.autoConfirm) return <span className="store-pill store-pill-warning">⚠ Needs your confirmation</span>
+  if (order.status === 'PREPARED') return <span className="store-pill store-pill-neutral">◷ Prepared · auto</span>
+  if (order.status === 'CONFIRMED' && order.autoConfirm) return <span className="store-pill store-pill-success">⊙ Confirmed · auto</span>
+  return <Status status={order.status} />
 }
 
 export function StoreOrderDetail() {
   const { id = '' } = useParams()
   const client = useQueryClient()
-  const query = useQuery({ queryKey: ['store', 'order', id], queryFn: () => storeApi.order(id) })
+  const query = useQuery({ queryKey: ['store', 'order', id], queryFn: () => storeApi.order(id), refetchInterval: 15_000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always' })
   const pastOrders = useQuery({ queryKey: ['store', 'orders'], queryFn: () => storeApi.orders() })
   const home = useQuery({ queryKey: ['store', 'home'], queryFn: storeApi.home })
   const [units, setUnits] = useState<number | null>(null)
