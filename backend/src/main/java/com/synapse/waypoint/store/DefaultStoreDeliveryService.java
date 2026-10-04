@@ -33,14 +33,16 @@ class DefaultStoreDeliveryService implements StoreDeliveryService {
     private final OrderService orders;
     private final PlanQueryService plan;
     private final StoreReceipts receipts;
+    private final StoreDeliveryFacts facts;
     private final DemoClock clock;
 
     DefaultStoreDeliveryService(StoreOrderAccess access, OrderService orders, PlanQueryService plan,
-            StoreReceipts receipts, DemoClock clock) {
+            StoreReceipts receipts, StoreDeliveryFacts facts, DemoClock clock) {
         this.access = access;
         this.orders = orders;
         this.plan = plan;
         this.receipts = receipts;
+        this.facts = facts;
         this.clock = clock;
     }
 
@@ -67,8 +69,11 @@ class DefaultStoreDeliveryService implements StoreDeliveryService {
     }
 
     private DeliveryView view(OrderDto order, DeferralDto deferredFromRun, ReceiptView receipt) {
-        return new DeliveryView(order.id(), order.ref(), order.status(), arrival(order).orElse(null),
-                deferral(order, deferredFromRun).map(StoreDeferralDto::from).orElse(null), null, null, receipt);
+        ArrivalView arrival = arrival(order).orElse(null);
+        return new DeliveryView(order.id(), order.ref(), order.status(), arrival,
+                deferral(order, deferredFromRun).map(StoreDeferralDto::from).orElse(null),
+                facts.delivery(order.id()).orElse(null), facts.shortfall(order.id()).orElse(null),
+                facts.driverStatus(order.status(), arrival).orElse(null), receipt);
     }
 
     private Optional<ArrivalView> arrival(OrderDto order) {

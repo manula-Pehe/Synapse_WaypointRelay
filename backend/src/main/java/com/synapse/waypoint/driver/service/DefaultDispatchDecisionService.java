@@ -118,6 +118,8 @@ class DefaultDispatchDecisionService implements DispatchDecisionService {
                 delivery.getReceivedBy(),
                 delivery.getPhotoFileId() != null,
                 delivery.getSignatureFileId() != null,
+                delivery.getPhotoFileId(),
+                delivery.getSignatureFileId(),
                 delivery.getCompletedAt(),
                 delivery.getUndoneAt() != null,
                 delivery.getDecision(),
