@@ -285,6 +285,8 @@ One active delivery per stop: unique index on `stop_id` where `undone_at IS NULL
 
 **order_disputes** — a store's answer when checking a phone-in order (S2e-msg): id, order_id → orders, outlet_id → outlets, message TEXT, status VARCHAR(20) (OPEN · RESOLVED), created_by → users, created_at, resolved_at NULL.
 
+**store_notification_settings** (V31) — a store user's alert choices: user_id → users (PK), deliveries, orders, issues BOOLEAN (default true). The earlier `store_notification_reads` table was dropped in `V32__drop_store_notification_reads.sql`; read state lives on `notifications`.
+
 ---
 
 ## Dispatch (V40–V49)

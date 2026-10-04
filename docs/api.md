@@ -243,6 +243,7 @@ Ordered by id. `runDate` defaults to the current run date.
 - `POST /api/store/orders/{id}/confirm` → order · `POST /api/store/orders/{id}/cancel` → order — S2, S2x
 - `POST /api/store/orders` `{ "runDate", "temp", "units", "note" }` → order (`source=STORE`) — S2n; 409 `ORDERS_CLOSED` when that run is closed
 - `POST /api/store/orders/{id}/check` `{ "ok": true }` or `{ "ok": false, "message": "…" }` — S2e, S2e-msg
+- `GET /api/store/notifications/settings` · `PUT /api/store/notifications/settings` `{ "deliveries": true, "orders": true, "issues": true }` — S12 alert choices. Read state is kept by `/api/notifications` (§5).
 - `GET /api/store/deliveries?runDate=` → list of (own outlet only; `runDate` defaults to the current run date)
 ```json
 { "orderId": "…", "orderRef": "S1-001", "status": "PLANNED",

@@ -9,7 +9,6 @@ import java.util.UUID;
 import jakarta.validation.Valid;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
@@ -143,19 +142,6 @@ class StoreController {
         return orders.get(id);
     }
 
-    @PostMapping("/orders/{id}/dispute")
-    @Transactional
-    Map<String, String> dispute(@PathVariable String id, @Valid @RequestBody Dispute body) {
-        OrderDto order = orders.get(id);
-        if (order.source() != com.synapse.waypoint.core.order.entity.OrderSource.PHONE_IN)
-            throw new DomainException(ErrorCode.INVALID_STATUS, "Only phone orders can be disputed here.");
-        if (body.message().isBlank()) throw new DomainException(ErrorCode.VALIDATION, "A message is required.");
-        String disputeId = UUID.randomUUID().toString();
-        jdbc.update("INSERT INTO order_disputes(id,order_id,outlet_id,message,created_by,created_at) VALUES (?,?,?,?,?,?)",
-                disputeId, order.id(), outletId(), body.message().strip(), user.id(), Timestamp.from(clock.now()));
-        return Map.of("id", disputeId, "status", "OPEN");
-    }
-
     @PostMapping("/orders/{id}/receipt")
     @Transactional
     Map<String, Object> receipt(@PathVariable String id, @Valid @RequestBody Receipt body) {
@@ -188,6 +174,5 @@ class StoreController {
     record NewStoreOrder(@NotNull LocalDate runDate, @NotNull TemperatureRequirement temp, @Min(1) int units,
                          @Size(max = 500) String note) {}
     record PhoneCheck(boolean ok, @Size(max = 1000) String message) {}
-    record Dispute(@NotBlank @Size(max = 1000) String message) {}
     record Receipt(@Min(0) int receivedUnits, @Size(max = 1000) String note) {}
 }
