@@ -5,7 +5,7 @@ import { isSession, readLanguage, readSession, saveLanguage, saveSession } from 
 import { api, ApiError, configureApi } from '../lib/api'
 
 // Explicit opt-in: production builds use the real endpoint by default.
-const mockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
+const mockAuth = import.meta.env?.VITE_MOCK_AUTH === 'true'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()

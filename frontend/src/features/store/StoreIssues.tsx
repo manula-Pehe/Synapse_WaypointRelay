@@ -28,13 +28,15 @@ export function StoreIssues() {
 }
 export function NewIssue() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const fromReceipt = location.state as { orderId?: string; units?: number; type?: string; note?: string } | null
   const client = useQueryClient()
   const orders = useQuery({ queryKey: ['store', 'orders'], queryFn: () => storeApi.orders() })
-  const [orderId, setOrderId] = useState('')
-  const [type, setType] = useState('DAMAGED')
-  const [units, setUnits] = useState(1)
+  const [orderId, setOrderId] = useState(fromReceipt?.orderId ?? '')
+  const [type, setType] = useState(fromReceipt?.type && ['DAMAGED','MISSING','WRONG_ITEM','LATE','OTHER'].includes(fromReceipt.type) ? fromReceipt.type : 'DAMAGED')
+  const [units, setUnits] = useState(fromReceipt?.units && fromReceipt.units > 0 ? fromReceipt.units : 1)
   const [wants, setWants] = useState('REPLACE')
-  const [note, setNote] = useState('')
+  const [note, setNote] = useState(fromReceipt?.note ?? '')
   const [photos, setPhotos] = useState<File[]>([])
   const mutation = useMutation({ mutationFn: async () => {
     const issue = await storeApi.createIssue({ orderId: orderId || null, type, units: type === 'LATE' || type === 'OTHER' ? null : units, wants, note })
