@@ -45,6 +45,7 @@ Branch: `codex/loader-vihanj`. Scope: F1–F6 of the VihanJ loader brief. The br
 
 - Frontend production build, ESLint, and the existing frontend test suite pass. The sign-in view was inspected at a 390 px viewport.
 - Backend compiles. PostgreSQL workflow tests cover depot scope, trip 2 availability, recorded store notes, failed and repeated fridge checks, partial and full shortfalls, missing reason validation, remainder/history, and handover order status. Security tests cover public demo-clock reading and protected clock changes.
+- Full backend CI initially exhausted PostgreSQL's client limit because many cached Spring test contexts retained default-size Hikari pools. Maven Surefire now limits test pools to two connections with no minimum idle; production pool settings are unaffected.
 
 ## Known design/data gaps
 
