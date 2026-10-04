@@ -185,7 +185,7 @@ Ordered by id. `runDate` defaults to the current run date.
 {
   "id": "pln-1", "runDate": "2026-10-01", "depot": "Peliyagoda", "version": 1, "status": "DRAFT",
   "summary": { "served": 80, "deferred": 5, "unavoidable": 1, "chosen": 4, "violations": 0,
-               "fridgeVehiclesUsed": 4, "fridgeVehiclesAvailable": 4 },
+               "fridgeVehiclesUsed": 4, "fridgeVehiclesAvailable": 4, "warnings": 2 },
   "vehicles": [
     { "vehicleId": "VEH036", "type": "van", "temp": "reefer", "weightCapKg": 1000, "volumeCapM3": 6.0,
       "freshMinutesUsed": 130, "freshBudget": 270, "daytimeMinutesUsed": 0, "daytimeBudget": 480,
@@ -197,6 +197,8 @@ Ordered by id. `runDate` defaults to the current run date.
                        "arriveFrom": "…", "arriveTo": "…", "lateRisk": 0.1 } ] } ] } ]
 }
 ```
+`summary.warnings` counts stops with a late-arrival risk; these do not break a rule. Timestamps are Sri Lanka time. A vehicle's `freshMinutesUsed` / `daytimeMinutesUsed` add up its trips of that window, against budgets of 270 and 480 minutes.
+
 ### Deferral object
 ```json
 { "id": "dfr-1", "orderId": "…", "orderRef": "S1-058", "outletId": "OUT054", "kind": "CHOSEN",
@@ -207,12 +209,13 @@ Ordered by id. `runDate` defaults to the current run date.
 
 ### Endpoints
 - `GET /api/dispatch/plans/readiness?runDate=&depot=` → `{ ordersClosed, fleetConfirmed, confirmedOrders, availableVehicles, reeferAvailable, warnings: [] }` — Dp0
-- `POST /api/dispatch/plans` `{ "runDate", "depot" }` → plan (DRAFT); 409 `ORDERS_NOT_CLOSED` — Dp1/Dp2
+- `POST /api/dispatch/plans` `{ "runDate", "depot" }` → plan (DRAFT, **201**); 409 `ORDERS_NOT_CLOSED` until orders are closed; 409 `PLAN_LOCKED` once a plan is published for the run and depot. An existing draft is replaced (version 1). `depot` may be left out by a dispatcher who works at one depot — Dp1/Dp2
 - `GET /api/dispatch/plans?runDate=&depot=` → latest plan (or 404)
 - `GET /api/dispatch/plans/{id}` → plan · `GET /api/dispatch/plans/{id}/deferrals` → list — D3, D4
 - `POST /api/dispatch/plans/{id}/validate-move` `{ "orderId", "toTripId" | "toVehicleId" }` → `{ ok, rule, message }` — D5
 - `POST /api/dispatch/plans/{id}/move` (same body) → plan; 409 `RULE_VIOLATION`
-- `POST /api/dispatch/plans/{id}/publish` → plan (PUBLISHED); 409 `PLAN_LOCKED` — D3p/D3ok
+- `POST /api/dispatch/plans/{id}/publish` → plan (PUBLISHED); 409 `PLAN_LOCKED` if already published. In one transaction every placed order becomes PLANNED and every deferred order MOVED (to its deferral's `newDate`); then the stores of served outlets (INFO "Delivery window for <date>" → `/store/deliveries`), the stores of moved orders (WARNING "Order <ref> moved to <date>" → `/store/orders/<id>`), the depot's loaders (INFO "Loading lists ready" → `/loader`) and each used vehicle's driver (INFO "Your trips are ready" → `/driver`) are notified — D3p/D3ok
+- Dispatcher endpoints take `depot` like the fleet endpoints: a dispatcher with a depot sees only that depot (another depot's plan → 404); `runDate` defaults to the current run date.
 - `POST /api/dispatch/plans/{id}/revise` `{ "reason", "changes": [ { "orderId", "toTripId" } ] }` → plan v2 — D3r
 - `POST /api/dispatch/plans/{id}/breakdown` `{ "vehicleId", "problemId" }` → `{ suggestions: [ { vehicleId, tripNo, stops, newArrive } ] }`; then `revise` — D6b
 
@@ -308,7 +311,7 @@ Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, 
 | `ReferenceService` | core | `outlet(id)`, `outlets(depot)`, `vehicle(id)`, `availableVehicles(runDate, depot)`, `travel(district, depot)`, `serviceMinutes(brand, dockType)`, `fuelUsed(vehicleId, isoYear, isoWeek)` — read-only, returns DTO records. `outlet`, `vehicle`, `travel` and `serviceMinutes` throw `NotFoundException` when nothing matches; `fuelUsed` returns 0 when no row exists; `vehicle(id)` shows availability for the current run date; `availableVehicles` applies the availability rule in §3 (also `outlets(depot, brand)` and `vehicles(runDate, depot)`) |
 | `NotificationService` | notification | `notifyUser(userId, severity, type, title, body, link)`, `notifyRole(role, scope, severity, type, title, body, link)` — see below |
 | `FileService` | core | `store(bytes, contentType, kind, clientId): fileId`, `get(fileId)` — photos and signatures (driver proof, issue photos) |
-| `PlanQueryService` | planning | `tripsForVehicle(runDate, vehicleId)`, `tripsForDepot(runDate, depot)`, `stopForOrder(orderId)`, `deferralForOrder(orderId)`, `publishedPlan(runDate, depot)` |
+| `PlanQueryService` | planning | `tripsForVehicle(runDate, vehicleId)`, `tripsForDepot(runDate, depot)` (lists of trip objects with their stops), `stopForOrder(orderId)` (`Optional` of the stop with its `tripId`, `vehicleId`, `tripNo`, `departAt`), `deferralForOrder(orderId)` (`Optional` deferral object), `publishedPlan(runDate, depot)` (`Optional` plan). Reads the **published** plan only — drafts give empty results — and is not limited to the signed-in user, so any role may call it |
 | `DeliveryQueryService` | driver | `deliveryForOrder(orderId)`, `driverStatus(vehicleId)`, `failedDeliveries(runDate)`, `openConflicts(runDate)`, `vehicleProblems(runDate)` |
 | `LoadingQueryService` | loader | `loadingStatus(runDate, depot)`, `shortfallForOrder(orderId)` |
 
