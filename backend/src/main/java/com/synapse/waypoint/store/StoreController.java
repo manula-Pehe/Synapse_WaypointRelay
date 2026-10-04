@@ -32,6 +32,7 @@ import com.synapse.waypoint.core.order.entity.TemperatureRequirement;
 import com.synapse.waypoint.core.order.service.OrderService;
 import com.synapse.waypoint.core.reference.entity.Outlet;
 import com.synapse.waypoint.core.reference.repository.OutletRepository;
+import com.synapse.waypoint.driver.entity.FailedDeliveryDecision;
 import com.synapse.waypoint.notification.entity.NotificationSeverity;
 import com.synapse.waypoint.notification.recipient.NotificationScope;
 import com.synapse.waypoint.notification.service.NotificationService;
@@ -48,13 +49,16 @@ class StoreController {
     private final EntityManager entityManager;
     private final StoreDeliveryService deliveries;
     private final NotificationService notifications;
+    private final StoreFailedChoiceService failedChoices;
 
     StoreController(OrderService orders, CurrentUser user, DemoClock clock, OutletRepository outlets,
                     JdbcTemplate jdbc, StoreOrderAccess access, EntityManager entityManager,
-                    StoreDeliveryService deliveries, NotificationService notifications) {
+                    StoreDeliveryService deliveries, NotificationService notifications,
+                    StoreFailedChoiceService failedChoices) {
         this.orders = orders; this.user = user; this.clock = clock; this.outlets = outlets;
         this.jdbc = jdbc; this.access = access; this.entityManager = entityManager; this.deliveries = deliveries;
         this.notifications = notifications;
+        this.failedChoices = failedChoices;
     }
 
     private String outletId() {
@@ -87,6 +91,12 @@ class StoreController {
     @GetMapping("/deliveries")
     ListResponse<DeliveryView> deliveries(@RequestParam(required = false) LocalDate runDate) {
         return ListResponse.of(deliveries.forRun(runDate));
+    }
+
+    @PostMapping("/failed/{deliveryId}/choice")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void failedChoice(@PathVariable String deliveryId, @Valid @RequestBody FailedChoice body) {
+        failedChoices.choose(deliveryId, body.choice());
     }
 
     @PutMapping("/orders/{id}")
@@ -173,6 +183,7 @@ class StoreController {
     record Home(String outlet, String brand, LocalDate runDate, java.time.Instant now, boolean ordersClosed, String cutOffAt,
                 List<OrderDto> tomorrow, List<OrderDto> today, int openIssues) {}
     record Units(@Min(1) int units) {}
+    record FailedChoice(@NotNull FailedDeliveryDecision choice) {}
     record CancelReason(@Size(max = 100) String reason) {}
     record NewStoreOrder(@NotNull LocalDate runDate, @NotNull TemperatureRequirement temp, @Min(1) int units,
                          @Size(max = 500) String note) {}

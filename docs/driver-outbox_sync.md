@@ -4,7 +4,7 @@ Every action on the driver's phone is written here first and sent to the server
 afterwards. The driver keeps working with no signal, and the work arrives exactly
 once when the phone reconnects.
 
-Owner: **Vihan**. Reused by the loader app: **VihanJ**.
+Also reused by the loader app.
 
 Contract: `docs/api.md` §9 (`POST /api/sync`) and §11.
 
@@ -161,7 +161,7 @@ Covered by `frontend/tests/driver-offline.test.mjs`.
 
 ---
 
-## For the loader app (VihanJ)
+## Reuse by the loader app
 
 Identical queue, one extra cache key per dock. Three things to know:
 

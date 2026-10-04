@@ -18,7 +18,7 @@ import jakarta.persistence.Table;
  * reports the same flat tyre twice while offline still produces one report. reply holds the
  * dispatcher's instruction, which the driver reads on the same screen instead of phoning.
  *
- * <p>unitsOnBoard is what Chethiya re-plans against (D6b): how many cases are stranded on this
+ * <p>unitsOnBoard is what the breakdown re-plan works from (D6b): how many cases are stranded on this
  * vehicle right now. Absent when there is no load - a breakdown on the way back to the depot.
  */
 @Entity

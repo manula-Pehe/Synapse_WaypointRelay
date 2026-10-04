@@ -43,7 +43,7 @@ class StoreDeliveryFacts {
     }
 
     private static DeliveryProofView toProof(DeliveryDto delivery) {
-        return new DeliveryProofView(delivery.outcome(), delivery.units(), fileUrl(delivery.photoFileId()),
+        return new DeliveryProofView(delivery.id(), delivery.outcome(), delivery.units(), fileUrl(delivery.photoFileId()),
                 fileUrl(delivery.signatureFileId()), delivery.receivedBy(), delivery.completedAt());
     }
 

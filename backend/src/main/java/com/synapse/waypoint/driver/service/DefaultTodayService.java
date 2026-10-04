@@ -30,7 +30,7 @@ import com.synapse.waypoint.planning.service.PlanQueryService;
 /**
  * Builds the driver's day from the published plan (docs/api.md §7).
  *
- * Two rules run through the whole class. The plan is only ever read through Chethiya's service, so a
+ * Two rules run through the whole class. The plan is only ever read through the planning module's service, so a
  * driver follows the published plan and not a draft. And the vehicle always comes from the signed-in
  * user, never from a parameter, so one driver cannot ask for another's run by guessing a vehicle id.
  */
