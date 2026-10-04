@@ -18,6 +18,7 @@ export interface DispatcherLayoutProps {
   planStatus?: string;
   notificationCount?: number;
   user?: SideNavProps['user'];
+  onSignOut?: () => void;
   onNotificationClick?: () => void;
   hideTopBar?: boolean;
   clockControl?: React.ReactNode;
@@ -35,6 +36,7 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
   planStatus,
   notificationCount,
   user,
+  onSignOut,
   onNotificationClick,
   hideTopBar = false,
   clockControl,
@@ -54,6 +56,7 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
         activeItem={activeNav}
         onItemSelect={onNavChange}
         user={user}
+        onSignOut={onSignOut}
       />
 
       {/* Main Content Area */}

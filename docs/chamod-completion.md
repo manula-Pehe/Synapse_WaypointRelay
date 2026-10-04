@@ -33,3 +33,10 @@ This document tracks the work after the supplied design guide update. F1 and F10
 - Failed outcomes remain in the report's failed count and exception list; the district late-delivery denominator counts delivered and partial outcomes only.
 - SVG trip counts and the depot label use the theme's on-brand text token in dark mode.
 - F5 intentionally uses only data recorded by the current backend, per the user's scope decision. Driver sync, vehicle problems, sync conflicts, dock shortfalls, and two-run skip history require their separate source workflows before they can appear as live facts.
+
+## Develop merge
+
+- Fetched `origin/develop` at `fe98324` and merged it into the dispatch branch. The merge brought in store ordering, delivery, issue, receipt, and planning changes.
+- Resolved `frontend/src/App.tsx` by retaining the API-backed dispatcher workspace while adding the new store routes from develop. Resolved the sidebar conflict by passing develop's sign-out callback through the existing account menu, which continues to use the signed-in user's real profile and language settings.
+- The local, uncommitted deletion of `docs/dispatch-frontend-integration.md` existed before the merge and remains outside the merge commit.
+- Verified with frontend build, lint, six tests, and the focused dispatcher backend tests.

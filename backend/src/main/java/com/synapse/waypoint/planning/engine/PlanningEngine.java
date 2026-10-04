@@ -9,7 +9,7 @@ import com.synapse.waypoint.planning.engine.rule.RuleChecker;
 import com.synapse.waypoint.planning.engine.rule.RuleViolation;
 
 /**
- * Entry point of the planning domain: allocates the orders, explains the deferrals, then verifies the
+ * Entry point of the planning domain: allocates the orders (best of several greedy runs), explains the deferrals, then verifies the
  * whole plan with the same hard-rule checker; late arrivals are only reported as warnings. Pure and deterministic; time comes only from the input's run date.
  */
 public class PlanningEngine {
@@ -30,7 +30,7 @@ public class PlanningEngine {
         TripCalculator calculator = new TripCalculator(input);
         RuleChecker checker = RuleChecker.standard(calculator);
 
-        AllocationResult allocation = new Allocator(input, scorer, checker).allocate();
+        AllocationResult allocation = new MultiStartAllocator(input, scorer, new Allocator(input, scorer, checker)).allocate();
         DeferralAnalyzer analyzer = new DeferralAnalyzer(input, scorer, checker);
         List<PlannedDeferral> deferrals = allocation.unplaced().stream().map(analyzer::analyze).toList();
         List<PlannedTrip> trips = new PlanAssembler(calculator, estimator).assemble(allocation.days());

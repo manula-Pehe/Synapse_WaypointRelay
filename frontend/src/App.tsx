@@ -10,9 +10,16 @@ import { useState } from 'react'
 import DispatcherLayout from './components/DispatcherLayout'
 import LiveBoardPage from './components/LiveBoardPage'
 import { StoreLayout } from './features/store/StoreLayout'
-import { StoreHome, StoreOrders, StoreOrderDetail, NewStoreOrder } from './features/store/StoreOrders'
+import { StoreHome, StoreOrders, StoreOrderDetail } from './features/store/StoreOrders'
+import { StoreReview } from './features/store/StoreReview'
+import { NewStoreOrder } from './features/store/NewStoreOrder'
 import { StoreDeliveries } from './features/store/StoreDeliveries'
-import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreIssues'
+import { StoreArrival } from './features/store/StoreArrival'
+import { StoreIssues, StoreIssueDetail } from './features/store/StoreIssues'
+import { NewIssuePage } from './features/store/NewIssuePage'
+import { StoreMoved } from './features/store/StoreMoved'
+import { StoreDeliveryProblem } from './features/store/StoreDeliveryProblem'
+import { StoreReceipt } from './features/store/StoreReceipt'
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
 import { StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
@@ -24,7 +31,7 @@ import RunReport from './components/RunReport'
 import CapacityOutlook from './components/CapacityOutlook'
 
 function DispatcherWorkspace() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const client = useQueryClient()
   const [activeNav, setActiveNav] = useState('orders')
   const [activeDepot, setActiveDepot] = useState(user?.depot ?? 'Peliyagoda')
@@ -61,6 +68,7 @@ function DispatcherWorkspace() {
 
   return <DispatcherLayout
     activeNav={activeNav}
+    onSignOut={logout}
     onNavChange={setActiveNav}
     title={meta.title}
     subtitle={`${meta.subtitle}${runDate ? ` · Run ${runDate}` : ''}`}
@@ -102,10 +110,15 @@ export default function App() {
                       <Route index element={<StoreHome />} />
                       <Route path="orders" element={<StoreOrders />} />
                       <Route path="orders/new" element={<NewStoreOrder />} />
+                      <Route path="orders/review" element={<StoreReview />} />
                       <Route path="orders/:id" element={<StoreOrderDetail />} />
                       <Route path="deliveries" element={<StoreDeliveries />} />
+                      <Route path="deliveries/:orderId" element={<StoreArrival />} />
+                      <Route path="deliveries/:orderId/moved" element={<StoreMoved />} />
+                      <Route path="deliveries/:orderId/problem" element={<StoreDeliveryProblem />} />
+                      <Route path="deliveries/:orderId/receipt" element={<StoreReceipt />} />
                       <Route path="issues" element={<StoreIssues />} />
-                      <Route path="issues/new" element={<NewIssue />} />
+                      <Route path="issues/new" element={<NewIssuePage />} />
                       <Route path="issues/:id" element={<StoreIssueDetail />} />
                       <Route path="settings" element={<StoreSettings />} />
                       <Route path="history" element={<StoreHistory />} />

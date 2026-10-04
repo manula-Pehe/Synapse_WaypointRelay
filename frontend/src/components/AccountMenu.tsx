@@ -6,11 +6,12 @@ import { api } from '../lib/api'
 export interface AccountMenuProps {
   isOpen: boolean
   onClose: () => void
+  onSignOut?: () => void
 }
 
 const languages: [Language, string][] = [['en', 'English'], ['si', 'සිංහල'], ['ta', 'தமிழ்']]
 
-export default function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
+export default function AccountMenu({ isOpen, onClose, onSignOut }: AccountMenuProps) {
   const { user, token, language, setLanguage, logout } = useAuth()
   const navigate = useNavigate()
   const saveLanguage = useMutation({
@@ -28,6 +29,6 @@ export default function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
     </div>
     <fieldset className="mt-3 space-y-1"><legend className="mb-2 text-xs font-semibold text-ink-2">Language</legend>{languages.map(([code, label]) => <label key={code} className="flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm hover:bg-surface-2"><input type="radio" name="dispatch-language" checked={language === code} disabled={saveLanguage.isPending} onChange={() => saveLanguage.mutate(code)} />{label}</label>)}</fieldset>
     {saveLanguage.error && <p role="alert" className="mt-2 text-xs text-danger">{saveLanguage.error.message}</p>}
-    <div className="mt-3 border-t border-line pt-3"><button type="button" className="min-h-10 w-full rounded-lg px-3 text-left text-sm hover:bg-surface-2" onClick={() => { onClose(); navigate('/dispatch/notifications') }}>Notifications</button><button type="button" className="min-h-10 w-full rounded-lg px-3 text-left text-sm font-semibold text-danger hover:bg-danger-soft" onClick={() => { onClose(); logout() }}>Sign out</button></div>
+    <div className="mt-3 border-t border-line pt-3"><button type="button" className="min-h-10 w-full rounded-lg px-3 text-left text-sm hover:bg-surface-2" onClick={() => { onClose(); navigate('/dispatch/notifications') }}>Notifications</button><button type="button" className="min-h-10 w-full rounded-lg px-3 text-left text-sm font-semibold text-danger hover:bg-danger-soft" onClick={() => { onClose(); (onSignOut ?? logout)() }}>Sign out</button></div>
   </div>
 }

@@ -2,12 +2,14 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { demoStoreApi } from '../src/mocks/store.ts'
 
-test('prepared demo order can be edited and confirmed, then rejects another edit', async () => {
+test('prepared demo order can be edited, confirmed, and edited until cut-off', async () => {
   const order = await demoStoreApi.edit('demo-1', 28)
   assert.equal(order.units, 28)
   const confirmed = await demoStoreApi.confirm('demo-1')
   assert.equal(confirmed.status, 'CONFIRMED')
-  await assert.rejects(() => demoStoreApi.edit('demo-1', 30), error => error.code === 'INVALID_STATUS')
+  const revised = await demoStoreApi.edit('demo-1', 30)
+  assert.equal(revised.units, 30)
+  assert.equal(revised.status, 'CONFIRMED')
 })
 
 test('receipt is refused before delivery', async () => {
