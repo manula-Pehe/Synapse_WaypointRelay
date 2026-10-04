@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import com.synapse.waypoint.common.error.DomainException;
 import com.synapse.waypoint.common.error.ErrorCode;
 
-/** Reads the current user from the verified login token — no database lookup per request. */
+/** Reads the current user from the verified login token - no database lookup per request. */
 @Component
 class JwtCurrentUser implements CurrentUser {
 

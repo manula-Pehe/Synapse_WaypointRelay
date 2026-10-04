@@ -25,7 +25,7 @@ export function rememberLanguage(language: Language) {
   try {
     localStorage.setItem(STORAGE_KEY, language)
   } catch {
-    // Nothing to do — the switch still works for this session.
+    // Nothing to do - the switch still works for this session.
   }
 }
 
@@ -51,7 +51,7 @@ const STRINGS = {
     'driver.stops.around': 'around {time}',
     'driver.stop.detail': 'Stop',
     'driver.stop.access': 'Access',
-    'driver.stop.opensIn': 'Opens at {time} — you are {count} min early.',
+    'driver.stop.opensIn': 'Opens at {time} - you are {count} min early.',
     'driver.stop.call': 'Call store',
     'driver.delivery.deliver': 'Record delivery',
     'driver.delivery.photo': 'Photo',
@@ -118,7 +118,7 @@ const STRINGS = {
     'driver.stops.cases': 'කේස',
     'driver.stops.minEarly': 'විනාඩි {count}ක කලින්',
     'driver.stops.around': 'සුළඟෝචය {time}',
-    'driver.stop.opensIn': '{time} විට විවෘතයි — ඔබ විනාඩි {count}ක කලින් ය.',
+    'driver.stop.opensIn': '{time} විට විවෘතයි - ඔබ විනාඩි {count}ක කලින් ය.',
     'driver.delivery.deliver': 'බාර දීම සලකුණු කරන්න',
     'driver.delivery.retry': 'සුරකින්න නොහැකි විය. සංඥාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.',
     'driver.failed.title': 'කුමක් සිදු කළද?',
@@ -137,7 +137,7 @@ const STRINGS = {
     'driver.stops.cases': 'பெட்டிகள்',
     'driver.stops.minEarly': '{count} நிமிடங்கள் முன்பு',
     'driver.stops.around': 'சுமார் {time}',
-    'driver.stop.opensIn': '{time} திறக்கும் — நீங்கள் {count} நிமிடங்கள் முன்பே இருக்கிறீர்கள்.',
+    'driver.stop.opensIn': '{time} திறக்கும் - நீங்கள் {count} நிமிடங்கள் முன்பே இருக்கிறீர்கள்.',
     'driver.delivery.deliver': 'விநியோகம் பதிவு செய்',
     'driver.delivery.retry': 'சேமிக்க முடியவில்லை. சமிக்ஞையை சரிபார்த்து மீண்டும் முயற்சிக்கவும்.',
     'driver.failed.title': 'என்ன நடந்தது?',

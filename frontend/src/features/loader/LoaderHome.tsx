@@ -175,7 +175,7 @@ function Trips({
     )
   return (
     <section>
-      <h1 className="mb-4 text-2xl font-bold">Trips to load — next departures first</h1>
+      <h1 className="mb-4 text-2xl font-bold">Trips to load - next departures first</h1>
       <div className="space-y-3">
         {trips.map((trip, index) => (
           <button
@@ -267,7 +267,7 @@ function Fridge({
           role="alert"
           className="rounded-xl border border-danger bg-danger-soft p-5 text-danger"
         >
-          <h1 className="text-xl font-bold">Fridge check failed — do not load chilled goods</h1>
+          <h1 className="text-xl font-bold">Fridge check failed - do not load chilled goods</h1>
           <p className="mt-2">
             {trip.fridgeCheck.tempC} °C was recorded. The unit must be running at 0–5 °C with the
             doors closing properly. Dispatch was alerted.

@@ -37,8 +37,8 @@ export default function RunReport({ runDate, depot }: { runDate: string; depot: 
     <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-muted">Recorded results · {depot} · {runDate}</p><button className="min-h-10 rounded-lg border border-line bg-surface px-4 text-sm font-semibold" onClick={() => exportCsv(report)}>Export CSV</button></div>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {[
-        ['On time', report.onTimePercent == null ? '—' : `${report.onTimePercent}%`, `${report.onTimeStops} of ${report.completedStops} completed stops`],
-        ['Deferred', report.deferred == null ? '—' : String(report.deferred), report.deferred == null ? 'No published plan' : 'Published plan'],
+        ['On time', report.onTimePercent == null ? '-' : `${report.onTimePercent}%`, `${report.onTimeStops} of ${report.completedStops} completed stops`],
+        ['Deferred', report.deferred == null ? '-' : String(report.deferred), report.deferred == null ? 'No published plan' : 'Published plan'],
         ['Failed', String(report.failed), 'Recorded order outcomes'],
         ['Partial', String(report.partial), 'Recorded order outcomes'],
       ].map(([label, value, note]) => <div key={label} className={card}><p className="text-xs font-bold uppercase tracking-wide text-muted">{label}</p><p className="mt-1 text-3xl font-bold text-brand">{value}</p><p className="mt-1 text-xs text-muted">{note}</p></div>)}

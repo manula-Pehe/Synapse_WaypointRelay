@@ -14,7 +14,7 @@ export interface TodayProps {
   onToggleTheme: () => void
 }
 
-/** R1 — today's run at a glance, so the driver knows when and where without calling the depot. */
+/** R1 - today's run at a glance, so the driver knows when and where without calling the depot. */
 export default function Today({ trip, run, language, onToggleTheme }: TodayProps) {
   const navigate = useNavigate()
   const { colors } = useDriverTheme()

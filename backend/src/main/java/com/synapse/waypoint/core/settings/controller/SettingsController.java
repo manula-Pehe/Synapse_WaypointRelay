@@ -12,7 +12,7 @@ import com.synapse.waypoint.core.settings.dto.MoveClockRequest;
 import com.synapse.waypoint.core.settings.dto.SettingsResponse;
 import com.synapse.waypoint.core.settings.service.SettingsService;
 
-/** Demo clock and run date — docs/api.md §2. */
+/** Demo clock and run date - docs/api.md §2. */
 @RestController
 @RequestMapping("/api/settings")
 class SettingsController {

@@ -25,7 +25,7 @@ import com.synapse.waypoint.core.order.service.CloseOrdersService;
 import com.synapse.waypoint.core.order.service.OrderService;
 import com.synapse.waypoint.core.order.service.UnconfirmedOrderService;
 
-/** Dispatcher order endpoints — docs/api.md §4 (D1, D1b, D1u). Dispatcher-only by path rule. */
+/** Dispatcher order endpoints - docs/api.md §4 (D1, D1b, D1u). Dispatcher-only by path rule. */
 @RestController
 @RequestMapping("/api/dispatch/orders")
 class DispatchOrderController {

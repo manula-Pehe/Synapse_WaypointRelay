@@ -178,7 +178,7 @@ export default function HandBack({ trip, language, onToggleTheme }: HandBackProp
         ))}
       </Card>
 
-      {/* US-11.2 — the signature is the point of a handback, so it is asked for. */}
+      {/* US-11.2 - the signature is the point of a handback, so it is asked for. */}
       <Card>
         <Label>{t(language, 'driver.handback.signature')}</Label>
         <SignaturePad onSigned={setSignature} />

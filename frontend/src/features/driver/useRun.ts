@@ -11,7 +11,7 @@ import type { DriverRun } from './types'
  * "all data from the offline cache").
  *
  * The cached run is seeded into the query straight away, so the app opens showing the last known
- * run and then quietly replaces it with the server's — the driver is in a basement depot with no
+ * run and then quietly replaces it with the server's - the driver is in a basement depot with no
  * signal, and a spinner is the wrong first answer.
  */
 
@@ -74,7 +74,7 @@ export function useRun() {
 
   const run = useMemo(() => (query.data ? toRun(query.data) : DEMO_RUN), [query.data])
 
-  /** R0 — accept the load, then re-read so the screen shows the server's version, not a guess. */
+  /** R0 - accept the load, then re-read so the screen shows the server's version, not a guess. */
   const acceptLoad = useCallback(async () => {
     await driverApi.acceptTrip(run.trip.id)
     await client.invalidateQueries({ queryKey: QUERY_KEY })

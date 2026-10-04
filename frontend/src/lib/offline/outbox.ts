@@ -11,7 +11,7 @@ import type {
 
 /**
  * The outbox is the phone's queue of work waiting to reach the server. Driver
- * screens never call a write endpoint directly — they call enqueue() and the
+ * screens never call a write endpoint directly - they call enqueue() and the
  * screen updates immediately.
  */
 export async function enqueue(type: SyncType, payload: JsonObject): Promise<string> {
@@ -35,7 +35,7 @@ export async function unsentItems(limit = 50): Promise<OutboxRow[]> {
   return rows.slice(0, limit)
 }
 
-/** The shape POST /api/sync expects — clientId, type, createdAt, payload only. */
+/** The shape POST /api/sync expects - clientId, type, createdAt, payload only. */
 export function toRequestItem(row: OutboxRow): SyncRequestItem {
   return { clientId: row.clientId, type: row.type, createdAt: row.createdAt, payload: row.payload }
 }
@@ -46,7 +46,7 @@ export async function markSending(clientIds: string[]): Promise<void> {
 
 /**
  * APPLIED and DUPLICATE both mean the server now holds this action, so both are
- * done. CONFLICT is also done — the driver wrote a record that overrode a
+ * done. CONFLICT is also done - the driver wrote a record that overrode a
  * dispatcher's change, and the dispatcher gets a decision card; retrying would
  * not change that.
  */

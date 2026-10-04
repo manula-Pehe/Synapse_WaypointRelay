@@ -78,7 +78,7 @@ public class Conflict {
     }
 
     /**
-     * The dispatcher settles it (D8m). Resolving does not undo the delivery — that already stands —
+     * The dispatcher settles it (D8m). Resolving does not undo the delivery - that already stands -
      * it records who chose to let it stand and when.
      */
     public void resolve(ConflictResolution chosen, String dispatcherId, Instant now) {

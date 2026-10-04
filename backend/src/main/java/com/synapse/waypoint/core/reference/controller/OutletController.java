@@ -10,7 +10,7 @@ import com.synapse.waypoint.common.dto.ListResponse;
 import com.synapse.waypoint.core.reference.dto.OutletDto;
 import com.synapse.waypoint.core.reference.service.ReferenceService;
 
-/** Outlets — docs/api.md §3 (D13). Open to every signed-in role. */
+/** Outlets - docs/api.md §3 (D13). Open to every signed-in role. */
 @RestController
 @RequestMapping("/api/outlets")
 class OutletController {

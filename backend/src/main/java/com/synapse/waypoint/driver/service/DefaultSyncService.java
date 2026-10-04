@@ -128,7 +128,7 @@ class DefaultSyncService implements SyncService {
         };
     }
 
-    /** R0 — the driver checked the load against the loader's list and accepted it. */
+    /** R0 - the driver checked the load against the loader's list and accepted it. */
     private String acceptTrip(String userId, SyncItem item) {
         SyncItem.TripAccepted payload = convert(item, SyncItem.TripAccepted.class);
         TripRun run = tripRuns.findById(payload.tripId())
@@ -206,7 +206,7 @@ class DefaultSyncService implements SyncService {
         }
     }
 
-    /** R4b — the 10-second undo. The row stays so the history is honest. */
+    /** R4b - the 10-second undo. The row stays so the history is honest. */
     private String undoDelivery(SyncItem item, Instant now) {
         SyncItem.DeliveryUndone payload = convert(item, SyncItem.DeliveryUndone.class);
         Delivery delivery = deliveries.findById(payload.deliveryId())
@@ -247,7 +247,7 @@ class DefaultSyncService implements SyncService {
     }
 
     /**
- * R8r — goods handed back at the depot at the end of a trip.
+ * R8r - goods handed back at the depot at the end of a trip.
  *
  * <p>Recorded against the trip and the driver, idempotent on the item's clientId, so a driver who
  * records the handback twice after a dropped connection has still only handed the goods back once.

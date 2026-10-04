@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     configureApi(next.token, logout)
     saveSession(next, remember)
     setSession(next)
-    // X1m-off — keep a salted hash of the PIN so the driver can sign in at a depot with no signal.
+    // X1m-off - keep a salted hash of the PIN so the driver can sign in at a depot with no signal.
     // Only ever after the server has accepted these credentials.
     if (next.user.role === 'DRIVER') {
       await rememberPin(
@@ -70,11 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   /**
-   * X1m-off — sign in with no network, against the hash stored at the last online sign-in.
+   * X1m-off - sign in with no network, against the hash stored at the last online sign-in.
    *
    * This mints a session the server has never seen, marked with an `offline-` token so every caller
    * can tell the difference. It carries no authority: no endpoint accepts it, and writes go to the
-   * outbox until a real token is back. That is the whole design — offline work is queued and
+   * outbox until a real token is back. That is the whole design - offline work is queued and
    * reconciled later, never assumed.
    */
   async function loginOffline(credentials: Credentials): Promise<void> {

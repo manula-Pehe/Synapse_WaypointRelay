@@ -248,7 +248,7 @@ export const IssuesInbox: React.FC<IssuesInboxProps> = ({
           <line x1="12" y1="8" x2="12.01" y2="8" />
         </svg>
         <span>
-          Shortfalls, partial deliveries and remainder orders are handled automatically — they appear here for the record only.
+          Shortfalls, partial deliveries and remainder orders are handled automatically - they appear here for the record only.
         </span>
       </div>
     </div>

@@ -362,7 +362,7 @@ export const CapacityOutlook: React.FC<CapacityOutlookProps> = ({
 
           {/* Explanatory Footer Note */}
           <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-            Why fridge-truck days, not m³: historically fridge trucks leave only ~25% full — trips before 8 AM run out first, not space. Values illustrative; generated from the Task 2A forecast.
+            Why fridge-truck days, not m³: historically fridge trucks leave only ~25% full - trips before 8 AM run out first, not space. Values illustrative; generated from the Task 2A forecast.
           </p>
         </div>
 

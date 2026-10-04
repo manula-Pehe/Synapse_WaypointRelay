@@ -11,7 +11,7 @@ import com.synapse.waypoint.core.file.entity.FileKind;
 import com.synapse.waypoint.core.file.service.FileService;
 
 /**
- * Proof uploads from the driver's phone — docs/api.md §7, F5 (R4p photo, R4s signature).
+ * Proof uploads from the driver's phone - docs/api.md §7, F5 (R4p photo, R4s signature).
  *
  * The phone sends {@code clientId} with every file, so a queued upload retried after a dropped
  * connection is stored once rather than twice (US-1.2). The returned id is what goes into the

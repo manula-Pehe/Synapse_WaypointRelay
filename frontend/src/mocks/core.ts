@@ -1,5 +1,5 @@
 // Sample data in the exact shapes of docs/api.md (§2–§4).
-// All numbers are MADE UP — never copy values from the competition dataset.
+// All numbers are MADE UP - never copy values from the competition dataset.
 // Replace with real API calls once the endpoints are merged.
 
 export const settings = {
