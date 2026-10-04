@@ -25,6 +25,7 @@ import com.synapse.waypoint.common.security.Role;
 import com.synapse.waypoint.common.time.ApiTimestamp;
 import com.synapse.waypoint.common.time.DemoClock;
 import com.synapse.waypoint.core.order.dto.OrderDto;
+import com.synapse.waypoint.core.order.entity.OrderSource;
 import com.synapse.waypoint.core.order.service.OrderService;
 import com.synapse.waypoint.core.reference.entity.Outlet;
 import com.synapse.waypoint.core.reference.repository.OutletRepository;
@@ -46,7 +47,7 @@ public class LoaderService implements LoadingQueryService {
     public record TripList(List<TripSummary> items, int total, OffsetDateTime listsAvailableAt) {}
     public record StopDetail(String stopId, int loadSeq, String orderId, String orderRef, String outletId,
             String outletName, int units, BigDecimal weightKg, BigDecimal volumeM3, String accessNote,
-            boolean ticked, int missingUnits) {}
+            String storeNote, boolean ticked, int missingUnits) {}
     public record FridgeCheck(boolean running, BigDecimal tempC, boolean doorsOk, boolean passed,
             OffsetDateTime checkedAt) {}
     public record TripDetail(TripSummary trip, String vehicleType, BigDecimal weightCapKg,
@@ -244,9 +245,15 @@ public class LoaderService implements LoadingQueryService {
         String dock = outlet.getDockType().replace('_', ' ').toLowerCase();
         String parking = outlet.getParkingConstraint().replace('_', ' ').toLowerCase();
         String access = "normal".equals(parking) ? dock : parking + " · " + dock;
+        String storeNote = order.source() == OrderSource.STORE ? orders.history(stop.orderId()).stream()
+                .map(event -> event.details().get("note"))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .filter(note -> !note.isBlank())
+                .findFirst().orElse(null) : null;
         return new StopDetail(stop.id(), stop.loadSeq(), stop.orderId(), stop.orderRef(), stop.outletId(),
                 order.outletName(), loaded, order.weightKg().multiply(fraction),
-                order.volumeM3().multiply(fraction), access, ticked, missing);
+                order.volumeM3().multiply(fraction), access, storeNote, ticked, missing);
     }
 
     private Optional<FridgeCheck> latestCheck(String tripId) {

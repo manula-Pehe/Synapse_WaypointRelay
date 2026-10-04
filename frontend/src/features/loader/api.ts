@@ -26,6 +26,7 @@ export interface StopDetail {
   weightKg: number
   volumeM3: number
   accessNote: string
+  storeNote: string | null
   ticked: boolean
   missingUnits: number
 }

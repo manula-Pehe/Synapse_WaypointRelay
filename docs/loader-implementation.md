@@ -22,7 +22,7 @@ Branch: `codex/loader-vihanj`. Scope: F1–F6 of the VihanJ loader brief. The br
 
 ## F4 · Loading list
 
-- `GET /api/loader/trips/{id}` returns the published trip, vehicle capacities, reverse stop order (`load_seq`), recorded outlet access details, effective cases after shortfalls, proportional load weight/volume, tick state, and latest fridge check.
+- `GET /api/loader/trips/{id}` returns the published trip, vehicle capacities, reverse stop order (`load_seq`), recorded outlet access details and store order note, effective cases after shortfalls, proportional load weight/volume, tick state, and latest fridge check.
 - `POST /api/loader/stops/{stopId}/tick` records the loader and demo-clock time. All stops ticked moves the trip to `READY`. The UI shows progress, capacity bars, and stop details.
 
 ## F5 · Shortfall
@@ -44,10 +44,10 @@ Branch: `codex/loader-vihanj`. Scope: F1–F6 of the VihanJ loader brief. The br
 ## Verification
 
 - Frontend production build, ESLint, and the existing frontend test suite pass. The sign-in view was inspected at a 390 px viewport.
-- Backend compiles. PostgreSQL workflow tests cover depot scope, trip 2 availability, failed and repeated fridge checks, partial and full shortfalls, missing reason validation, remainder/history, and handover order status. Security tests cover public demo-clock reading and protected clock changes.
+- Backend compiles. PostgreSQL workflow tests cover depot scope, trip 2 availability, recorded store notes, failed and repeated fridge checks, partial and full shortfalls, missing reason validation, remainder/history, and handover order status. Security tests cover public demo-clock reading and protected clock changes.
 
 ## Known design/data gaps
 
-- The existing order and outlet read models expose dock and parking details, but no store-specific handling note. The loader stop detail shows recorded access information only.
+- Store notes exist only for store-created orders that included a note in their order history. Seeded orders without a recorded note show access information only.
 - The Figma shortfall dialog includes a photo action. The F1–F6 API contract has no loader photo upload endpoint, so this action is not presented as functional.
 - Handover changes the trip to `LOADED`. Departure is shown only after a driver updates the orders to `ON_THE_WAY`; the loader does not claim a truck has left at handover time.

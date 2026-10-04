@@ -71,6 +71,14 @@ class LoaderWorkflowTests {
     }
 
     @Test
+    void stopDetailShowsRecordedStoreNote() {
+        jdbc.update("UPDATE orders SET source='STORE' WHERE id='L-O1'");
+        jdbc.update("INSERT INTO order_events(order_id,at,actor_user_id,type,to_status,details) VALUES ('L-O1',now(),'store-test','PREPARED','PREPARED','{\"note\":\"Keep chilled cartons upright\"}'::jsonb)");
+        assertThat(loader.trip("L-T1").stops().stream().filter(stop -> stop.stopId().equals("L-S1"))
+                .findFirst().orElseThrow().storeNote()).isEqualTo("Keep chilled cartons upright");
+    }
+
+    @Test
     void failedFridgeCheckAlertsDispatchAndBlocksLoading() {
         assertThat(loader.fridgeCheck("L-T1", true, new BigDecimal("11"), true).passed()).isFalse();
         entityManager.flush();

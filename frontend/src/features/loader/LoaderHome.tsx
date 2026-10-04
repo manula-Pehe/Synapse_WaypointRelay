@@ -587,6 +587,7 @@ function StopDrawer({
         </div>
         <h3 className="mt-6 text-sm font-bold uppercase text-muted">Handling notes</h3>
         <p className="mt-3">▣ {stop.accessNote}</p>
+        {stop.storeNote && <p className="mt-3">⚠ Store note: {stop.storeNote}</p>}
         <div className="mt-auto space-y-3">
           <button
             className={`${primary} w-full`}

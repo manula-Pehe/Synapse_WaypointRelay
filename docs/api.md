@@ -256,7 +256,7 @@ Ordered by id. `runDate` defaults to the current run date.
 ## 8. Loader
 
 - `GET /api/loader/trips?runDate=` → `{ items: [{ tripId, vehicleId, tripNo, district, brand, stops, units, chilled, departAt, status, ticked, vehicleAvailable }], total, listsAvailableAt }` (empty items before publish) — L1b, L1w
-- `GET /api/loader/trips/{id}` → `{ trip, vehicleType, weightCapKg, volumeCapM3, loadedWeightKg, loadedVolumeM3, stops: [ { stopId, loadSeq, orderId, orderRef, outletId, outletName, units, weightKg, volumeM3, accessNote, ticked, missingUnits } ], fridgeCheck }` — L2, L2d
+- `GET /api/loader/trips/{id}` → `{ trip, vehicleType, weightCapKg, volumeCapM3, loadedWeightKg, loadedVolumeM3, stops: [ { stopId, loadSeq, orderId, orderRef, outletId, outletName, units, weightKg, volumeM3, accessNote, storeNote, ticked, missingUnits } ], fridgeCheck }` — L2, L2d
 - `POST /api/loader/trips/{id}/fridge-check` `{ "running": true, "tempC": 3, "doorsOk": true }` → `{ passed }` — L2f
 - `POST /api/loader/stops/{stopId}/tick` → updated trip detail — L2
 - `POST /api/loader/stops/{stopId}/shortfall` `{ "missingUnits": 2, "reason": "MISSING", "note": "" }` → `{ remainderOrderRef }` — L3
