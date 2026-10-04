@@ -17,6 +17,10 @@ import jakarta.persistence.Table;
  *
  * <p>Stock coming back to the shelf, not an outcome on the order: the order keeps its own status and
  * the shortfall stays outstanding, so the cases get delivered on a later run.
+ *
+ * <p>signatureFileId is who took responsibility for the handback (US-11.2). Optional: a handback
+ * queued from a phone out of reach of the depot cannot capture one, and losing the record of the
+ * handback over a missing signature would be the worse outcome.
  */
 @Entity
 @Table(name = "returns")
@@ -34,6 +38,9 @@ public class GoodsReturn {
 
     @Column(nullable = false)
     private Integer units;
+
+    @Column(name = "signature_file_id", length = 40)
+    private String signatureFileId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -57,6 +64,7 @@ public class GoodsReturn {
         this.tripId = recorded.tripId();
         this.orderId = recorded.orderId();
         this.units = recorded.units();
+        this.signatureFileId = recorded.signatureFileId();
         this.reason = recorded.reason();
         this.recordedBy = recorded.recordedBy();
         this.recordedAt = recorded.recordedAt();
@@ -83,6 +91,11 @@ public class GoodsReturn {
         return units;
     }
 
+    /** The signature captured at the depot, or null when the phone could not reach one. */
+    public String getSignatureFileId() {
+        return signatureFileId;
+    }
+
     public DeliveryReason getReason() {
         return reason;
     }
@@ -101,6 +114,7 @@ public class GoodsReturn {
 
     /** The values a queued GOODS_RETURNED carries. */
     public record RecordedReturn(String id, String tripId, String orderId, int units,
-            DeliveryReason reason, String recordedBy, Instant recordedAt, String clientId) {
+            DeliveryReason reason, String signatureFileId, String recordedBy, Instant recordedAt,
+            String clientId) {
     }
 }
