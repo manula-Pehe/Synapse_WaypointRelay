@@ -73,9 +73,11 @@ cloud-off icon and the count: `Offline · 3 waiting`.
 ```ts
 import { enqueue } from 'lib/offline'
 
-// R4 · record delivery
+// R4 · record delivery. The file ids come from uploading the proof first —
+// see "For the loader app" below for why proof is not queued itself.
 await enqueue('DELIVERY_RECORDED', {
   stopId,
+  orderId,
   outcome: 'DELIVERED',
   units: 42,
   receivedBy: 'Kasun',
@@ -109,38 +111,90 @@ guessed position — show the last confirmed update and its window (design syste
 
 ---
 
-## Swapping in the shared API client
+## Transport
 
-`transport.ts` is the only file that calls `fetch`. When the shared `lib/api`
-client lands (Shaanil's app shell), pass it in — nothing else changes:
+`transport.ts` posts the batch through the shared `lib/api` client, so a sync
+carries the driver's bearer token like every other call. That matters offline: a
+session signed in against the local PIN hash has no token, and the work must stay
+queued until a real sign-in puts one back, rather than being sent and rejected.
+
+To point it elsewhere — a different base URL, or a mock in tests:
 
 ```ts
 import { setSyncTransport } from 'lib/offline'
-setSyncTransport((items) => api.post('/api/sync', { items }))
+
+setSyncTransport(async (items) => ({
+  results: items.map((item) => ({ clientId: item.clientId, result: 'APPLIED' })),
+}))
 ```
+
+A transport throws `SyncTransportError(message, retryable)`. `retryable: false`
+stops the loop and shows the driver what went wrong. A 4xx is never retried; a
+5xx, 408 or 429 is.
+
+---
+
+## Offline sign-in (X1m-off)
+
+`pin.ts` keeps a salted PBKDF2-SHA256 hash of the driver's PIN after a
+successful **online** sign-in, so they can start a run at a depot with no signal.
+
+```ts
+import { checkPinOffline, rememberPin, forgetPin } from 'lib/offline'
+
+const check = await checkPinOffline(staffId, pin)
+// { ok, reason: 'ok' | 'no-stored-pin' | 'wrong-pin', credential }
+```
+
+`rememberPin` is called by `AuthProvider` only after the server has accepted the
+credentials. `forgetPin` runs on sign-out. The staff id has to match the stored
+one, so one driver's PIN cannot sign in as another on a shared phone.
+
+**Be clear-eyed about what this is.** The hash is client-side, and a 4-digit PIN
+is not a secret however it is stored. The offline session it mints carries an
+`offline-` token and **no authority** — no endpoint accepts it. Actions queue in
+the outbox, and the server still validates every one of them when they arrive.
+It is a convenience for starting a run without signal, not a way around
+authentication.
+
+Covered by `frontend/tests/driver-offline.test.mjs`.
 
 ---
 
 ## For the loader app (VihanJ)
 
-Identical queue, one extra cache key per dock. Two things to know:
+Identical queue, one extra cache key per dock. Three things to know:
 
 1. The loader is a **shared tablet**. `startSyncRunner()` is safe to call on
    every mount — it clears its own interval and listeners first — but call it once
    from the loader layout rather than per screen.
-2. Photo and signature uploads are queued the same way, but they carry binary
-   data. `enqueue()` takes JSON only, so uploads go through the outbox as a
-   separate item type when that lands with the file endpoint
-   (`POST /api/driver/files`, docs/api.md §9). Do not base64 a 4 MB photo into
-   an outbox row — it will blow past the IndexedDB quota on a tablet that has been
-   in a dock all day.
+2. **Photo and signature uploads do not go through the outbox.** `enqueue()` takes
+   JSON only, and the driver app uploads the file first through
+   `POST /api/driver/files` (docs/api.md §9), then enqueues the delivery naming the
+   returned `photoFileId`. Uploads are idempotent on `clientId`, so a retry after a
+   dropped connection does not create a second file.
+
+   This means a delivery recorded with no signal waits for signal *before* its
+   photo can be uploaded. Do not base64 a 4 MB photo into an outbox row as a
+   workaround — it will blow past the IndexedDB quota on a tablet that has been in
+   a dock all day. If the loader needs uploads to queue, that is a new item type
+   and a design decision, not a small change.
+3. A shared tablet has more than one driver's PIN. Give the loader its own storage
+   key per staff id, or `rememberPin` will be overwritten by whoever signs in last.
 
 ---
 
-## Not built yet
+## Still open
 
 | What | Why |
 |---|---|
-| Offline file upload | Needs `POST /api/driver/files` and the `files` table (V3, Manula) |
-| Conflict list for R6 | Needs `GET /api/dispatch/conflicts`; `sync_log` records the result, the screen reads the conflict |
-| Tests | The frontend test runner lands with the app shell; these functions are written to be injected (`setSyncTransport`) so they test without a browser |
+| Uploads that queue offline | Proof needs signal before it uploads (see above) |
+| R8r — returned goods | Hand back at the depot with a signature; `returns` exists in V20, no endpoint or screen yet |
+| F12 — Sinhala / Tamil stop list | i18n keys exist; the stop list still renders outlet ids raw |
+
+## Already landed since this doc was written
+
+- `POST /api/driver/files` — proof upload, idempotent on `clientId`.
+- `GET /api/dispatch/conflicts` + resolve — the D8 decision card reads it directly.
+- The transport now uses `lib/api` rather than bare `fetch`.
+- Offline sign-in (`pin.ts`) and its tests.
