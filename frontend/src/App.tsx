@@ -19,6 +19,7 @@ import { StoreDeliveries } from './features/store/StoreDeliveries'
 import { StoreArrival } from './features/store/StoreArrival'
 import { StoreReceipt } from './features/store/StoreReceipt'
 import { StoreMoved } from './features/store/StoreMoved'
+import { StoreDeliveryProblem } from './features/store/StoreDeliveryProblem'
 import { StoreIssues, StoreIssueDetail } from './features/store/StoreIssues'
 import { NewIssuePage } from './features/store/NewIssuePage'
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
@@ -110,6 +111,7 @@ export default function App() {
                       <Route path="deliveries/:orderId" element={<StoreArrival />} />
                       <Route path="deliveries/:orderId/receipt" element={<StoreReceipt />} />
                       <Route path="deliveries/:orderId/moved" element={<StoreMoved />} />
+                      <Route path="deliveries/:orderId/problem" element={<StoreDeliveryProblem />} />
                       <Route path="issues" element={<StoreIssues />} />
                       <Route path="issues/new" element={<NewIssuePage />} />
                       <Route path="issues/:id" element={<StoreIssueDetail />} />
