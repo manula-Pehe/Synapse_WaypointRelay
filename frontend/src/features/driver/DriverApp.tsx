@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { enqueue, startSyncRunner, useSyncStatus } from '../../lib/offline'
-import { mockTrip } from './mocks'
 import { useDriverTheme } from './theme'
 import DriverThemeProvider from './ThemeProvider'
+import { useRun } from './useRun'
+import { useDriverReply } from './api'
 import type { Language } from './i18n'
 import SignIn from './screens/SignIn'
 import Today from './screens/Today'
@@ -17,14 +18,13 @@ import SyncSummary from './screens/SyncSummary'
 import Menu from './screens/Menu'
 import VehicleProblem from './screens/VehicleProblem'
 import TripEnd from './screens/TripEnd'
-import type { DriverTrip, DriverStop } from './types'
+import type { DriverStop } from './types'
 
 /**
  * The driver app (F2 to F11).
  *
- * The run is held in memory for now and reads from the offline cache once `GET /api/driver/today`
- * lands; nothing else about the screens changes when it does. Every write goes through the outbox,
- * so a screen is usable with no signal.
+ * The run comes from `useRun`: `GET /api/driver/today`, cached in Dexie and painted from there when
+ * there is no signal. Every write goes through the outbox, so a screen is usable with no signal.
  *
  * This is mounted by the main router under `/driver`, so it brings no router of its own and its
  * routes are relative. Signing in is the app's job too - a driver reaches this through `/login` and
@@ -51,17 +51,29 @@ function DriverRoutes() {
   const { toggle } = useDriverTheme()
   const [language, setLanguage] = useState<Language>('en')
   const { state } = useSyncStatus()
+  const { run, trip, acceptLoad, refresh } = useRun()
+  const latestReply = useDriverReply()
 
-  // One trip for the demo. `updateStop` is the seam where real data replaces this.
-  const [trip, setTrip] = useState<DriverTrip>(mockTrip)
+  // Stops change on this phone as the driver works, so the run is kept alongside the server's copy
+  // and merged back in on the next refresh.
+  const [localStops, setLocalStops] = useState<DriverStop[] | null>(null)
 
-  const byId = useMemo(() => new Map(trip.stops.map((stop) => [stop.id, stop])), [trip])
+  const stops = useMemo(() => localStops ?? trip.stops, [localStops, trip.stops])
+
+  const view = useMemo(() => ({ ...trip, stops }), [trip, stops])
+  const byId = useMemo(() => new Map(stops.map((stop) => [stop.id, stop])), [stops])
 
   const updateStop: UpdateStop = (id, patch) => {
-    setTrip((current) => ({
-      ...current,
-      stops: current.stops.map((stop) => (stop.id === id ? { ...stop, ...patch } : stop)),
-    }))
+    setLocalStops((current) => {
+      const base = current ?? trip.stops
+      return base.map((stop) => (stop.id === id ? { ...stop, ...patch } : stop))
+    })
+  }
+
+  /** Drop the local overlay so the screen shows the server's run again. */
+  const clearLocal = () => {
+    setLocalStops(null)
+    void refresh()
   }
 
   const shared = { language, onToggleTheme: toggle }
@@ -70,20 +82,23 @@ function DriverRoutes() {
     <Routes>
       <Route path="sign-in" element={<SignIn {...shared} offline={state === 'offline'} />} />
 
-      <Route path="today" element={<Today {...shared} trip={trip} />} />
+      <Route path="today" element={<Today {...shared} trip={view} run={run} />} />
 
       <Route
         path="accept"
         element={
           <AcceptLoad
             {...shared}
-            trip={trip}
-            onAccepted={() => setTrip((current) => ({ ...current, loadAccepted: true }))}
+            trip={view}
+            onAccepted={async () => {
+              await acceptLoad()
+              clearLocal()
+            }}
           />
         }
       />
 
-      <Route path="stops" element={<Stops {...shared} trip={trip} />} />
+      <Route path="stops" element={<Stops {...shared} trip={view} />} />
 
       <Route
         path="stop/:stopId"
@@ -136,11 +151,18 @@ function DriverRoutes() {
 
       <Route path="sync" element={<SyncSummary {...shared} />} />
       <Route path="menu" element={<Menu {...shared} onLanguage={setLanguage} />} />
-      <Route path="problem" element={<VehicleProblem {...shared} trip={trip} reply={null} />} />
-      <Route path="trip-end" element={<TripEnd {...shared} trip={trip} />} />
+      <Route
+        path="problem"
+        element={
+          // R9ok — dispatch's instruction, read from the server so the driver is not phoning.
+          <VehicleProblem {...shared} trip={view} reply={latestReply} />
+        }
+      />
+      <Route path="trip-end" element={<TripEnd {...shared} trip={view} />} />
     </Routes>
   )
 }
+
 
 /** Renders the stop the URL names, or goes back to the list if this run does not have it. */
 function StopRoute({

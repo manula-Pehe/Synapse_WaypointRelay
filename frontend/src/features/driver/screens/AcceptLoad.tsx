@@ -10,7 +10,7 @@ export interface AcceptLoadProps {
   trip: DriverTrip
   language: Language
   onToggleTheme: () => void
-  onAccepted: () => void
+  onAccepted: () => void | Promise<void>
 }
 
 /**
@@ -26,12 +26,13 @@ export default function AcceptLoad({ trip, language, onToggleTheme, onAccepted }
 
   const onTheTruck = trip.stops.reduce((sum, stop) => sum + stop.cases, 0)
 
-  function accept() {
+  async function accept() {
     if (onTheTruck !== trip.loadedCases) {
       setMismatch(true)
       return
     }
-    onAccepted()
+    // Awaited so the stops screen opens with the server's view rather than the pre-accept one.
+    await onAccepted()
     navigate('/driver/stops')
   }
 
@@ -42,7 +43,7 @@ export default function AcceptLoad({ trip, language, onToggleTheme, onAccepted }
       onToggleTheme={onToggleTheme}
       onBack={() => navigate('/driver/today')}
       action={
-        <Button full onClick={accept} testId="accept-load">
+        <Button full onClick={() => void accept()} testId="accept-load">
           {t(language, 'driver.today.accept')}
         </Button>
       }

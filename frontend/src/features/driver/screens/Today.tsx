@@ -3,16 +3,18 @@ import DriverLayout from '../DriverLayout'
 import { Badge, Button, Card, Label, Value } from '../components'
 import { t, type Language } from '../i18n'
 import { useDriverTheme } from '../theme'
-import type { DriverTrip } from '../types'
+import type { DriverRun, DriverTrip } from '../types'
 
 export interface TodayProps {
   trip: DriverTrip
+  /** Vehicle type and run date come from the run, not the trip. */
+  run: DriverRun
   language: Language
   onToggleTheme: () => void
 }
 
 /** R1 — today's run at a glance, so the driver knows when and where without calling the depot. */
-export default function Today({ trip, language, onToggleTheme }: TodayProps) {
+export default function Today({ trip, run, language, onToggleTheme }: TodayProps) {
   const navigate = useNavigate()
   const { colors } = useDriverTheme()
   const { done } = summarise(trip)
@@ -45,7 +47,7 @@ export default function Today({ trip, language, onToggleTheme }: TodayProps) {
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div>
             <Label>{t(language, 'driver.today.vehicle')}</Label>
-            <Value>{trip.vehicleId}</Value>
+            <Value>{run.vehicleType || trip.vehicleId}</Value>
           </div>
           <div>
             <Label>{t(language, 'driver.menu.depot')}</Label>
