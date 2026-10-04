@@ -45,7 +45,7 @@ function DispatcherWorkspace() {
     'network-map': { title: 'Network map', subtitle: 'District trips from the selected plan' },
     capacity: { title: 'Capacity outlook · sample preview', subtitle: 'Forecast backend is not available yet' },
     outlets: { title: 'Outlets', subtitle: 'Delivery rules by outlet' },
-    reports: { title: 'Run report · sample preview', subtitle: 'Run report backend is not available yet' },
+    reports: { title: 'Run report', subtitle: 'Recorded outcomes and exceptions for the selected run' },
   }
   const meta = metadata[activeNav] ?? { title: 'Waypoint Relay', subtitle: 'Dispatch & fleet operations' }
   const content = settings.error ? <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-800">Could not load run settings: {settings.error.message}</p>
@@ -55,7 +55,7 @@ function DispatcherWorkspace() {
     : activeNav === 'capacity' ? <CapacityOutlook />
     : activeNav === 'outlets' ? <DispatchOutlets depot={depot} />
     : activeNav === 'network-map' ? (runDate && depot ? <NetworkMap runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
-    : activeNav === 'reports' ? <RunReport />
+    : activeNav === 'reports' ? (runDate && depot ? <RunReport runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'orders' ? (runDate && depot ? <DispatchOrders runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : <p>This screen is being developed by its owner.</p>
 

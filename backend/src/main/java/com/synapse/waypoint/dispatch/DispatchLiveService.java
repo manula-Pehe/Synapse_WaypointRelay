@@ -85,7 +85,7 @@ public class DispatchLiveService {
                     Instant at = outcomes.get(order.id());
                     if (at != null) {
                         completed++;
-                        if (!at.isAfter(stop.arriveTo().toInstant())) onTime++;
+                        if (order.status() != OrderStatus.FAILED && !at.isAfter(stop.arriveTo().toInstant())) onTime++;
                     }
                 }
                 if (order.status() == OrderStatus.ON_THE_WAY || COMPLETED.contains(order.status())) started = true;

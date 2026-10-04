@@ -30,6 +30,12 @@ export interface LiveBoard {
   needsAttention: { id: string; type: string; severity: 'CRITICAL' | 'WARNING'; title: string; details: string; orderId: string | null; action: string | null }[]
   trips: { id: string; vehicleId: string; tripNo: number; district: string; stopsDone: number; stopsTotal: number; status: string; lastUpdate: string | null; lastSync: string | null }[]
 }
+export interface RunReport {
+  runDate: string; depot: string; onTimePercent: number | null; onTimeStops: number
+  completedStops: number; deferred: number | null; failed: number; partial: number
+  lateByDistrict: { district: string; late: number; completed: number }[]
+  exceptions: { type: string; detail: string; orderId: string }[]
+}
 
 const params = (values: Record<string, string>) => new URLSearchParams(values).toString()
 const json = (body: unknown) => JSON.stringify(body)
@@ -52,4 +58,5 @@ export const dispatchApi = {
   markAllNotificationsRead: () => api<{ updated: number }>('notifications/read-all', { method: 'POST' }),
   latestPlan: (runDate: string, depot: string) => api<Plan>(`dispatch/plans?${params({ runDate, depot })}`),
   live: (runDate: string, depot: string) => api<LiveBoard>(`dispatch/live?${params({ runDate, depot })}`),
+  runReport: (runDate: string, depot: string) => api<RunReport>(`dispatch/reports/run?${params({ runDate, depot })}`),
 }

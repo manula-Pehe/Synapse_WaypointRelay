@@ -14,3 +14,10 @@ This document tracks the work after the supplied design guide update. F1 and F10
 - The responsive desktop/phone board polls every 15 seconds and opens an order detail/history drawer from an actionable alert. The old hard-coded desktop and phone sample boards were removed.
 - On-time percentage uses recorded delivery outcome events compared with the planned stop window; it is `null` until an outcome is recorded. Fridge use is based on the published plan summary. Missing driver sync, skipped-run history, vehicle problems, and dock shortfalls are shown as unavailable or omitted because their source workflows are not present. No guessed progress or GPS position is shown.
 - A focused backend aggregation test covers on-time arithmetic, trip progress, fridge use, and critical-first ordering. Backend compilation and the focused test pass with annotation processing disabled (the installed Lombok processor is incompatible with the available JDK 27; no source uses Lombok annotations). Frontend build and lint pass.
+
+## F8 — run report
+
+- Added `GET /api/dispatch/reports/run?runDate=&depot=`. It reports the published plan's deferrals, recorded failed and partial order outcomes, on-time results from the live aggregation, late outcomes by district from planned stop windows, and recorded exceptions.
+- Replaced the sample report with a run/depot-aware screen and CSV export of the returned data. The old sample date filters and example values were removed.
+- A failed outcome cannot count as on-time, even if recorded before the window closes. Runs without a published plan show unknown plan-derived metrics as `null`, and district totals count only stops with recorded outcomes.
+- Verified with the focused report and live aggregation backend tests, frontend build, and lint.
