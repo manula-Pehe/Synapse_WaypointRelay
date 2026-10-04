@@ -30,7 +30,6 @@ const realStoreApi = {
   receipt: (id: string, receivedUnits: number, note: string) => api(`store/orders/${id}/receipt`, { method: 'POST', body: JSON.stringify({ receivedUnits, note }) }),
   deferralChoice: (id: string, choice: 'KEEP' | 'REDUCE' | 'CANCEL' | 'SPLIT', units?: number) => api(`store/deferrals/${id}/choice`, { method: 'POST', body: JSON.stringify({ choice, ...(units === undefined ? {} : { units }) }) }),
   failedChoice: (id: string, choice: 'REPLAN_TOMORROW' | 'TRY_LATER_TODAY' | 'CANCEL') => api(`store/failed/${id}/choice`, { method: 'POST', body: JSON.stringify({ choice }) }),
-  breakdownChoice: (stopId: string, accept: boolean) => api(`store/breakdown/${stopId}/choice`, { method: 'POST', body: JSON.stringify({ accept }) }),
   issues: () => api<List<Issue>>('store/issues'),
   issue: (id: string) => api<Issue>(`store/issues/${id}`),
   createIssue: (body: { orderId: string | null; type: string; units: number | null; wants: string; note: string }) => api<Issue>('store/issues', { method: 'POST', body: JSON.stringify(body) }),
