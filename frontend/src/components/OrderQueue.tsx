@@ -249,7 +249,7 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
                 80
               </div>
             </div>
-            <p className="mt-3 text-xs text-slate-500">Fresh 60 · Style 12 · Tech 8</p>
+            <p className="mt-3 text-xs text-slate-500">Fresh 62 · Style 14 · Tech 4</p>
           </div>
 
           <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs">
@@ -331,18 +331,18 @@ export const OrderQueue: React.FC<OrderQueueProps> = ({
                 type="button"
                 className="min-h-[40px] rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-50"
               >
-                Chilled 20
+                Chilled 22
               </button>
               <button
                 type="button"
                 className="min-h-[40px] rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-50"
               >
-                Van only 12
+                Van only 3
               </button>
             </>
           ) : (
             <>
-              {(['Fresh 60', 'Style 12', 'Tech 8', 'Chilled 20', 'Van only 12', 'Skipped before 7'] as const).map(
+              {(['Fresh 62', 'Style 14', 'Tech 4', 'Chilled 22', 'Van only 3', 'Skipped before 2'] as const).map(
                 (cat) => (
                   <button
                     key={cat}
