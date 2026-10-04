@@ -17,6 +17,9 @@ import jakarta.persistence.Table;
  * <p>Written from the phone's outbox, so it carries the clientId that made it - a driver who
  * reports the same flat tyre twice while offline still produces one report. reply holds the
  * dispatcher's instruction, which the driver reads on the same screen instead of phoning.
+ *
+ * <p>unitsOnBoard is what Chethiya re-plans against (D6b): how many cases are stranded on this
+ * vehicle right now. Absent when there is no load - a breakdown on the way back to the depot.
  */
 @Entity
 @Table(name = "vehicle_problems")
@@ -41,6 +44,9 @@ public class VehicleProblem {
 
     @Column(name = "fridge_temp_c", precision = 4, scale = 1)
     private BigDecimal fridgeTempC;
+
+    @Column(name = "units_on_board")
+    private Integer unitsOnBoard;
 
     @Column(columnDefinition = "TEXT")
     private String note;
@@ -79,6 +85,7 @@ public class VehicleProblem {
         this.kind = reported.kind();
         this.canDrive = reported.canDrive();
         this.fridgeTempC = reported.fridgeTempC();
+        this.unitsOnBoard = reported.unitsOnBoard();
         this.note = reported.note();
         this.reportedBy = reported.reportedBy();
         this.reportedAt = reported.reportedAt();
@@ -135,6 +142,11 @@ public class VehicleProblem {
         return note;
     }
 
+    /** How many cases are stranded on this vehicle, or null when there is no load. */
+    public Integer getUnitsOnBoard() {
+        return unitsOnBoard;
+    }
+
     public ProblemStatus getStatus() {
         return status;
     }
@@ -165,7 +177,7 @@ public class VehicleProblem {
 
     /** The values a queued {@code VEHICLE_PROBLEM} carries. */
     public record ReportedProblem(String id, String vehicleId, String tripId, VehicleProblemKind kind,
-            boolean canDrive, BigDecimal fridgeTempC, String note, String reportedBy,
-            Instant reportedAt, String clientId) {
+            boolean canDrive, BigDecimal fridgeTempC, Integer unitsOnBoard, String note,
+            String reportedBy, Instant reportedAt, String clientId) {
     }
 }
