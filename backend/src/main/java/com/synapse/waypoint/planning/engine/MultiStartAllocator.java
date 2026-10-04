@@ -30,8 +30,8 @@ public class MultiStartAllocator {
         this.allocator = allocator;
         this.runCount = runCount;
         this.betterFirst = Comparator
-                .comparingInt(this::servedPriority).reversed()
-                .thenComparing(Comparator.comparingInt(this::servedCount).reversed())
+                .comparingInt(this::servedCount).reversed()
+                .thenComparing(Comparator.comparingInt(this::servedPriority).reversed())
                 .thenComparingInt(this::tripCount);
     }
 
