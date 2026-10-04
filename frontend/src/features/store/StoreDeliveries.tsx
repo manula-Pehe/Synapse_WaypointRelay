@@ -31,7 +31,7 @@ function DeliveryCard({ delivery }: { delivery: Delivery }) {
     {delivery.breakdown?.stopId && <div className="mt-5 rounded-lg bg-warning-soft p-4"><p className="font-semibold text-warning">! Vehicle breakdown: {delivery.breakdown.reason}</p><div className="mt-3 flex gap-3"><Button disabled={choice.isPending} onClick={() => choice.mutate('BREAKDOWN:ACCEPT')}>Accept new plan</Button><Button tone="secondary" disabled={choice.isPending} onClick={() => choice.mutate('BREAKDOWN:DECLINE')}>Ask dispatch to call</Button></div></div>}
     {delivery.status === 'FAILED' && <div className="mt-5 rounded-lg bg-danger-soft p-4 text-danger"><p className="font-semibold">! Delivery failed</p>{delivery.delivery?.id ? <div className="mt-3 flex flex-wrap gap-2"><Button disabled={choice.isPending} onClick={() => choice.mutate('FAILED:REPLAN_TOMORROW')}>Tomorrow</Button><Button tone="secondary" disabled={choice.isPending} onClick={() => choice.mutate('FAILED:TRY_LATER_TODAY')}>Try later today</Button><Button tone="danger" disabled={choice.isPending} onClick={() => choice.mutate('FAILED:CANCEL')}>Cancel</Button></div> : <p>Contact dispatch to arrange the next attempt.</p>}</div>}
     <Feedback error={choice.error} success={choiceSaved} />
-    <Link to={`/store/orders/${delivery.orderId}`} className="mt-5 inline-flex min-h-12 items-center font-semibold text-brand">Order history →</Link>
+    <Link to={`/store/deliveries/${delivery.orderId}`} className="mt-5 inline-flex min-h-12 items-center font-semibold text-brand">Arrival and order history →</Link>
   </Card>
 }
 export function StoreDeliveries() {
