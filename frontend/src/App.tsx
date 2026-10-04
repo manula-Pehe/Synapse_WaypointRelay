@@ -26,51 +26,85 @@ import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
 import { StoreMore, StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
 import OutletsReference from './components/OutletsReference'
+import RunReport from './components/RunReport'
+import CapacityOutlook from './components/CapacityOutlook'
+import IssuesInbox from './components/IssuesInbox'
+import IssueDetail from './components/IssueDetail'
 
 function DispatcherWorkspace() {
-  const [activeNav, setActiveNav] = useState('outlets')
+  const [activeNav, setActiveNav] = useState('issues')
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
 
   const pageMeta: Record<string, { title: string; subtitle: string; planStatus?: string }> = {
     orders: {
-      title: 'Order queue · Thu 1 Oct run',
-      subtitle: 'Orders closed Wed 4:00 PM · 85 confirmed orders',
-      planStatus: 'Plan v1 · not started',
+      title: 'Order queue',
+      subtitle: 'Orders awaiting dispatch planning',
     },
     fleet: {
-      title: 'Fleet · Peliyagoda · Thu 1 Oct',
-      subtitle: 'Mark workshop vehicles before planning · weekly fuel shown per vehicle',
-      planStatus: 'Plan v1 · not started',
+      title: 'Fleet',
+      subtitle: 'Vehicle availability and workshop status',
     },
     'live-board': {
-      title: 'Live board · Thu 1 Oct · 6:45 AM',
+      title: 'Live board',
       subtitle: 'Exceptions first · updates arrive as drivers sync',
-      planStatus: 'Plan v1 · published',
+    },
+    issues: {
+      title: 'Issues',
+      subtitle: 'Reports from stores, drivers, and loaders',
+    },
+    capacity: {
+      title: 'Capacity outlook · next 10 weeks',
+      subtitle: 'Demand forecast versus fleet capacity',
     },
     outlets: {
       title: 'Outlets',
-      subtitle: '120 outlets · Peliyagoda 75 · Kandy 45',
-      planStatus: 'Plan v1 · not started',
+      subtitle: 'Outlet reference',
+    },
+    reports: {
+      title: 'Run report',
+      subtitle: 'Delivery and dispatch results',
     },
   }
 
   const currentMeta = pageMeta[activeNav] || {
     title: 'Waypoint Relay',
     subtitle: 'Dispatch & Fleet Operations',
-    planStatus: 'Plan v1 · not started',
   }
+
+  const isIssueDetailActive = activeNav === 'issues' && selectedIssueId !== null
 
   const content = activeNav === 'fleet' ? <FleetStatus />
     : activeNav === 'live-board' ? <LiveBoardPage />
+    : activeNav === 'issues' ? (
+        selectedIssueId ? (
+          <IssueDetail
+            issueId={selectedIssueId}
+            onBack={() => setSelectedIssueId(null)}
+          />
+        ) : (
+          <IssuesInbox
+            onIssueSelect={(issue) => setSelectedIssueId(issue.id)}
+          />
+        )
+      )
+    : activeNav === 'capacity' ? <CapacityOutlook />
     : activeNav === 'outlets' ? <OutletsReference />
+    : activeNav === 'reports' ? <RunReport />
     : <OrderQueue />
 
   return (
     <DispatcherLayout
       activeNav={activeNav}
-      onNavChange={setActiveNav}
+      onNavChange={(nav) => {
+        setActiveNav(nav)
+        if (nav !== 'issues') {
+          setSelectedIssueId(null)
+        }
+      }}
       title={currentMeta.title}
       subtitle={currentMeta.subtitle}
       planStatus={currentMeta.planStatus}
+      hideTopBar={activeNav === 'capacity' || isIssueDetailActive}
     >
       {content}
     </DispatcherLayout>

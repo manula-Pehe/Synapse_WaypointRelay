@@ -94,6 +94,8 @@ Anything else → `409 INVALID_STATUS`.
 ```
 ### `POST /api/settings/clock` (dispatcher) `{ "at": "2026-09-30T16:05:00+05:30" }` → same as GET
 
+Moving the clock forward runs every timed job that has become due (see `docs/deployment.md`, "Timed jobs") before the response returns, so e.g. a move past 4 PM has closed the orders by then. Moving it backwards re-runs nothing.
+
 ---
 
 ## 3. Reference data
@@ -167,8 +169,12 @@ Ordered by id. `runDate` defaults to the current run date.
   "body": "Store closed. 64 cases returning.", "link": "/dispatch/live/failed/123",
   "createdAt": "…", "readAt": null }
 ```
-- `GET /api/notifications?unread=true` → list (newest first) + `unreadCount`
-- `POST /api/notifications/{id}/read` · `POST /api/notifications/read-all`
+- `GET /api/notifications?unread=true` → `{ "items": [notification…], "total": n, "unreadCount": n }`, newest first. Without `unread` all of the user's notifications are listed. `total` counts the returned items; `unreadCount` always counts every unread notification of the user.
+- `POST /api/notifications/{id}/read` → the notification with `readAt` set. Reading it again keeps the first `readAt`.
+- `POST /api/notifications/read-all` → `{ "updated": n }` (how many were newly marked read).
+- Open to every signed-in role; a user only ever sees and changes their own notifications. Someone else's or an unknown id → 404 `NOT_FOUND`.
+- A notification is stored once per recipient, so read state is per user. `createdAt` is the demo clock time.
+- **Critical notifications can't be muted.** There is no muting yet, so nothing filters notifications out; when muting is added it must skip `CRITICAL`.
 
 ---
 
@@ -300,10 +306,25 @@ Item types: `TRIP_ACCEPTED`, `ARRIVED`, `DELIVERY_RECORDED`, `DELIVERY_UNDONE`, 
 | `DemoClock` | core | `now(): OffsetDateTime`, `today(): LocalDate`, `runDate(): LocalDate` |
 | `OrderService` | core | `get(id)`, `findByRun(runDate, depot, filters)`, `confirm(id)`, `editUnits(id, units)`, `cancel(id, reason)`, `createStoreOrder(…)`, `createPhoneInOrder(…)`, `markPlanned(id, planId)`, `markMoved(id, newDate, reason)`, `markLoaded(id)`, `markOnTheWay(id)`, `recordOutcome(id, outcome, units)`, `createRemainder(parentId, units, reason)`, `history(id)`, `isClosed(runDate, depot)`, `autoConfirm(id)` (cut-off only; no user) |
 | `ReferenceService` | core | `outlet(id)`, `outlets(depot)`, `vehicle(id)`, `availableVehicles(runDate, depot)`, `travel(district, depot)`, `serviceMinutes(brand, dockType)`, `fuelUsed(vehicleId, isoYear, isoWeek)` — read-only, returns DTO records. `outlet`, `vehicle`, `travel` and `serviceMinutes` throw `NotFoundException` when nothing matches; `fuelUsed` returns 0 when no row exists; `vehicle(id)` shows availability for the current run date; `availableVehicles` applies the availability rule in §3 (also `outlets(depot, brand)` and `vehicles(runDate, depot)`) |
-| `NotificationService` | notification | `notifyUser(userId, …)`, `notifyRole(role, scope, severity, type, title, body, link)` |
+| `NotificationService` | notification | `notifyUser(userId, severity, type, title, body, link)`, `notifyRole(role, scope, severity, type, title, body, link)` — see below |
 | `FileService` | core | `store(bytes, contentType, kind, clientId): fileId`, `get(fileId)` — photos and signatures (driver proof, issue photos) |
 | `PlanQueryService` | planning | `tripsForVehicle(runDate, vehicleId)`, `tripsForDepot(runDate, depot)`, `stopForOrder(orderId)`, `deferralForOrder(orderId)`, `publishedPlan(runDate, depot)` |
 | `DeliveryQueryService` | driver | `deliveryForOrder(orderId)`, `driverStatus(vehicleId)`, `failedDeliveries(runDate)`, `openConflicts(runDate)`, `vehicleProblems(runDate)` |
 | `LoadingQueryService` | loader | `loadingStatus(runDate, depot)`, `shortfallForOrder(orderId)` |
+
+**`NotificationService` details** (package `com.synapse.waypoint.notification.service`; `NotificationScope` and `NotificationSeverity` are in the notification module)
+- `severity` is `CRITICAL`, `WARNING` or `INFO`; `type`, `title` and `body` are required (otherwise `VALIDATION`); `link` is optional.
+- `notifyUser` throws `NotFoundException` when the user does not exist or is inactive.
+- `notifyRole` writes one row per **active** user of the role inside the scope. Scope fields are `NotificationScope.outlet(id)`, `.depot(name)`, `.vehicle(id)` or `.none()`:
+
+  | Role | Narrowed by |
+  |---|---|
+  | `STORE_MANAGER` | `outletId` |
+  | `DRIVER` | `vehicleId` |
+  | `LOADER` | `depot` |
+  | `DISPATCHER` | `depot`; a dispatcher with no depot works across all depots and receives every depot's notifications |
+
+  A missing scope field means the whole role (fine for broadcasts such as "all dispatchers"). **Store and driver notifications should always pass `outletId` / `vehicleId`**, otherwise every store manager or driver is notified.
+- Writes join the caller's transaction (`REQUIRED`): if the caller's change rolls back, its notifications are not stored. Call the service from inside the same transaction as the change it reports.
 
 Until a service is merged, callers code against its interface and use a stub returning sample data.

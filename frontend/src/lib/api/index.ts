@@ -9,6 +9,13 @@ export class ApiError extends Error {
   }
 }
 
+const apiBase = (import.meta.env?.VITE_API_URL ?? '').replace(/\/+$/, '')
+
+/** Built apps call VITE_API_URL; empty means same origin (Vite proxy or nginx). */
+function apiUrl(path: string): string {
+  return `${apiBase}/api/${path.replace(/^\//, '')}`
+}
+
 let accessToken: string | null = null
 let onUnauthorized = () => {}
 export function configureApi(token: string | null, unauthorized: () => void) {
@@ -25,7 +32,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   if (init.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json')
   const requestToken = authenticated ? accessToken : null
   if (requestToken) headers.set('Authorization', `Bearer ${requestToken}`)
-  const response = await fetch(`/api/${path.replace(/^\//, '')}`, { ...init, headers })
+  const response = await fetch(apiUrl(path), { ...init, headers })
   if (response.status === 401 && requestToken && requestToken === accessToken) onUnauthorized()
   const body = await response.text()
   let data: unknown
@@ -56,7 +63,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
 
 export async function apiBlob(path: string): Promise<Blob> {
   const requestToken = accessToken
-  const response = await fetch(`/api/${path.replace(/^\//, '')}`, {
+  const response = await fetch(apiUrl(path), {
     headers: requestToken ? { Authorization: `Bearer ${requestToken}` } : {},
   })
   if (response.status === 401 && requestToken && requestToken === accessToken) onUnauthorized()

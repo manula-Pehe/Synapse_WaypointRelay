@@ -10,12 +10,15 @@ import com.synapse.waypoint.core.order.entity.TemperatureRequirement;
  * Chilled, Style and Tech orders never are — an unconfirmed one is left out of the run.
  */
 @Component
-class AutoConfirmPolicy {
+public class AutoConfirmPolicy {
 
     private static final String FRESH_BRAND = "Fresh";
 
     boolean appliesTo(Order order) {
-        return FRESH_BRAND.equalsIgnoreCase(order.getBrand())
-                && order.getTemperatureRequirement() == TemperatureRequirement.AMBIENT;
+        return appliesTo(order.getBrand(), order.getTemperatureRequirement());
+    }
+
+    public boolean appliesTo(String brand, TemperatureRequirement temperature) {
+        return FRESH_BRAND.equalsIgnoreCase(brand) && temperature == TemperatureRequirement.AMBIENT;
     }
 }

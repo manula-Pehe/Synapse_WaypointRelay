@@ -8,7 +8,6 @@ export interface Order {
   updatedAt: string; confirmedAt: string | null; weightKg: number; volumeM3: number
 }
 export interface OutletDetails { id: string; name: string; brand: string; district: string; depot: string; dockType: string; parkingConstraint: string; windowOpen: string; windowClose: string; mallWindowOpen: string | null; mallWindowClose: string | null }
-export interface StoreNotificationSettings { deliveries: boolean; orders: boolean; issues: boolean }
 export interface OrderEvent { at: string; actor: string | null; type: string; fromStatus: OrderStatus | null; toStatus: OrderStatus; details: Record<string, unknown> }
 export interface OrderDetail { order: Order; history: OrderEvent[] }
 export interface StoreHome { outlet: string; brand: string; runDate: string; now: string; ordersClosed: boolean; cutOffAt: string; tomorrow: Order[]; today: Order[]; openIssues: number }
@@ -18,10 +17,6 @@ export interface Issue { id: string; ref: string; outletId: string; orderId: str
 interface List<T> { items: T[]; total: number }
 const realStoreApi = {
   outlet: (id: string) => api<OutletDetails>(`outlets/${encodeURIComponent(id)}`),
-  notificationSettings: () => api<StoreNotificationSettings>('store/notifications/settings'),
-  saveNotificationSettings: (settings: StoreNotificationSettings) => api<StoreNotificationSettings>('store/notifications/settings', { method: 'PUT', body: JSON.stringify(settings) }),
-  notificationReads: () => api<string[]>('store/notifications/reads'),
-  markNotificationReads: (ids: string[]) => api<void>('store/notifications/reads', { method: 'POST', body: JSON.stringify({ ids }) }),
   home: () => api<StoreHome>('store/home'),
   orders: (from?: string, to?: string) => api<List<Order>>(`store/orders?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) })}`),
   order: (id: string) => api<OrderDetail>(`store/orders/${id}`),

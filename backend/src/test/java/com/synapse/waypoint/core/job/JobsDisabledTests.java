@@ -1,0 +1,22 @@
+package com.synapse.waypoint.core.job;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
+
+/** {@code app.jobs.enabled=false} is the test default (see the surefire configuration). */
+@SpringBootTest
+class JobsDisabledTests {
+
+    @Autowired ApplicationContext context;
+
+    @Test
+    void shouldNotStartTheSchedulerOrTheClockTrigger() {
+        assertThat(context.getBeansOfType(JobScheduler.class)).isEmpty();
+        assertThat(context.getBeansOfType(ClockMoveJobTrigger.class)).isEmpty();
+        assertThat(context.getBeansOfType(JobRunner.class)).hasSize(1);
+    }
+}

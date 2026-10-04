@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import com.synapse.waypoint.core.settings.entity.AppSetting;
 import com.synapse.waypoint.core.settings.repository.AppSettingRepository;
@@ -16,6 +17,7 @@ import com.synapse.waypoint.core.settings.repository.AppSettingRepository;
  * The offset and run date live in {@code app_settings} and survive restarts.
  */
 @Component
+@ConditionalOnProperty(name = "app.demo.enabled", havingValue = "true")
 class PersistentDemoClock implements AdjustableDemoClock {
 
     static final String OFFSET_KEY = "clock_offset_seconds";

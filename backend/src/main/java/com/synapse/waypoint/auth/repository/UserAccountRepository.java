@@ -14,5 +14,7 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, String
 
     Optional<UserAccount> findByStaffIdIgnoreCaseAndActiveTrue(String staffId);
 
+    List<UserAccount> findByRoleAndActiveTrue(Role role);
+
     List<UserAccount> findByRoleAndDepotIgnoreCaseAndActiveTrue(Role role, String depot);
 }
