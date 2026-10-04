@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { storeApi } from './api'
 import { Feedback } from './StoreShared'
 import './new-issue-page.css'
@@ -8,11 +8,13 @@ import './new-issue-page.css'
 const kinds = [['MISSING','Short'],['DAMAGED','Damaged'],['WRONG_ITEM','Wrong item'],['TEMPERATURE','Temperature'],['OTHER','Other']] as const
 export function NewIssuePage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const fromReceipt = location.state as { orderId?: string; units?: number; type?: string } | null
   const client = useQueryClient()
   const orders = useQuery({ queryKey: ['store', 'orders'], queryFn: () => storeApi.orders() })
-  const [orderId, setOrderId] = useState('')
-  const [type, setType] = useState<string>('DAMAGED')
-  const [units, setUnits] = useState(1)
+  const [orderId, setOrderId] = useState(fromReceipt?.orderId ?? '')
+  const [type, setType] = useState<string>(kinds.some(([value]) => value === fromReceipt?.type) ? fromReceipt!.type! : 'DAMAGED')
+  const [units, setUnits] = useState(fromReceipt?.units && fromReceipt.units > 0 ? fromReceipt.units : 1)
   const [wants, setWants] = useState<'REPLACE' | 'NOTHING'>('REPLACE')
   const [note, setNote] = useState('')
   const [photos, setPhotos] = useState<File[]>([])
