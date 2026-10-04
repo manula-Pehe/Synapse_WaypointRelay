@@ -1,9 +1,12 @@
 package com.synapse.waypoint.planning.service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import com.synapse.waypoint.common.security.Role;
 import com.synapse.waypoint.core.order.dto.OrderDto;
+import com.synapse.waypoint.planning.entity.Stop;
 import com.synapse.waypoint.notification.entity.NotificationSeverity;
 import com.synapse.waypoint.notification.recipient.NotificationScope;
 import com.synapse.waypoint.notification.service.NotificationService;
@@ -24,6 +28,8 @@ import com.synapse.waypoint.notification.service.NotificationService;
 class PlanPublishNotifier {
 
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH);
+    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
+            .withZone(ZoneId.of("Asia/Colombo"));
     private static final String STORE_DELIVERIES_LINK = "/store/deliveries";
     private static final String STORE_ORDER_LINK = "/store/orders/";
     private static final String LOADER_LINK = "/loader";
@@ -39,9 +45,9 @@ class PlanPublishNotifier {
         this.notifications = notifications;
     }
 
-    void notifyPublished(String depot, LocalDate runDate, List<OrderDto> planned, List<MovedOrder> moved,
+    void notifyPublished(String depot, LocalDate runDate, List<OrderDto> planned, List<Stop> stops, List<MovedOrder> moved,
             Set<String> usedVehicleIds) {
-        notifyServedStores(runDate, planned);
+        notifyServedStores(runDate, planned, stops);
         moved.forEach(this::notifyMovedStore);
         notifications.notifyRole(Role.LOADER, NotificationScope.depot(depot), NotificationSeverity.INFO,
                 "LOADING_LISTS_READY", "Loading lists ready",
@@ -49,20 +55,31 @@ class PlanPublishNotifier {
         new TreeSet<>(usedVehicleIds).forEach(vehicleId -> notifyDriver(runDate, vehicleId));
     }
 
-    private void notifyServedStores(LocalDate runDate, List<OrderDto> planned) {
-        Set<String> outletIds = planned.stream().map(OrderDto::outletId)
-                .collect(Collectors.toCollection(TreeSet::new));
-        outletIds.forEach(outletId -> notifications.notifyRole(Role.STORE_MANAGER, NotificationScope.outlet(outletId),
-                NotificationSeverity.INFO, "DELIVERY_WINDOW", "Delivery window for " + DAY.format(runDate),
-                "Your delivery is planned for " + DAY.format(runDate) + ". Open it to see the arrival window.",
-                STORE_DELIVERIES_LINK));
+    private void notifyServedStores(LocalDate runDate, List<OrderDto> planned, List<Stop> stops) {
+        Map<String, String> outletsByOrder = planned.stream()
+                .collect(Collectors.toMap(OrderDto::id, OrderDto::outletId));
+        Map<String, List<Stop>> stopsByOutlet = stops.stream()
+                .filter(stop -> outletsByOrder.containsKey(stop.getOrderId()))
+                .collect(Collectors.groupingBy(stop -> outletsByOrder.get(stop.getOrderId())));
+        new TreeSet<>(stopsByOutlet.keySet()).forEach(outletId -> {
+            List<Stop> outletStops = stopsByOutlet.get(outletId);
+            Stop first = outletStops.stream().min(Comparator.comparing(Stop::getArriveFrom)).orElseThrow();
+            String arrival = TIME.format(first.getArriveFrom()) + "–" + TIME.format(first.getArriveTo());
+            String label = outletStops.size() == 1 ? "Expected arrival: " : "First expected arrival: ";
+            notifications.notifyRole(Role.STORE_MANAGER, NotificationScope.outlet(outletId),
+                    NotificationSeverity.INFO, "DELIVERY_WINDOW", "Delivery scheduled for " + DAY.format(runDate),
+                    "Your delivery is scheduled for " + DAY.format(runDate) + ". " + label + arrival + ".",
+                    STORE_DELIVERIES_LINK);
+        });
     }
 
     private void notifyMovedStore(MovedOrder moved) {
         OrderDto order = moved.order();
         notifications.notifyRole(Role.STORE_MANAGER, NotificationScope.outlet(order.outletId()),
-                NotificationSeverity.WARNING, "ORDER_MOVED",
-                "Order " + order.ref() + " moved to " + DAY.format(order.runDate()), moved.reason(),
+                NotificationSeverity.CRITICAL, "DELIVERY_DEFERRED",
+                "Order " + order.ref() + " deferred to " + DAY.format(order.runDate()),
+                "Order " + order.ref() + " has been deferred to " + DAY.format(order.runDate())
+                        + ". Reason: " + moved.reason(),
                 STORE_ORDER_LINK + order.id());
     }
 

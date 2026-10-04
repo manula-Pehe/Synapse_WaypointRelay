@@ -43,3 +43,19 @@ test('store alert choices hide muted categories but retain critical notices', as
   const result = await getNotifications({ id: 'user-1', role: 'STORE_MANAGER' })
   assert.deepEqual(result.map(item => item.id), ['critical'])
 })
+
+test('delivery problems stay visible as urgent delivery alerts', async () => {
+  configureApi('session-token', () => {})
+  globalThis.fetch = async (url) => {
+    if (url === '/api/store/notifications/settings') return new Response(JSON.stringify({ deliveries: false, orders: true, issues: true }), { status: 200 })
+    if (url === '/api/notifications') return new Response(JSON.stringify({ items: [
+      { id: 'problem', severity: 'CRITICAL', type: 'DELIVERY_PROBLEM', title: 'Delivery problem', body: 'Driver could not complete it.', link: '/store/deliveries/order-1/problem', createdAt: new Date().toISOString(), readAt: null },
+    ], total: 1, unreadCount: 1 }), { status: 200 })
+    throw new Error(`Unexpected request: ${url}`)
+  }
+  const [notice] = await getNotifications({ id: 'user-1', role: 'STORE_MANAGER' })
+  assert.equal(notice.category, 'deliveries')
+  assert.equal(notice.severity, 'critical')
+  assert.equal(notice.icon, 'warning')
+  assert.equal(notice.href, '/store/deliveries/order-1/problem')
+})
