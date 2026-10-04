@@ -186,6 +186,8 @@ class DefaultDeliveryQueryService implements DeliveryQueryService {
                 delivery.getReceivedBy(),
                 delivery.getPhotoFileId() != null,
                 delivery.getSignatureFileId() != null,
+                delivery.getPhotoFileId(),
+                delivery.getSignatureFileId(),
                 delivery.getCompletedAt(),
                 delivery.isUndone(),
                 delivery.getDecision(),
