@@ -70,7 +70,7 @@ Open http://localhost.
 ### Dataset
 The competition dataset is confidential and is **never committed**. `./data` and all `*.csv` files are git-ignored.
 On first start the backend loads reference data, the demo delivery day (Thu 1 Oct 2026: 85 orders and the fleet) and the demo accounts from `./data`. It does this once; later starts skip it.
-If the folder or a file is missing, start-up stops with a message naming the file. Set `SEED_ENABLED=false` to start without seeding (no demo data or accounts).
+If the folder or a file is missing, start-up stops with a message naming the file. `docker compose` seeds and runs the demo clock by default (`SEED_ENABLED` and `DEMO_MODE` are `true`); set both to `false` in `.env` to start without demo data or accounts.
 
 ### Local development
 ```bash
@@ -90,7 +90,7 @@ cd frontend && npm ci && npm run dev
 | Loader (Kasun, Peliyagoda) | depot `Peliyagoda` / PIN `1234` |
 | Driver (Nuwan, VEH036) | staff ID `DRV-0036` / PIN `3636` |
 
-Live URL: _to be added_ · Deployment guide: [`docs/deployment.md`](docs/deployment.md)
+Live URL: https://waypoint-relay.vercel.app · Deployment guide: [`docs/deployment.md`](docs/deployment.md)
 
 A step-by-step walkthrough across all four roles will be added here.
 
