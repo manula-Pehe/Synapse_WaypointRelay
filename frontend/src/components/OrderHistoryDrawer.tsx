@@ -39,7 +39,7 @@ const DEFAULT_TIMELINE_EVENTS: TimelineEvent[] = [
   {
     id: 'evt-4',
     title: 'Loaded by Kasun (dock PIN)',
-    timestamp: 'Thu 6:08 AM · 80 cases',
+    timestamp: 'Thu 6:08 AM · 70 cases',
     dotColor: 'blue',
   },
   {
@@ -73,7 +73,7 @@ export const OrderHistoryDrawer: React.FC<OrderHistoryDrawerProps> = ({
   onClose,
   orderId = 'S1-001',
   outletId = 'OUT001',
-  casesSummary = 'Chilled 80 cases',
+  casesSummary = 'Chilled 70 cases',
   onRecordOutcome,
   onPrintLoadingList,
 }) => {
