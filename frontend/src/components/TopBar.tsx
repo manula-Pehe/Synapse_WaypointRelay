@@ -9,6 +9,7 @@ export interface TopBarProps {
   planStatus?: string;
   notificationCount?: number;
   onNotificationClick?: () => void;
+  clockControl?: React.ReactNode;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -20,6 +21,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   planStatus = 'Plan v1 · not started',
   notificationCount = 8,
   onNotificationClick,
+  clockControl,
 }) => {
   const [internalDepot, setInternalDepot] = useState('Peliyagoda');
   const activeDepot = controlledDepot ?? internalDepot;
@@ -43,6 +45,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Top Bar Controls & Badges */}
       <div className="flex flex-wrap items-center gap-2.5">
+        {clockControl}
         {/* Depot Switch Buttons Segmented Group (40px touch targets) */}
         <div className="flex min-h-[40px] items-center rounded-lg bg-slate-100 p-1">
           {depots.map((depot) => {

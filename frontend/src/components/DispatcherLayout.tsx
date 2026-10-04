@@ -18,6 +18,7 @@ export interface DispatcherLayoutProps {
   user?: SideNavProps['user'];
   onNotificationClick?: () => void;
   hideTopBar?: boolean;
+  clockControl?: React.ReactNode;
 }
 
 export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
@@ -34,6 +35,7 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
   user,
   onNotificationClick,
   hideTopBar = false,
+  clockControl,
 }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
@@ -64,6 +66,7 @@ export const DispatcherLayout: React.FC<DispatcherLayoutProps> = ({
             planStatus={planStatus}
             notificationCount={notificationCount}
             onNotificationClick={handleNotificationClick}
+            clockControl={clockControl}
           />
         )}
 

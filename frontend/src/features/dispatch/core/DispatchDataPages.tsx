@@ -1,0 +1,75 @@
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { dispatchApi, type Order, type Vehicle } from './api'
+
+const card = 'rounded-xl border border-slate-200 bg-white p-5 shadow-sm'
+const button = 'min-h-10 rounded-lg bg-[#0e2a47] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50'
+const input = 'min-h-10 rounded-lg border border-slate-300 px-3 py-2 text-sm'
+const errorText = (error: unknown) => error instanceof Error ? error.message : 'Request failed'
+
+function QueryState({ loading, error }: { loading: boolean; error: unknown }) {
+  if (loading) return <p role="status">Loading…</p>
+  if (error) return <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-800">{errorText(error)}</p>
+  return null
+}
+
+export function DispatchOrders({ runDate, depot }: { runDate: string; depot: string }) {
+  const client = useQueryClient()
+  const [view, setView] = useState<'all' | 'unconfirmed'>('all')
+  const [selected, setSelected] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [outletId, setOutletId] = useState('')
+  const [temp, setTemp] = useState<'CHILLED' | 'AMBIENT'>('AMBIENT')
+  const [units, setUnits] = useState('')
+  const [note, setNote] = useState('')
+  const [result, setResult] = useState('')
+  const key = ['dispatch-orders', runDate, depot]
+  const orders = useQuery({ queryKey: [...key, 'list'], queryFn: () => dispatchApi.orders(runDate, depot) })
+  const unconfirmed = useQuery({ queryKey: [...key, 'unconfirmed'], queryFn: () => dispatchApi.unconfirmed(runDate, depot) })
+  const closeStatus = useQuery({ queryKey: [...key, 'close'], queryFn: () => dispatchApi.closeStatus(runDate, depot) })
+  const detail = useQuery({ queryKey: [...key, 'detail', selected], queryFn: () => dispatchApi.order(selected!), enabled: !!selected })
+  const close = useMutation({ mutationFn: () => dispatchApi.closeOrders(runDate, depot), onSuccess: data => { setResult(`Closed: ${data.confirmed} confirmed, ${data.autoConfirmed} auto-confirmed, ${data.notConfirmed} not confirmed.`); client.invalidateQueries({ queryKey: key }) } })
+  const phoneIn = useMutation({ mutationFn: () => dispatchApi.phoneIn({ outletId: outletId.trim(), runDate, temp, units: Number(units), note }), onSuccess: () => { setAdding(false); setResult('Phone-in order created.'); client.invalidateQueries({ queryKey: key }) } })
+
+  if (orders.isPending || closeStatus.isPending) return <QueryState loading error={null} />
+  if (orders.error || closeStatus.error) return <QueryState loading={false} error={orders.error || closeStatus.error} />
+  const list = orders.data.items
+  const prepared = list.filter(order => order.status === 'PREPARED').length
+  const chilled = list.filter(order => order.temp === 'CHILLED').length
+  return <div className="space-y-5">
+    <div className={card}>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div><h2 className="text-lg font-bold">Orders for {runDate} · {depot}</h2><p className="text-sm text-slate-600">{list.length} orders · {prepared} prepared · {chilled} chilled</p><p className="text-sm text-slate-600">{closeStatus.data.closed ? `Closed ${closeStatus.data.closedAt}` : `Open until ${closeStatus.data.cutOffAt}`}</p></div>
+        <div className="flex gap-2"><button className={button} onClick={() => setAdding(true)}>Add phone-in order</button><button className={button} disabled={closeStatus.data.closed || close.isPending} onClick={() => { if (window.confirm(`Close orders for ${depot} on ${runDate}?`)) close.mutate() }}>Close orders</button></div>
+      </div>
+      {result && <p role="status" className="mt-3 text-emerald-700">{result}</p>}{close.error && <QueryState loading={false} error={close.error} />}
+    </div>
+    <div className="flex gap-2"><button className={button} onClick={() => setView('all')}>All ({list.length})</button><button className={button} onClick={() => setView('unconfirmed')}>Not confirmed ({unconfirmed.data?.total ?? '…'})</button></div>
+    {view === 'all' ? <div className={`${card} overflow-x-auto`}><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="p-2">Order</th><th>Outlet</th><th>Brand</th><th>Temperature</th><th>Units</th><th>Status</th><th>Source</th></tr></thead><tbody>{list.map((order: Order) => <tr key={order.id} className="border-b"><td className="p-2"><button className="font-semibold text-blue-700 underline" onClick={() => setSelected(order.id)}>{order.ref}</button></td><td>{order.outletName}</td><td>{order.brand}</td><td>{order.temp}</td><td>{order.units}</td><td>{order.status}</td><td>{order.source}</td></tr>)}</tbody></table>{list.length === 0 && <p className="p-3">No orders for this run and depot.</p>}</div>
+      : <div className={`${card} overflow-x-auto`}><QueryState loading={unconfirmed.isPending} error={unconfirmed.error} />{unconfirmed.data && <table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="p-2">Outlet</th><th>Prepared orders</th><th>Phone</th><th>Action</th></tr></thead><tbody>{unconfirmed.data.items.map(store => <tr key={store.outletId} className="border-b"><td className="p-2">{store.outletName}</td><td>{store.orders.map(order => `${order.ref} · ${order.temp} · ${order.units} units`).join(', ')}</td><td>{store.phone ?? 'Not available'}</td><td><button className="text-blue-700 underline" onClick={() => { setOutletId(store.outletId); setAdding(true) }}>Enter by phone</button></td></tr>)}</tbody></table>}{unconfirmed.data?.total === 0 && <p className="p-3">All stores have confirmed.</p>}</div>}
+    {selected && <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40"><div className="h-full w-full max-w-lg overflow-auto bg-white p-6"><button className="float-right" onClick={() => setSelected(null)}>Close</button><h2 className="text-lg font-bold">Order history</h2><QueryState loading={detail.isPending} error={detail.error} />{detail.data && <><p className="my-4">{detail.data.order.ref} · {detail.data.order.outletName} · {detail.data.order.status}</p>{detail.data.history.map((event, index) => <div key={index} className="border-t py-3 text-sm"><strong>{event.type}</strong> · {event.at}<p>{event.actor ?? 'System'} · {event.fromStatus ?? '—'} → {event.toStatus ?? '—'}</p></div>)}</>}</div></div>}
+    {adding && <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40"><form className="h-full w-full max-w-lg space-y-4 overflow-auto bg-white p-6" onSubmit={event => { event.preventDefault(); phoneIn.mutate() }}><button type="button" className="float-right" onClick={() => setAdding(false)}>Close</button><h2 className="text-lg font-bold">Add phone-in order</h2><p>Run date: {runDate}. Weight and volume are estimated by the server.</p><label className="block">Outlet ID<input className={`mt-1 block w-full ${input}`} required maxLength={10} value={outletId} onChange={event => setOutletId(event.target.value)} /></label><label className="block">Temperature<select className={`mt-1 block w-full ${input}`} value={temp} onChange={event => setTemp(event.target.value as typeof temp)}><option value="AMBIENT">Ambient</option><option value="CHILLED">Chilled</option></select></label><label className="block">Units<input className={`mt-1 block w-full ${input}`} type="number" min="1" required value={units} onChange={event => setUnits(event.target.value)} /></label><label className="block">Note<input className={`mt-1 block w-full ${input}`} maxLength={500} value={note} onChange={event => setNote(event.target.value)} /></label><button className={button} disabled={phoneIn.isPending}>Create order</button>{phoneIn.error && <QueryState loading={false} error={phoneIn.error} />}</form></div>}
+  </div>
+}
+
+export function DispatchFleet({ runDate, depot }: { runDate: string; depot: string }) {
+  const client = useQueryClient()
+  const [selected, setSelected] = useState<Vehicle | null>(null)
+  const [reason, setReason] = useState('')
+  const key = ['dispatch-fleet', runDate, depot]
+  const fleet = useQuery({ queryKey: key, queryFn: () => dispatchApi.fleet(runDate, depot) })
+  const confirm = useMutation({ mutationFn: () => dispatchApi.confirmFleet(runDate, depot), onSuccess: () => client.invalidateQueries({ queryKey: key }) })
+  const update = useMutation({ mutationFn: (value: { vehicle: Vehicle; status: Vehicle['availability']; reason: string | null }) => dispatchApi.setAvailability(value.vehicle.id, runDate, value.status, value.reason), onSuccess: () => { setSelected(null); setReason(''); client.invalidateQueries({ queryKey: key }) } })
+  if (fleet.isPending) return <QueryState loading error={null} />
+  if (fleet.error) return <QueryState loading={false} error={fleet.error} />
+  return <div className="space-y-5"><div className={card}><div className="flex items-center justify-between gap-4"><div><h2 className="text-lg font-bold">Fleet · {depot} · {runDate}</h2><p className="text-sm text-slate-600">{fleet.data.counts.available} available · {fleet.data.counts.reeferAvailable} reefers · {fleet.data.counts.inWorkshop} in workshop · {fleet.data.counts.offRoad} off road</p><p className="text-sm text-slate-600">{fleet.data.confirmedAt ? `Confirmed ${fleet.data.confirmedAt}` : 'Awaiting confirmation'}</p></div><button className={button} disabled={confirm.isPending} onClick={() => confirm.mutate()}>Confirm fleet</button></div>{confirm.error && <QueryState loading={false} error={confirm.error} />}</div><div className={`${card} overflow-x-auto`}><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="p-2">Vehicle</th><th>Type</th><th>Capacity</th><th>Availability</th><th>Reason</th><th>Action</th></tr></thead><tbody>{fleet.data.items.map(vehicle => <tr key={vehicle.id} className="border-b"><td className="p-2 font-semibold">{vehicle.id}</td><td>{vehicle.type} · {vehicle.temp}</td><td>{vehicle.weightCapKg} kg · {vehicle.volumeCapM3} m³</td><td>{vehicle.availability.replaceAll('_', ' ')}</td><td>{vehicle.availabilityReason ?? '—'}</td><td><button className="text-blue-700 underline" onClick={() => { setSelected(vehicle); setReason(vehicle.availabilityReason ?? '') }}>Change</button></td></tr>)}</tbody></table></div>{selected && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"><div className={`${card} w-full max-w-md space-y-4`}><h2 className="text-lg font-bold">Availability · {selected.id}</h2><p>This change applies to {runDate} only.</p><label className="block">Reason<input className={`mt-1 block w-full ${input}`} maxLength={200} value={reason} onChange={event => setReason(event.target.value)} /></label><div className="flex flex-wrap gap-2"><button className={button} disabled={update.isPending} onClick={() => update.mutate({ vehicle: selected, status: 'AVAILABLE', reason: null })}>Available</button><button className={button} disabled={update.isPending || !reason.trim()} onClick={() => update.mutate({ vehicle: selected, status: 'IN_WORKSHOP', reason: reason.trim() })}>In workshop</button><button className={button} disabled={update.isPending || !reason.trim()} onClick={() => update.mutate({ vehicle: selected, status: 'OFF_ROAD', reason: reason.trim() })}>Off road</button><button className="min-h-10 px-3" onClick={() => setSelected(null)}>Cancel</button></div>{update.error && <QueryState loading={false} error={update.error} />}</div></div>}</div>
+}
+
+export function DispatchOutlets({ depot }: { depot: string }) {
+  const [search, setSearch] = useState('')
+  const outlets = useQuery({ queryKey: ['dispatch-outlets', depot], queryFn: () => dispatchApi.outlets(depot) })
+  if (outlets.isPending) return <QueryState loading error={null} />
+  if (outlets.error) return <QueryState loading={false} error={outlets.error} />
+  const shown = outlets.data.items.filter(outlet => `${outlet.id} ${outlet.name} ${outlet.brand} ${outlet.district}`.toLowerCase().includes(search.toLowerCase()))
+  return <div className="space-y-5"><div className={card}><h2 className="text-lg font-bold">Outlets · {depot}</h2><p className="text-sm text-slate-600">{outlets.data.total} outlets</p><input className={`mt-4 w-full max-w-md ${input}`} aria-label="Search outlets" placeholder="Search outlets" value={search} onChange={event => setSearch(event.target.value)} /></div><div className={`${card} overflow-x-auto`}><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="p-2">Outlet</th><th>Brand</th><th>District</th><th>Dock</th><th>Access</th><th>Window</th></tr></thead><tbody>{shown.map(outlet => <tr key={outlet.id} className="border-b"><td className="p-2 font-semibold">{outlet.name}</td><td>{outlet.brand}</td><td>{outlet.district}</td><td>{outlet.dockType}</td><td>{outlet.parkingConstraint}</td><td>{outlet.mallWindowOpen && outlet.mallWindowClose ? `${outlet.mallWindowOpen}–${outlet.mallWindowClose} (mall)` : `${outlet.windowOpen}–${outlet.windowClose}`}</td></tr>)}</tbody></table>{shown.length === 0 && <p className="p-3">No outlets found.</p>}</div></div>
+}

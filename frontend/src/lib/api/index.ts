@@ -9,7 +9,7 @@ export class ApiError extends Error {
   }
 }
 
-const apiBase = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
+const apiBase = (import.meta.env?.VITE_API_URL ?? '').replace(/\/+$/, '')
 
 /** Built apps call VITE_API_URL; empty means same origin (Vite proxy or nginx). */
 function apiUrl(path: string): string {

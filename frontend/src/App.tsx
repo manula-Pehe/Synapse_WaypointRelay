@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './app/AuthProvider'
 import { rolePaths, useAuth, type Role } from './app/auth'
@@ -8,8 +8,6 @@ import { NotificationsPage } from './features/notifications/Notifications'
 import { ApiError } from './lib/api'
 import { useState } from 'react'
 import DispatcherLayout from './components/DispatcherLayout'
-import OrderQueue from './components/OrderQueue'
-import FleetStatus from './components/FleetStatus'
 import LiveBoardPage from './components/LiveBoardPage'
 import { StoreLayout } from './features/store/StoreLayout'
 import { StoreHome, StoreOrders, StoreOrderDetail, NewStoreOrder } from './features/store/StoreOrders'
@@ -18,15 +16,24 @@ import { StoreIssues, NewIssue, StoreIssueDetail } from './features/store/StoreI
 import { DispatchIssues } from './features/dispatch/issues/DispatchIssues'
 import { StoreSettings } from './features/store/StoreSettings'
 import { StoreHistory } from './features/store/StoreHistory'
-import OutletsReference from './components/OutletsReference'
+import { DispatchOrders, DispatchFleet, DispatchOutlets } from './features/dispatch/core/DispatchDataPages'
+import { dispatchApi } from './features/dispatch/core/api'
 import RunReport from './components/RunReport'
 import CapacityOutlook from './components/CapacityOutlook'
 import IssuesInbox from './components/IssuesInbox'
 import IssueDetail from './components/IssueDetail'
 
 function DispatcherWorkspace() {
-  const [activeNav, setActiveNav] = useState('issues')
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>('ISS-0142')
+  const { user } = useAuth()
+  const client = useQueryClient()
+  const [activeNav, setActiveNav] = useState('orders')
+  const [activeDepot, setActiveDepot] = useState(user?.depot ?? 'Peliyagoda')
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
+  const [clockInput, setClockInput] = useState('')
+  const settings = useQuery({ queryKey: ['dispatch-settings'], queryFn: dispatchApi.settings, refetchInterval: 30_000 })
+  const moveClock = useMutation({ mutationFn: dispatchApi.moveClock, onSuccess: () => client.invalidateQueries() })
+  const runDate = settings.data?.runDate
+  const depot = activeDepot === 'All depots' ? '' : activeDepot
 
   const pageMeta: Record<string, { title: string; subtitle: string; planStatus?: string }> = {
     orders: {
@@ -74,7 +81,8 @@ function DispatcherWorkspace() {
 
   const isIssueDetailActive = activeNav === 'issues' && selectedIssueId !== null
 
-  const content = activeNav === 'fleet' ? <FleetStatus />
+  const content = settings.error ? <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-800">Could not load run settings: {settings.error.message}</p>
+    : activeNav === 'fleet' ? (runDate && depot ? <DispatchFleet runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'live-board' ? <LiveBoardPage />
     : activeNav === 'issues' ? (
         selectedIssueId ? (
@@ -89,9 +97,10 @@ function DispatcherWorkspace() {
         )
       )
     : activeNav === 'capacity' ? <CapacityOutlook />
-    : activeNav === 'outlets' ? <OutletsReference />
+    : activeNav === 'outlets' ? <DispatchOutlets depot={depot} />
     : activeNav === 'reports' ? <RunReport />
-    : <OrderQueue />
+    : activeNav === 'orders' ? (runDate && depot ? <DispatchOrders runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
+    : <p>This screen is awaiting its backend integration.</p>
 
   return (
     <DispatcherLayout
@@ -102,9 +111,14 @@ function DispatcherWorkspace() {
           setSelectedIssueId(null)
         }
       }}
-      title={currentMeta.title}
-      subtitle={currentMeta.subtitle}
-      planStatus={currentMeta.planStatus}
+      title={['orders', 'fleet', 'outlets'].includes(activeNav) ? `${activeNav[0].toUpperCase()}${activeNav.slice(1)} · ${depot || 'All depots'}` : currentMeta.title}
+      subtitle={['orders', 'fleet', 'outlets'].includes(activeNav) ? (runDate ? `Run ${runDate} · demo clock ${settings.data?.now ?? ''}` : 'Loading run settings…') : currentMeta.subtitle}
+      planStatus={['orders', 'fleet', 'outlets'].includes(activeNav) ? undefined : currentMeta.planStatus}
+      activeDepot={activeDepot}
+      onDepotChange={setActiveDepot}
+      runDate={runDate ? `Run: ${runDate}` : 'Loading run date…'}
+      user={user ? { name: user.name, role: 'Dispatcher', depots: user.depot ?? 'All depots' } : undefined}
+      clockControl={<form className="flex items-center gap-2" onSubmit={event => { event.preventDefault(); if (clockInput) moveClock.mutate(`${clockInput}:00+05:30`) }}><label className="text-xs font-medium">Demo clock (Sri Lanka) <input className="ml-1 min-h-10 rounded border border-slate-300 px-2" type="datetime-local" value={clockInput} onChange={event => setClockInput(event.target.value)} /></label><button className="min-h-10 rounded bg-[#0e2a47] px-3 text-xs font-semibold text-white" disabled={!clockInput || moveClock.isPending}>Set</button>{moveClock.error && <span role="alert" className="text-xs text-red-700">{moveClock.error.message}</span>}</form>}
       hideTopBar={activeNav === 'capacity' || isIssueDetailActive}
     >
       {content}
