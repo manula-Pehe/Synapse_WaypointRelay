@@ -23,6 +23,13 @@ export interface Outlet { id: string; name: string; brand: string; district: str
 export interface Notice { id: string; severity: 'CRITICAL' | 'WARNING' | 'INFO'; type: string; title: string; body: string; link: string | null; createdAt: string; readAt: string | null }
 export interface NoticeList extends List<Notice> { unreadCount: number }
 export interface Plan { id: string; runDate: string; depot: string; version: number; status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED'; vehicles: { vehicleId: string; trips: { id: string; tripNo: number; brand: string; district: string; stops: { orderId: string; outletId: string }[] }[] }[] }
+export interface LiveBoard {
+  runDate: string; depot: string; generatedAt: string; onTimePercent: number | null
+  completedStops: number; onTimeStops: number; deferredToday: number | null
+  skippedTwoRuns: number | null; fridgeTruckUsePercent: number | null
+  needsAttention: { id: string; type: string; severity: 'CRITICAL' | 'WARNING'; title: string; details: string; orderId: string | null; action: string | null }[]
+  trips: { id: string; vehicleId: string; tripNo: number; district: string; stopsDone: number; stopsTotal: number; status: string; lastUpdate: string | null; lastSync: string | null }[]
+}
 
 const params = (values: Record<string, string>) => new URLSearchParams(values).toString()
 const json = (body: unknown) => JSON.stringify(body)
@@ -44,4 +51,5 @@ export const dispatchApi = {
   markNotificationRead: (id: string) => api<Notice>(`notifications/${encodeURIComponent(id)}/read`, { method: 'POST' }),
   markAllNotificationsRead: () => api<{ updated: number }>('notifications/read-all', { method: 'POST' }),
   latestPlan: (runDate: string, depot: string) => api<Plan>(`dispatch/plans?${params({ runDate, depot })}`),
+  live: (runDate: string, depot: string) => api<LiveBoard>(`dispatch/live?${params({ runDate, depot })}`),
 }

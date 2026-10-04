@@ -40,7 +40,7 @@ function DispatcherWorkspace() {
     orders: { title: 'Order queue', subtitle: 'Orders and confirmation status for the selected run' },
     fleet: { title: 'Fleet', subtitle: 'Mark unavailable vehicles before planning' },
     plan: { title: 'Plan', subtitle: 'Planning screens are owned by Chethiya' },
-    'live-board': { title: 'Live board · sample preview', subtitle: 'Live board backend is not available yet' },
+    'live-board': { title: 'Live board', subtitle: 'Recorded delivery progress and attention items' },
     issues: { title: 'Issues', subtitle: 'Store issues and replies' },
     'network-map': { title: 'Network map', subtitle: 'District trips from the selected plan' },
     capacity: { title: 'Capacity outlook · sample preview', subtitle: 'Forecast backend is not available yet' },
@@ -50,7 +50,7 @@ function DispatcherWorkspace() {
   const meta = metadata[activeNav] ?? { title: 'Waypoint Relay', subtitle: 'Dispatch & fleet operations' }
   const content = settings.error ? <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-800">Could not load run settings: {settings.error.message}</p>
     : activeNav === 'fleet' ? (runDate && depot ? <DispatchFleet runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
-    : activeNav === 'live-board' ? <LiveBoardPage />
+    : activeNav === 'live-board' ? (runDate && depot ? <LiveBoardPage runDate={runDate} depot={depot} /> : <p>Select a depot and wait for the run date.</p>)
     : activeNav === 'issues' ? <DispatchIssues />
     : activeNav === 'capacity' ? <CapacityOutlook />
     : activeNav === 'outlets' ? <DispatchOutlets depot={depot} />
