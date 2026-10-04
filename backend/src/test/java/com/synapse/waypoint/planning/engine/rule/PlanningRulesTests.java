@@ -267,9 +267,17 @@ class PlanningRulesTests {
         }
 
         @Test
-        void shouldRejectArrivalBeforeTheWindowOpens() {
-            assertThat(violationOf(rule, day(aVehicle(), stop(anOrder(), anOutlet().window("05:00", "08:00")))).rule())
-                    .isEqualTo(RuleCode.WINDOW);
+        void shouldAcceptEarlyArrivalBecauseTheTruckWaitsForTheWindowToOpen() {
+            assertThat(rule.check(day(aVehicle(), stop(anOrder(), anOutlet().window("05:00", "08:00"))))).isEmpty();
+        }
+
+        @Test
+        void shouldRejectWhenWaitingForAnEarlyOutletMakesALaterStopLate() {
+            // the first stop opens at 6:00, so the second stop is reached at 6:15, after its 6:10 close
+            VehicleDay waiting = day(aVehicle(), stop(anOrder(), anOutlet().window("06:00", "06:05")),
+                    stop(anOrder().ref("B"), anOutlet().id("O2").window("04:00", "06:10")));
+
+            assertThat(violationOf(rule, waiting).rule()).isEqualTo(RuleCode.WINDOW);
         }
 
         @Test
@@ -281,7 +289,7 @@ class PlanningRulesTests {
 
         @Test
         void shouldRejectArrivalOutsideTheMallWindowEvenInsideTheNormalWindow() {
-            OutletBuilder mall = anOutlet().window("04:00", "08:00").mallWindow("06:00", "07:00");
+            OutletBuilder mall = anOutlet().window("04:00", "08:00").mallWindow("03:00", "04:00");
 
             assertThat(violationOf(rule, day(aVehicle(), stop(anOrder(), mall))).rule()).isEqualTo(RuleCode.WINDOW);
         }

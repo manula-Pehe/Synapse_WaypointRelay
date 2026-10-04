@@ -14,6 +14,8 @@ import com.synapse.waypoint.planning.engine.input.VehicleInput;
 /**
  * The booklet formulas. Trip minutes = outbound + inter-stop × (stops − 1) + Σ service allowance.
  * Trip km = 2 × depot-to-district km + inter-stop km × (stops − 1). Litres = km ÷ km per litre.
+ * A truck that reaches an outlet before its window opens waits there, which delays the stops after it;
+ * the booklet's trip minutes (used for the time budget) do not include that waiting.
  */
 public class TripCalculator {
 
@@ -76,9 +78,14 @@ public class TripCalculator {
             if (index > 0) {
                 clock = clock.plusMinutes(serviceMinutes(trip.stops().get(index - 1)) + travel.interStopMinutes());
             }
+            clock = laterOf(clock, trip.stops().get(index).window().open());
             arrivals.add(clock);
         }
         return arrivals;
+    }
+
+    private static LocalTime laterOf(LocalTime a, LocalTime b) {
+        return a.isAfter(b) ? a : b;
     }
 
     private int serviceMinutes(StopCandidate stop) {

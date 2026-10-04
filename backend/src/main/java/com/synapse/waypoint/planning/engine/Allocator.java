@@ -1,5 +1,6 @@
 package com.synapse.waypoint.planning.engine;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -39,8 +40,11 @@ public class Allocator {
     public AllocationResult allocate() {
         Map<String, VehicleDay> days = new LinkedHashMap<>();
         List<UnplacedOrder> unplaced = new ArrayList<>();
-        for (OrderInput order : ordersByPlacementOrder()) {
-            Attempt attempt = new Attempt(new StopCandidate(order, input.outletOf(order)));
+        List<OrderInput> queue = ordersByPlacementOrder();
+        for (int index = 0; index < queue.size(); index++) {
+            OrderInput order = queue.get(index);
+            Attempt attempt = new Attempt(new StopCandidate(order, input.outletOf(order)),
+                    queue.subList(index + 1, queue.size()));
             if (!attempt.placeInto(days)) {
                 unplaced.add(new UnplacedOrder(order, attempt.lastBlock()));
             }
@@ -63,11 +67,13 @@ public class Allocator {
     private final class Attempt {
 
         private final StopCandidate stop;
+        private final Demand pendingDemand;
         private final List<List<VehicleInput>> vehicleTiers;
         private RuleViolation lastBlock;
 
-        Attempt(StopCandidate stop) {
+        Attempt(StopCandidate stop, List<OrderInput> stillToPlace) {
             this.stop = stop;
+            this.pendingDemand = demandOfSameTrip(stop, stillToPlace);
             this.vehicleTiers = tiersFor(stop.order());
         }
 
@@ -108,7 +114,7 @@ public class Allocator {
         }
 
         private boolean openNewTrip(Map<String, VehicleDay> days, List<VehicleInput> tier) {
-            for (VehicleInput vehicle : tier) {
+            for (VehicleInput vehicle : sizedForPendingDemand(tier)) {
                 VehicleDay day = days.getOrDefault(vehicle.id(), VehicleDay.idle(vehicle));
                 VehicleDay candidate = day.withTrip(new TripDraft(List.of(stop)));
                 if (accepts(candidate)) {
@@ -119,11 +125,49 @@ public class Allocator {
             return false;
         }
 
+        /**
+         * A new trip should be able to take everything still waiting for the same brand, district and
+         * temperature: vehicles that can come first (smallest first), then the rest from largest down,
+         * so a busy district does not eat several trips by starting on a small vehicle.
+         */
+        private List<VehicleInput> sizedForPendingDemand(List<VehicleInput> tier) {
+            List<VehicleInput> roomyEnough = tier.stream().filter(pendingDemand::fitsIn).toList();
+            List<VehicleInput> tooSmall = new ArrayList<>(tier.stream().filter(vehicle -> !pendingDemand.fitsIn(vehicle)).toList());
+            tooSmall.sort(Comparator.comparing(VehicleInput::weightCapKg).thenComparing(VehicleInput::volumeCapM3).reversed()
+                    .thenComparing(VehicleInput::id));
+            List<VehicleInput> ordered = new ArrayList<>(roomyEnough);
+            ordered.addAll(tooSmall);
+            return ordered;
+        }
+
         private boolean accepts(VehicleDay candidate) {
             Optional<RuleViolation> violation = checker.firstViolation(candidate);
             violation.ifPresent(found -> lastBlock = found);
             return violation.isEmpty();
         }
+    }
+
+    /** Weight and volume of the order being placed plus the orders still waiting for the same kind of trip. */
+    private record Demand(BigDecimal weightKg, BigDecimal volumeM3) {
+
+        boolean fitsIn(VehicleInput vehicle) {
+            return weightKg.compareTo(vehicle.weightCapKg()) <= 0 && volumeM3.compareTo(vehicle.volumeCapM3()) <= 0;
+        }
+    }
+
+    private Demand demandOfSameTrip(StopCandidate stop, List<OrderInput> stillToPlace) {
+        OrderInput placing = stop.order();
+        BigDecimal weight = placing.weightKg();
+        BigDecimal volume = placing.volumeM3();
+        for (OrderInput other : stillToPlace) {
+            boolean sameKindOfTrip = other.brand() == placing.brand() && other.isChilled() == placing.isChilled()
+                    && input.outletOf(other).district().equals(stop.outlet().district());
+            if (sameKindOfTrip) {
+                weight = weight.add(other.weightKg());
+                volume = volume.add(other.volumeM3());
+            }
+        }
+        return new Demand(weight, volume);
     }
 
     /**

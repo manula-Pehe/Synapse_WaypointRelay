@@ -155,6 +155,28 @@ class AllocatorTests {
     }
 
     @Test
+    void shouldStartATripOnAVehicleBigEnoughForTheWholeDistrictsDemand() {
+        // 3 × 100 kg for one district: a 100 kg vehicle would need three trips, the 400 kg one needs one
+        AllocationResult result = allocate(withOutlets()
+                .vehicle(aVehicle().id("TINY").capacity("100", "10")).vehicle(aVehicle().id("ROOMY").capacity("400", "10"))
+                .order(anOrder().ref("A").outlet("O1").weightKg("100")).order(anOrder().ref("B").outlet("O2").weightKg("100"))
+                .order(anOrder().ref("C").outlet("O3").weightKg("100")).build());
+
+        assertThat(result.days()).extracting(day -> day.vehicle().id()).containsExactly("ROOMY");
+        assertThat(result.days().get(0).trips()).singleElement().satisfies(trip -> assertThat(trip.stops()).hasSize(3));
+    }
+
+    @Test
+    void shouldFallBackToTheLargestVehicleWhenNoneCanTakeAllTheDemand() {
+        AllocationResult result = allocate(withOutlets()
+                .vehicle(aVehicle().id("SMALL").capacity("150", "10")).vehicle(aVehicle().id("LARGE").capacity("250", "10"))
+                .order(anOrder().ref("A").outlet("O1").weightKg("200")).order(anOrder().ref("B").outlet("O2").weightKg("200"))
+                .build());
+
+        assertThat(result.days()).extracting(day -> day.vehicle().id()).contains("LARGE");
+    }
+
+    @Test
     void shouldGiveTheSameResultOnEveryRun() {
         PlanningInput input = withOutlets()
                 .vehicle(aVehicle().id("V1").capacity("300", "5")).vehicle(aVehicle().id("V2").capacity("300", "5"))

@@ -98,6 +98,19 @@ class TripCalculatorTests {
     }
 
     @Test
+    void shouldWaitForAnOutletToOpenAndDelayTheStopsAfterIt() {
+        TripDraft trip = new TripDraft(List.of(
+                aStop(anOrder().ref("A"), anOutlet().id("O1").window("06:00", "08:00")),
+                aStop(anOrder().ref("B"), anOutlet().id("O2").window("04:00", "09:00"))));
+
+        TripTiming timing = calculator.timing(VehicleDay.idle(vehicle).withTrip(trip), 0);
+
+        // reaches O1 at 4:10 but waits until 6:00; O2 is then 10 service + 5 drive later
+        assertThat(timing.arrivals()).containsExactly(LocalTime.of(6, 0), LocalTime.of(6, 15));
+        assertThat(timing.minutes()).isEqualTo(40 + 5 + 2 * 10);
+    }
+
+    @Test
     void shouldFailClearlyWhenTravelTimesAreMissing() {
         TripDraft elsewhere = new TripDraft(List.of(aStop(anOrder(), anOutlet().district("Nowhere"))));
 
