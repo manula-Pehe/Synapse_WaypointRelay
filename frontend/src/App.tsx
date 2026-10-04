@@ -138,7 +138,11 @@ export default function App() {
 </> : role === 'DRIVER' ? (
                     // The driver app is a phone-width app in a cab, so it takes the whole route
                     // rather than an index page inside the desktop shell.
-                    <Route path="*" element={<DriverApp />} />
+                    <>
+                      {/* Sign-in lands on /driver: send a signed-in driver straight to today's run. */}
+                      <Route index element={<Navigate to="today" replace />} />
+                      <Route path="*" element={<DriverApp />} />
+                    </>
                   ) : <Route index element={role === 'DISPATCHER' ? <DispatcherWorkspace /> : role === 'LOADER' ? <LoaderHome /> : <WorkspacePlaceholder />} />}
                   {role === 'DISPATCHER' && <Route path="issues" element={<DispatchIssues />} />}
                   <Route path="notifications" element={<NotificationsPage />} />
