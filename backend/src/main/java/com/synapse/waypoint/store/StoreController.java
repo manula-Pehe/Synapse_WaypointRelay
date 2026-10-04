@@ -98,8 +98,8 @@ class StoreController {
     }
 
     @PostMapping("/orders/{id}/cancel")
-    OrderDto cancel(@PathVariable String id) {
-        return orders.cancel(id, "Cancelled by store");
+    OrderDto cancel(@PathVariable String id, @Valid @RequestBody(required = false) CancelReason body) {
+        return orders.cancel(id, body == null || body.reason() == null || body.reason().isBlank() ? "Cancelled by store" : body.reason());
     }
 
     @PostMapping("/orders")
@@ -170,6 +170,7 @@ class StoreController {
                         Object deferral, Object delivery, Object shortfall, ReceiptView receipt) {}
     record ReceiptView(int receivedUnits, java.time.Instant at) {}
     record Units(@Min(1) int units) {}
+    record CancelReason(@Size(max = 100) String reason) {}
     record NewStoreOrder(@NotNull LocalDate runDate, @NotNull TemperatureRequirement temp, @Min(1) int units,
                          @Size(max = 500) String note) {}
     record PhoneCheck(boolean ok, @Size(max = 1000) String message) {}

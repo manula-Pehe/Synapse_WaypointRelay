@@ -27,7 +27,7 @@ const realStoreApi = {
   order: (id: string) => api<OrderDetail>(`store/orders/${id}`),
   edit: (id: string, units: number) => api<Order>(`store/orders/${id}`, { method: 'PUT', body: JSON.stringify({ units }) }),
   confirm: (id: string) => api<Order>(`store/orders/${id}/confirm`, { method: 'POST' }),
-  cancel: (id: string) => api<Order>(`store/orders/${id}/cancel`, { method: 'POST' }),
+  cancel: (id: string, reason?: string) => api<Order>(`store/orders/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }),
   create: (body: { runDate: string; temp: 'CHILLED' | 'AMBIENT'; units: number; note: string }) => api<Order>('store/orders', { method: 'POST', body: JSON.stringify(body) }),
   check: (id: string, ok: boolean, message?: string) => api<Order>(`store/orders/${id}/check`, { method: 'POST', body: JSON.stringify({ ok, message }) }),
   deliveries: (runDate?: string) => api<List<Delivery>>(`store/deliveries${runDate ? `?runDate=${encodeURIComponent(runDate)}` : ''}`),
