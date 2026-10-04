@@ -97,7 +97,6 @@ export function NotificationsPage() {
         </li>)}</ul>
       </section>)}
     </>}
-    {isDispatch && <p className="mt-5 text-xs text-muted">{text.demo}</p>}
   </>
   return <>
     {isDispatch ? <dialog ref={panel} onCancel={() => navigate(rolePaths[user.role])} onClick={(event) => { if (event.target === panel.current) navigate(rolePaths[user.role]) }} aria-labelledby="notifications-title" className="fixed inset-y-0 left-auto right-0 m-0 h-dvh max-h-none w-full max-w-[460px] border-0 bg-surface p-0 text-ink backdrop:bg-overlay">

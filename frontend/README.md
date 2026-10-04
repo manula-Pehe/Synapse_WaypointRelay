@@ -8,18 +8,10 @@ cp .env.example .env.local
 npm run dev
 ```
 
-`.env.local` opts into mock login. Set `VITE_MOCK_AUTH=false` and restart Vite to use
-`POST /api/auth/login`. There is no automatic fallback to mocks on API failures.
+Sign-in uses `POST /api/auth/login`. There is no mock sign-in or automatic fallback.
 `VITE_API_TARGET` selects the backend forwarded through the local `/api` proxy.
-Production defaults to real login unless mock mode is explicitly enabled at build time.
 Store manager screens always load their operational data from backend endpoints.
-
-| Role | Identifier | Password / PIN |
-| --- | --- | --- |
-| Store manager | dilani@waypoint.lk | Relay@2026 |
-| Dispatcher | ruwan@waypoint.lk | Relay@2026 |
-| Loader | PELIYAGODA | 1234 |
-| Driver | DRV-0036 | 3636 |
+Provision accounts before signing in. Demo credentials are not included in the frontend.
 
 ## Extend the shell
 
@@ -60,19 +52,15 @@ Every role header includes a shared bell linking to its `/notifications` child r
 Notifications poll every 30 seconds. The S11 store view follows the supplied desktop
 reference with a sidebar, category filters, day sections, timestamps and unread dots.
 S11m uses stacked cards and fixed bottom navigation. D14 is a native modal side panel
-with severity filters, keyboard focus containment, Escape/close dismissal, and 3/2/3
-critical/warning/info sample notifications. X2 uses a responsive fallback until its
+with severity filters, keyboard focus containment, and Escape/close dismissal. X2 uses a responsive fallback until its
 reference is supplied. English, Sinhala and Tamil copy is included.
 
 Opening a card marks it read and shows its details; mark-all-read also persists per
-user and role. Store categories and needs-action filtering are independent of read
-state. Demo fixtures use fictional quantities and IDs; loader/driver have empty lists
-until their fixtures or API are available. Notifications remain demo data regardless
-of authentication mode. Replace `features/notifications/data.ts` when the backend
-contract arrives. Receipt and issue actions are not implemented here; details explain
-that limitation, and unfinished navigation destinations are disabled. The dispatch
-panel overlays the existing shell; the live board belongs to the dispatch feature.
+user on the backend. Every role reads from `GET /api/notifications` and sends reads to
+`POST /api/notifications/{id}/read`. Store categories and needs-action filtering are
+independent of read state. The backend currently sends English title and body text.
+The dispatch panel overlays the existing shell; the live board belongs to the dispatch feature.
 
 The phone retains accessible filters and mark-all-read controls in addition to the
 reference layout. Controls have at least 48px targets; the OS status bar is not part
-of the web page. Live API integration remains outstanding.
+of the web page. See `docs/store-production-readiness.md` for remaining backend work.

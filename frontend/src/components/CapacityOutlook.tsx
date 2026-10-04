@@ -299,7 +299,7 @@ export const CapacityOutlook: React.FC<CapacityOutlookProps> = ({
                 viewBox="0 0 1000 220"
                 preserveAspectRatio="none"
               >
-                {/* 
+                {/*
                   10 weeks positioned at x = 50, 150, 250, 350, 450, 550, 650, 750, 850, 950
                   wk 41-44: 9 avail -> getY(9)
                   wk 45: 7 avail -> getY(7)

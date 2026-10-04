@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * Any failure, such as a missing dataset file, stops the start-up so the problem is not missed.
  */
 @Component
-@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
 class SeedOnStartup implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(SeedOnStartup.class);

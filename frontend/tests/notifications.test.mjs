@@ -1,44 +1,45 @@
-import { test } from 'node:test'
+import { test, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { getNotifications, markNotificationsRead, groupNotifications } from '../src/features/notifications/data.ts'
-import { storeApi } from '../src/features/store/api.ts'
+import { configureApi } from '../src/lib/api/index.ts'
 
-test('notifications group critical before warning before info regardless of input order', () => {
+const originalFetch = globalThis.fetch
+afterEach(() => { globalThis.fetch = originalFetch; configureApi(null, () => {}) })
+
+test('notifications group critical before warning before info', () => {
   const items = [{ id: 'i', severity: 'info' }, { id: 'c', severity: 'critical' }, { id: 'w', severity: 'warning' }]
-  assert.deepEqual(groupNotifications(items).flatMap((group) => group.items.map((item) => item.id)), ['c', 'w', 'i'])
+  assert.deepEqual(groupNotifications(items).flatMap(group => group.items.map(item => item.id)), ['c', 'w', 'i'])
 })
-test('store notifications reflect backend orders, settings, and saved reads', async () => {
-  const methods = ['home', 'orders', 'issues', 'deliveries', 'notificationSettings', 'notificationReads', 'markNotificationReads']
-  const originals = Object.fromEntries(methods.map((method) => [method, storeApi[method]]))
-  const readIds = new Set()
-  let settings = { deliveries: true, orders: true, issues: true }
-  const user = { id: 'notification-test', role: 'STORE_MANAGER' }
-  try {
-    storeApi.home = async () => ({ now: '2026-09-30T08:00:00Z', runDate: '2026-10-01', ordersClosed: false })
-    storeApi.orders = async () => ({ items: [
-      { id: 'one', ref: 'T-001', runDate: '2026-10-01', status: 'PREPARED', autoConfirm: false, units: 12, temp: 'CHILLED', source: 'PREPARED', updatedAt: '2026-09-30T07:00:00Z' },
-      { id: 'two', ref: 'T-002', runDate: '2026-10-01', status: 'CANCELLED', autoConfirm: false, units: 8, temp: 'AMBIENT', source: 'MANUAL', updatedAt: '2026-09-30T06:00:00Z' },
-    ], total: 2 })
-    storeApi.issues = async () => ({ items: [], total: 0 })
-    storeApi.deliveries = async () => ({ items: [], total: 0 })
-    storeApi.notificationSettings = async () => settings
-    storeApi.notificationReads = async () => [...readIds]
-    storeApi.markNotificationReads = async (ids) => { ids.forEach((id) => readIds.add(id)) }
 
-    const initial = await getNotifications(user)
-    assert.deepEqual(initial.map((item) => item.id), ['order-action:one', 'order-cancelled:two'])
-    await markNotificationsRead(user, [initial[0].id])
-    assert.deepEqual((await getNotifications(user)).map((item) => item.read), [true, false])
-    settings = { ...settings, orders: false }
-    assert.deepEqual(await getNotifications(user), [])
-    assert.equal((await getNotifications({ id: 'dispatcher', role: 'DISPATCHER' })).filter((item) => !item.read).length, 8)
-  } finally {
-    for (const method of methods) storeApi[method] = originals[method]
+test('notifications use the signed-in user API and persist read state on the server', async () => {
+  configureApi('session-token', () => {})
+  const called = []
+  globalThis.fetch = async (url, options) => {
+    called.push([url, options.method ?? 'GET', options.headers.get('Authorization')])
+    if (url === '/api/notifications') return new Response(JSON.stringify({ items: [{ id: 'notice-1', severity: 'WARNING', type: 'STORE_REMINDER', title: 'Confirm by 4 PM', body: 'One order is ready', link: '/store/orders', createdAt: new Date().toISOString(), readAt: null }], total: 1, unreadCount: 1 }), { status: 200 })
+    if (url === '/api/store/notifications/settings') return new Response(JSON.stringify({ deliveries: true, orders: true, issues: true }), { status: 200 })
+    if (url === '/api/notifications/notice-1/read') return new Response(JSON.stringify({ id: 'notice-1' }), { status: 200 })
+    throw new Error(`Unexpected request: ${url}`)
   }
+  const user = { id: 'user-1', role: 'STORE_MANAGER' }
+  const result = await getNotifications(user)
+  assert.equal(result[0].title.en, 'Confirm by 4 PM')
+  assert.equal(result[0].category, 'orders')
+  assert.equal(result[0].read, false)
+  await markNotificationsRead(user, ['notice-1'])
+  assert.deepEqual(called, [['/api/notifications', 'GET', 'Bearer session-token'], ['/api/store/notifications/settings', 'GET', 'Bearer session-token'], ['/api/notifications/notice-1/read', 'POST', 'Bearer session-token']])
 })
 
-test('dispatcher fixtures retain their notification categories', async () => {
-  const dispatch = await getNotifications({ id: 'dispatch-fixtures', role: 'DISPATCHER' })
-  assert.deepEqual(groupNotifications(dispatch).map((group) => group.items.length), [3, 2, 3])
-  assert.deepEqual(await getNotifications({ id: 'driver-fixtures', role: 'DRIVER' }), [])
+test('store alert choices hide muted categories but retain critical notices', async () => {
+  configureApi('session-token', () => {})
+  globalThis.fetch = async (url) => {
+    if (url === '/api/store/notifications/settings') return new Response(JSON.stringify({ deliveries: true, orders: false, issues: true }), { status: 200 })
+    if (url === '/api/notifications') return new Response(JSON.stringify({ items: [
+      { id: 'muted', severity: 'INFO', type: 'STORE_ORDER', title: 'Order update', body: '', link: null, createdAt: new Date().toISOString(), readAt: null },
+      { id: 'critical', severity: 'CRITICAL', type: 'STORE_ORDER', title: 'Urgent order update', body: '', link: null, createdAt: new Date().toISOString(), readAt: null },
+    ], total: 2, unreadCount: 2 }), { status: 200 })
+    throw new Error(`Unexpected request: ${url}`)
+  }
+  const result = await getNotifications({ id: 'user-1', role: 'STORE_MANAGER' })
+  assert.deepEqual(result.map(item => item.id), ['critical'])
 })

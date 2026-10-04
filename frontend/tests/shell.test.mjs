@@ -2,7 +2,6 @@ import { test, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { rolePaths, roleRedirect } from '../src/app/auth.ts'
 import { isSession } from '../src/app/session.ts'
-import { mockLogin } from '../src/mocks/auth.ts'
 import { api, ApiError, configureApi } from '../src/lib/api/index.ts'
 
 const originalFetch = globalThis.fetch
@@ -28,22 +27,6 @@ test('invalid saved sessions are rejected', () => {
   ]) {
     assert.equal(isSession(value), false)
   }
-})
-test('demo credentials return the four contracted roles and reject wrong passwords', async () => {
-  const accounts = [
-    ['dilani@waypoint.lk', 'Relay@2026', 'STORE_MANAGER'],
-    ['ruwan@waypoint.lk', 'Relay@2026', 'DISPATCHER'],
-    ['PELIYAGODA', '1234', 'LOADER'],
-    ['DRV-0036', '3636', 'DRIVER'],
-  ]
-  for (const [identifier, secret, role] of accounts) {
-    const result = await mockLogin({ identifier, secret })
-    assert.equal(result.user.role, role)
-    assert.equal(isSession(result), true)
-  }
-  await assert.rejects(mockLogin({ identifier: 'dilani@waypoint.lk', secret: 'wrong' }), {
-    status: 401,
-  })
 })
 test('client sends bearer token and preserves structured API errors', async () => {
   configureApi('token-1', () => {})
