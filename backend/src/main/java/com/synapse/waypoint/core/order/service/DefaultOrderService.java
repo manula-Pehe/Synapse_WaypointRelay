@@ -2,6 +2,8 @@ package com.synapse.waypoint.core.order.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +78,17 @@ class DefaultOrderService implements OrderService {
     public List<OrderDto> findByRun(LocalDate runDate, String depot, OrderFilters filters) {
         OrderFilters scoped = filters.forOutlet(access.outletFilterFor(filters.outletId()));
         return mapper.toDtos(orders.findAll(OrderSpecifications.forRun(runDate, depot, scoped), SORT_BY_REF));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderDto> findByIds(Collection<String> orderIds) {
+        if (orderIds.isEmpty()) {
+            return List.of();
+        }
+        return mapper.toDtos(orders.findAllById(orderIds).stream()
+                .sorted(Comparator.comparing(Order::getRef))
+                .toList());
     }
 
     @Override
