@@ -42,11 +42,13 @@ class StoreController {
     private final JdbcTemplate jdbc;
     private final StoreOrderAccess access;
     private final EntityManager entityManager;
+    private final StoreDeliveryService deliveries;
 
     StoreController(OrderService orders, CurrentUser user, DemoClock clock, OutletRepository outlets,
-                    JdbcTemplate jdbc, StoreOrderAccess access, EntityManager entityManager) {
+                    JdbcTemplate jdbc, StoreOrderAccess access, EntityManager entityManager,
+                    StoreDeliveryService deliveries) {
         this.orders = orders; this.user = user; this.clock = clock; this.outlets = outlets;
-        this.jdbc = jdbc; this.access = access; this.entityManager = entityManager;
+        this.jdbc = jdbc; this.access = access; this.entityManager = entityManager; this.deliveries = deliveries;
     }
 
     private String outletId() {
@@ -78,13 +80,7 @@ class StoreController {
 
     @GetMapping("/deliveries")
     ListResponse<DeliveryView> deliveries(@RequestParam(required = false) LocalDate runDate) {
-        LocalDate date = runDate == null ? clock.today() : runDate;
-        return ListResponse.of(access.find(date, date).stream().map(order -> {
-            List<ReceiptView> receipts = jdbc.query("SELECT received_units,received_at FROM receipts WHERE order_id = ?",
-                    (rs, row) -> new ReceiptView(rs.getInt(1), rs.getTimestamp(2).toInstant()), order.id());
-            return new DeliveryView(order.id(), order.ref(), order.status(), null, null, null, null,
-                    receipts.isEmpty() ? null : receipts.get(0));
-        }).toList());
+        return ListResponse.of(deliveries.forRun(runDate));
     }
 
     @PutMapping("/orders/{id}")
@@ -166,9 +162,6 @@ class StoreController {
 
     record Home(String outlet, String brand, LocalDate runDate, java.time.Instant now, boolean ordersClosed, String cutOffAt,
                 List<OrderDto> tomorrow, List<OrderDto> today, int openIssues) {}
-    record DeliveryView(String orderId, String orderRef, OrderStatus status, Object arrival,
-                        Object deferral, Object delivery, Object shortfall, ReceiptView receipt) {}
-    record ReceiptView(int receivedUnits, java.time.Instant at) {}
     record Units(@Min(1) int units) {}
     record CancelReason(@Size(max = 100) String reason) {}
     record NewStoreOrder(@NotNull LocalDate runDate, @NotNull TemperatureRequirement temp, @Min(1) int units,
