@@ -49,7 +49,7 @@ class ReferenceDataSeedStepTests {
         assertThat(mall.getMallWindowOpen()).isEqualTo(LocalTime.of(10, 0));
         assertThat(mall.getMallWindowClose()).isEqualTo(LocalTime.of(12, 30));
         assertThat(plain.getMallWindowOpen()).isNull();
-        assertThat(plain.getWindowOpen()).isEqualTo(LocalTime.of(5, 0));
+        assertThat(plain.getWindowOpen()).isEqualTo(LocalTime.of(5, 20));
     }
 
     @Test

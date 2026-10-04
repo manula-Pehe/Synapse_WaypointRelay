@@ -1,4 +1,4 @@
 outlet_id,brand,district,depot,dock_type,parking_constraint,mall_window,window_open_time,window_close_time
-OUT001,Fresh,Testville,Peliyagoda,rear_dock,normal,,05:00,07:30
+OUT001,Fresh,Testville,Peliyagoda,rear_dock,normal,,05:20,07:40
 OUT002,Fresh,Testville,Peliyagoda,street,van_only,,05:00,07:30
 OUT003,Style,Mallton,Peliyagoda,mall_bay,mall_dock,10:00-12:30,09:00,20:00
