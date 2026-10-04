@@ -7,5 +7,6 @@ public enum SyncActionType {
     DELIVERY_RECORDED,
     DELIVERY_UNDONE,
     STORE_WAIT,
-    VEHICLE_PROBLEM
+    VEHICLE_PROBLEM,
+    GOODS_RETURNED
 }

@@ -39,6 +39,7 @@ import com.synapse.waypoint.driver.dto.SyncResponse;
 import com.synapse.waypoint.driver.entity.Conflict;
 import com.synapse.waypoint.driver.entity.Delivery;
 import com.synapse.waypoint.driver.entity.DeliveryReason;
+import com.synapse.waypoint.driver.entity.GoodsReturn;
 import com.synapse.waypoint.driver.entity.StoreWait;
 import com.synapse.waypoint.driver.entity.SyncActionType;
 import com.synapse.waypoint.driver.entity.SyncLog;
@@ -48,6 +49,7 @@ import com.synapse.waypoint.driver.entity.VehicleProblem;
 import com.synapse.waypoint.driver.entity.VehicleProblemKind;
 import com.synapse.waypoint.driver.repository.ConflictRepository;
 import com.synapse.waypoint.driver.repository.DeliveryRepository;
+import com.synapse.waypoint.driver.repository.GoodsReturnRepository;
 import com.synapse.waypoint.driver.repository.StoreWaitRepository;
 import com.synapse.waypoint.driver.repository.SyncLogRepository;
 import com.synapse.waypoint.driver.repository.TripRunRepository;
@@ -75,6 +77,7 @@ class DefaultSyncServiceTests {
     private VehicleProblemRepository vehicleProblems;
     private ConflictRepository conflicts;
     private OrderService orders;
+    private GoodsReturnRepository goodsReturns;
     private DefaultSyncService service;
 
     @BeforeEach
@@ -86,6 +89,7 @@ class DefaultSyncServiceTests {
         vehicleProblems = mock(VehicleProblemRepository.class);
         conflicts = mock(ConflictRepository.class);
         orders = mock(OrderService.class);
+        goodsReturns = mock(GoodsReturnRepository.class);
 
         DemoClock clock = mock(DemoClock.class);
         when(clock.now()).thenReturn(NOW);
@@ -102,9 +106,10 @@ class DefaultSyncServiceTests {
         when(storeWaits.save(any(StoreWait.class))).thenAnswer(call -> call.getArgument(0));
         when(vehicleProblems.save(any(VehicleProblem.class))).thenAnswer(call -> call.getArgument(0));
         when(conflicts.save(any(Conflict.class))).thenAnswer(call -> call.getArgument(0));
+        when(goodsReturns.save(any(GoodsReturn.class))).thenAnswer(call -> call.getArgument(0));
 
         service = new DefaultSyncService(syncLog, deliveries, tripRuns, storeWaits, vehicleProblems,
-                conflicts, orders, clock, user, mapper);
+                conflicts, goodsReturns, orders, clock, user, mapper);
     }
 
     /** F1: the same clientId sent twice is applied once. */
@@ -319,6 +324,62 @@ class DefaultSyncServiceTests {
         assertThat(problem.isCanDrive()).isTrue();
         assertThat(problem.getFridgeTempC()).isEqualByComparingTo("11.4");
         assertThat(problem.isOpen()).isTrue();
+    }
+
+    /** R8r — goods handed back at the depot are recorded against the trip and the driver. */
+    @Test
+    void goodsHandedBackAtTheDepotAreRecorded() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+
+        service.sync(DRIVER, new SyncRequest(List.of(new SyncItem("c-1",
+                SyncActionType.GOODS_RETURNED, NOW,
+                Map.of("tripId", "trp-1", "orderId", "ord-1", "units", 12,
+                        "reason", DeliveryReason.STORE_CLOSED.name())))));
+
+        ArgumentCaptor<GoodsReturn> saved = ArgumentCaptor.forClass(GoodsReturn.class);
+        verify(goodsReturns).save(saved.capture());
+        GoodsReturn returned = saved.getValue();
+        assertThat(returned.getTripId()).isEqualTo("trp-1");
+        assertThat(returned.getOrderId()).isEqualTo("ord-1");
+        assertThat(returned.getUnits()).isEqualTo(12);
+        assertThat(returned.getReason()).isEqualTo(DeliveryReason.STORE_CLOSED);
+        assertThat(returned.getRecordedBy()).isEqualTo(DRIVER);
+    }
+
+    /** A handback is stock coming back, not an outcome on the order - the shelf still owes for it. */
+    @Test
+    void handingGoodsBackDoesNotSettleTheOrder() {
+        when(syncLog.existsById(anyString())).thenReturn(false);
+
+        service.sync(DRIVER, new SyncRequest(List.of(new SyncItem("c-1",
+                SyncActionType.GOODS_RETURNED, NOW,
+                Map.of("tripId", "trp-1", "orderId", "ord-1", "units", 12,
+                        "reason", DeliveryReason.STORE_CLOSED.name())))));
+
+        verify(orders, never()).recordOutcome(anyString(), any(), anyInt());
+        verify(orders, never()).createRemainder(anyString(), anyInt(), anyString());
+    }
+
+    /**
+     * A handback sent twice after a dropped connection is still one handback - the same guarantee
+     * every other action gets from the clientId, and the reason a driver can retry without fear.
+     */
+    @Test
+    void aHandbackRetriedAfterADroppedConnectionIsStillRecordedOnce() {
+        SyncRequest request = new SyncRequest(List.of(new SyncItem("c-1",
+                SyncActionType.GOODS_RETURNED, NOW,
+                Map.of("tripId", "trp-1", "orderId", "ord-1", "units", 12,
+                        "reason", DeliveryReason.STORE_CLOSED.name()))));
+
+        when(syncLog.existsById("c-1")).thenReturn(false);
+        assertThat(service.sync(DRIVER, request).results()).extracting(SyncResponse.Result::result)
+                .containsExactly(SyncResult.APPLIED);
+
+        when(syncLog.existsById("c-1")).thenReturn(true);
+        assertThat(service.sync(DRIVER, request).results()).extracting(SyncResponse.Result::result)
+                .containsExactly(SyncResult.DUPLICATE);
+
+        verify(goodsReturns, times(1)).save(any(GoodsReturn.class));
     }
 
     /** An unreadable payload is the phone's problem, so it is a 400 and not a retryable 500. */

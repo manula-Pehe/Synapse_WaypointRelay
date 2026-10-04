@@ -7,6 +7,7 @@ import java.util.Map;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
 import com.synapse.waypoint.core.order.entity.DeliveryOutcome;
@@ -74,6 +75,14 @@ public record SyncItem(
             String note) {
     }
 
+    /** R8r — goods handed back at the depot with a signature for responsibility. */
+    public record GoodsReturned(
+            @NotBlank String tripId,
+            @NotBlank String orderId,
+            @Positive int units,
+            @NotNull DeliveryReason reason) {
+    }
+
     /** R2 — the driver arrived at a stop. */
     public record Arrived(
             @NotBlank String stopId,
@@ -87,5 +96,6 @@ public record SyncItem(
             SyncActionType.DELIVERY_RECORDED,
             SyncActionType.DELIVERY_UNDONE,
             SyncActionType.STORE_WAIT,
-            SyncActionType.VEHICLE_PROBLEM);
+            SyncActionType.VEHICLE_PROBLEM,
+            SyncActionType.GOODS_RETURNED);
 }

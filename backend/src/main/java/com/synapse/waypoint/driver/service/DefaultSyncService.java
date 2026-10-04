@@ -25,6 +25,7 @@ import com.synapse.waypoint.driver.dto.SyncRequest;
 import com.synapse.waypoint.driver.dto.SyncResponse;
 import com.synapse.waypoint.driver.entity.Conflict;
 import com.synapse.waypoint.driver.entity.Delivery;
+import com.synapse.waypoint.driver.entity.GoodsReturn;
 import com.synapse.waypoint.driver.entity.StoreWait;
 import com.synapse.waypoint.driver.entity.SyncLog;
 import com.synapse.waypoint.driver.entity.SyncResult;
@@ -32,6 +33,7 @@ import com.synapse.waypoint.driver.entity.TripRun;
 import com.synapse.waypoint.driver.entity.VehicleProblem;
 import com.synapse.waypoint.driver.repository.ConflictRepository;
 import com.synapse.waypoint.driver.repository.DeliveryRepository;
+import com.synapse.waypoint.driver.repository.GoodsReturnRepository;
 import com.synapse.waypoint.driver.repository.StoreWaitRepository;
 import com.synapse.waypoint.driver.repository.SyncLogRepository;
 import com.synapse.waypoint.driver.repository.TripRunRepository;
@@ -60,6 +62,7 @@ class DefaultSyncService implements SyncService {
     private final StoreWaitRepository storeWaits;
     private final VehicleProblemRepository vehicleProblems;
     private final ConflictRepository conflicts;
+    private final GoodsReturnRepository goodsReturns;
     private final OrderService orders;
     private final DemoClock clock;
     private final CurrentUser currentUser;
@@ -67,7 +70,8 @@ class DefaultSyncService implements SyncService {
 
     DefaultSyncService(SyncLogRepository syncLog, DeliveryRepository deliveries,
             TripRunRepository tripRuns, StoreWaitRepository storeWaits,
-            VehicleProblemRepository vehicleProblems, ConflictRepository conflicts, OrderService orders,
+            VehicleProblemRepository vehicleProblems, ConflictRepository conflicts,
+            GoodsReturnRepository goodsReturns, OrderService orders,
             DemoClock clock, CurrentUser currentUser, ObjectMapper mapper) {
         this.syncLog = syncLog;
         this.deliveries = deliveries;
@@ -75,6 +79,7 @@ class DefaultSyncService implements SyncService {
         this.storeWaits = storeWaits;
         this.vehicleProblems = vehicleProblems;
         this.conflicts = conflicts;
+        this.goodsReturns = goodsReturns;
         this.orders = orders;
         this.clock = clock;
         this.currentUser = currentUser;
@@ -119,6 +124,7 @@ class DefaultSyncService implements SyncService {
             case DELIVERY_UNDONE -> undoDelivery(item, now);
             case STORE_WAIT -> recordStoreWait(item, now);
             case VEHICLE_PROBLEM -> reportVehicleProblem(userId, item, now);
+            case GOODS_RETURNED -> recordGoodsReturned(userId, item, now);
         };
     }
 
@@ -237,6 +243,26 @@ class DefaultSyncService implements SyncService {
                 now,
                 item.clientId()));
         return vehicleProblems.save(problem).getId();
+    }
+
+    /**
+ * R8r — goods handed back at the depot at the end of a trip.
+ *
+ * <p>Recorded against the trip and the driver, idempotent on the item's clientId, so a driver who
+ * records the handback twice after a dropped connection has still only handed the goods back once.
+ */
+    private String recordGoodsReturned(String userId, SyncItem item, Instant now) {
+        SyncItem.GoodsReturned payload = convert(item, SyncItem.GoodsReturned.class);
+        GoodsReturn returned = GoodsReturn.record(new GoodsReturn.RecordedReturn(
+                newId(),
+                payload.tripId(),
+                payload.orderId(),
+                payload.units(),
+                payload.reason(),
+                userId,
+                now,
+                item.clientId()));
+        return goodsReturns.save(returned).getId();
     }
 
     /**
