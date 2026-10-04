@@ -66,6 +66,13 @@ class DefaultPlanQueryService implements PlanQueryService {
     }
 
     @Override
+    public List<DeferralDto> deferralsForOutlet(LocalDate runDate, String outletId) {
+        return views.toDtos(deferrals.findPublishedByRunDate(runDate)).stream()
+                .filter(deferral -> deferral.outletId().equals(outletId))
+                .toList();
+    }
+
+    @Override
     public Optional<PlanDto> publishedPlan(LocalDate runDate, String depot) {
         return plans.findFirstByRunDateAndDepotIgnoreCaseAndStatus(runDate, depot, PlanStatus.PUBLISHED)
                 .map(views::plan);
