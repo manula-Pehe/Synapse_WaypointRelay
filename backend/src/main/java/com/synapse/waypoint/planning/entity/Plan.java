@@ -84,6 +84,13 @@ public class Plan {
         this.createdBy = createdBy;
     }
 
+    /** Makes this draft the plan the depot runs on. */
+    public void publish(String userId, Instant at) {
+        this.status = PlanStatus.PUBLISHED;
+        this.publishedBy = userId;
+        this.publishedAt = at;
+    }
+
     public String getId() {
         return id;
     }

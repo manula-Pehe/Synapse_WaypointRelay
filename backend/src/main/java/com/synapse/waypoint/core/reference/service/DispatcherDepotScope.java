@@ -16,20 +16,20 @@ import com.synapse.waypoint.core.reference.repository.OutletRepository;
  * one covers all depots.
  */
 @Component
-class DispatcherDepotScope {
+public class DispatcherDepotScope {
 
     private static final String DEPOT = "Depot";
 
     private final CurrentUser currentUser;
     private final OutletRepository outlets;
 
-    DispatcherDepotScope(CurrentUser currentUser, OutletRepository outlets) {
+    public DispatcherDepotScope(CurrentUser currentUser, OutletRepository outlets) {
         this.currentUser = currentUser;
         this.outlets = outlets;
     }
 
     /** The depot as the outlets spell it, or the dispatcher's own depot when none is requested. */
-    String resolve(String requestedDepot) {
+    public String resolve(String requestedDepot) {
         String wanted = requestedDepot == null || requestedDepot.isBlank()
                 ? currentUser.depot().orElseThrow(DispatcherDepotScope::depotRequired)
                 : requestedDepot.strip();
@@ -39,7 +39,7 @@ class DispatcherDepotScope {
     }
 
     /** Throws NotFound when the dispatcher has a depot and it is not the given one. */
-    void requireInScope(String depot) {
+    public void requireInScope(String depot) {
         currentUser.depot().filter(own -> !own.equalsIgnoreCase(depot))
                 .ifPresent(own -> {
                     throw new NotFoundException(DEPOT, depot);

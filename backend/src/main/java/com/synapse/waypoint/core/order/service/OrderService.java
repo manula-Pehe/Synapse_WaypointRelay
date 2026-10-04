@@ -1,6 +1,7 @@
 package com.synapse.waypoint.core.order.service;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 import com.synapse.waypoint.core.order.dto.CreateOrderRequest;
@@ -22,6 +23,13 @@ public interface OrderService {
      * only their own outlet's orders.
      */
     List<OrderDto> findByRun(LocalDate runDate, String depot, OrderFilters filters);
+
+    /**
+     * The orders with these ids, by reference, in one query. Not limited to the signed-in user's outlet:
+     * it serves read facades such as {@code PlanQueryService}, whose callers may be any role. Unknown ids
+     * are left out.
+     */
+    List<OrderDto> findByIds(Collection<String> orderIds);
 
     OrderDto confirm(String orderId);
 
