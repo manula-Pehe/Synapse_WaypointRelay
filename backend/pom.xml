@@ -120,6 +120,8 @@
 						<app.jwt.secret>test-only-signing-secret-not-used-anywhere-else-0123456789</app.jwt.secret>
 						<!-- Seed tests switch it on with @TestPropertySource. -->
 						<app.seed.enabled>false</app.seed.enabled>
+						<!-- Job tests switch it on with @TestPropertySource. -->
+						<app.jobs.enabled>false</app.jobs.enabled>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>

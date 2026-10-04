@@ -211,7 +211,7 @@ export const AddOrderDrawer: React.FC<AddOrderDrawerProps> = ({
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
-                <span>Window 5:30 – 8:00 AM · rear dock</span>
+                <span>Window 5:15 – 7:45 AM · rear dock</span>
               </div>
             </div>
           </div>

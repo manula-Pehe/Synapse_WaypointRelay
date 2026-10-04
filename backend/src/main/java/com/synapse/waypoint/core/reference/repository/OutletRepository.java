@@ -15,6 +15,10 @@ public interface OutletRepository extends JpaRepository<Outlet, String> {
     @Query("select min(o.depot) from Outlet o where lower(o.depot) = lower(:depot)")
     Optional<String> findDepotName(@Param("depot") String depot);
 
+    /** Every depot name the outlets use, in name order. */
+    @Query("select distinct o.depot from Outlet o order by o.depot")
+    List<String> findDepotNames();
+
     List<Outlet> findAllByOrderByIdAsc();
 
     List<Outlet> findByDepotIgnoreCaseOrderByIdAsc(String depot);
