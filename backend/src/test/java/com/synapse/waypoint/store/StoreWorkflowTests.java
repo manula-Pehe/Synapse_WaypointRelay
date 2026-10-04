@@ -45,10 +45,12 @@ class StoreWorkflowTests {
                 .satisfies(ex -> assertThat(((DomainException) ex).code()).isEqualTo(ErrorCode.ORDERS_CLOSED));
     }
 
-    @Test void nonPreparedOrderCannotBeEditedAndOtherOutletIsHidden() {
+    @Test void confirmedOrderCanBeEditedButPlannedCannotAndOtherOutletIsHidden() {
         Order mine = OrderFixtures.save(orders, "OUT991", OrderStatus.CONFIRMED);
+        Order planned = OrderFixtures.save(orders, "OUT991", OrderStatus.PLANNED);
         Order other = OrderFixtures.save(orders, "OUT992", OrderStatus.PREPARED);
-        assertThatThrownBy(() -> store.edit(mine.getId(), new StoreController.Units(12))).isInstanceOf(DomainException.class)
+        assertThat(store.edit(mine.getId(), new StoreController.Units(12)).units()).isEqualTo(12);
+        assertThatThrownBy(() -> store.edit(planned.getId(), new StoreController.Units(12))).isInstanceOf(DomainException.class)
                 .satisfies(ex -> assertThat(((DomainException) ex).code()).isEqualTo(ErrorCode.INVALID_STATUS));
         assertThatThrownBy(() -> store.detail(other.getId())).isInstanceOf(NotFoundException.class);
     }
